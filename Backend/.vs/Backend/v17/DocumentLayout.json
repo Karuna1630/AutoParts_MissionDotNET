@@ -1,23 +1,130 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\AutoParts_MissionDotNET-main\\Backend\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|c:\\users\\aases\\desktop\\projects\\autoparts_missiondotnet\\backend\\webapi\\weatherforecast.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6A63DCE7-CF65-4871-A936-22987571847B}|WebAPI\\WebAPI.csproj|solutionrelative:webapi\\weatherforecast.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "DockedWidth": 216,
+          "SelectedChildIndex": 8,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "WebAPI\\Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Properties\\launchSettings.json",
+              "RelativeToolTip": "WebAPI\\Properties\\launchSettings.json",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAABQAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-25T06:41:54.955Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "WebAPI\\appsettings.Development.json",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\appsettings.Development.json",
+              "RelativeToolTip": "WebAPI\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-25T06:41:18.273Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\appsettings.json",
+              "RelativeDocumentMoniker": "WebAPI\\appsettings.json",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\appsettings.json",
+              "RelativeToolTip": "WebAPI\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-25T06:39:35.669Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "WeatherForecast.cs",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\WeatherForecast.cs",
+              "RelativeDocumentMoniker": "WebAPI\\WeatherForecast.cs",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\WeatherForecast.cs",
+              "RelativeToolTip": "WebAPI\\WeatherForecast.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-25T06:34:40.876Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "WeatherForecastController.cs",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Controllers\\WeatherForecastController.cs",
+              "RelativeDocumentMoniker": "WebAPI\\Controllers\\WeatherForecastController.cs",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Controllers\\WeatherForecastController.cs",
+              "RelativeToolTip": "WebAPI\\Controllers\\WeatherForecastController.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAwwBsAAABIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-25T06:33:50.083Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Program.cs",
+              "RelativeDocumentMoniker": "WebAPI\\Program.cs",
+              "ToolTip": "C:\\Users\\aases\\Desktop\\Projects\\AutoParts_MissionDotNET\\Backend\\WebAPI\\Program.cs",
+              "RelativeToolTip": "WebAPI\\Program.cs",
+              "ViewState": "AgIAACcAAAAAAAAAAADwvzIAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-25T06:25:12.267Z",
+              "EditorCaption": ""
             }
           ]
         }
