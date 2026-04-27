@@ -128,8 +128,12 @@ const CustomerLayout = () => {
                   {user.role || 'Customer'}
                 </span>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 shadow-sm transition-all group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md">
-                <FaUserCog />
+              <div className="flex h-10 w-10 overflow-hidden items-center justify-center rounded-full bg-slate-100 text-slate-500 shadow-sm transition-all group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:shadow-md border-2 border-transparent group-hover:border-blue-100">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-black">{user.fullName?.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                )}
               </div>
             </button>
 
