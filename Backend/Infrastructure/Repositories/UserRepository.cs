@@ -14,10 +14,15 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
+    public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
 
@@ -29,6 +34,12 @@ public class UserRepository : IUserRepository
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _context.Users.Update(user);
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

@@ -32,5 +32,15 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    [MaxLength(500)]
+    public string? AvatarUrl { get; set; }
+
+    [MaxLength(500)]
+    public string? CoverUrl { get; set; }
+
+    [MaxLength(250)]
+    public string? Address { get; set; }
+
     public bool IsActive { get; set; } = true;
 }
