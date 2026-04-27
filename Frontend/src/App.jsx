@@ -2,6 +2,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Register from './auth/Register';
 import Login from './auth/Login';
 import Landing from './pages/Landing';
+import CustomerLayout from './dashboard/customer/CustomerLayout';
+import CustomerDashboard from './dashboard/customer/CustomerDashboard';
+import MyVehicles from './dashboard/customer/MyVehicles';
+import Appointments from './dashboard/customer/Appointments';
+import Notifications from './dashboard/customer/Notifications';
+import PartsShop from './dashboard/customer/PartsShop';
+import PartRequests from './dashboard/customer/PartRequests';
+import TransactionHistory from './dashboard/customer/TransactionHistory';
+import HealthPredictor from './dashboard/customer/HealthPredictor';
+import PointsWallet from './dashboard/customer/PointsWallet';
+import Rewards from './dashboard/customer/Rewards';
+import ProfileSettings from './dashboard/customer/ProfileSettings';
 
 function App() {
   return (
@@ -15,7 +27,24 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        {/* Add more routes here as needed */}
+        
+        {/* Customer Dashboard Routes */}
+        <Route path="/dashboard" element={<CustomerLayout />}>
+          <Route index element={<CustomerDashboard />} />
+          <Route path="vehicles" element={<MyVehicles />} />
+          <Route path="appointments" element={<Appointments />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="shop" element={<PartsShop />} />
+          <Route path="requests" element={<PartRequests />} />
+          <Route path="history" element={<TransactionHistory />} />
+          <Route path="predictor" element={<HealthPredictor />} />
+          <Route path="wallet" element={<PointsWallet />} />
+          <Route path="rewards" element={<Rewards />} />
+          <Route path="profile" element={<ProfileSettings />} />
+        </Route>
+
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
