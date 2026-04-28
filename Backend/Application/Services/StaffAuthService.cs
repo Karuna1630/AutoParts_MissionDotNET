@@ -23,28 +23,36 @@ namespace Application.Services
         public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto)
         {
             //making identity & assigning role
+  
             var (Succeeded, id) = await _identityService.CreateUserAsync(dto.Email, dto.PhoneNumber, dto.Password);
-            if (Succeeded) 
-            {
+            if (!Succeeded) throw new InvalidOperationException("Identity creation failed.");
+            try { 
+            // add role
                 await _identityService.AddToRoleAsync(id, dto.UserRole.ToString());
+
+                //mapping remainaing dto props to userprofile object
+                var profile = new UserProfile
+                {
+                    IdentityId = id,
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    ProfilePictureUrl = dto.ProfilePictureUrl,
+                    UserRole = dto.UserRole,
+                    RegistrationDate = DateTime.UtcNow
+                };
+
+                // saving to db
+                await _repo.AddAsync(profile);
+
+                // returning viewdto
+                return StaffMapper.ToViewDto(profile, dto.Email, dto.PhoneNumber);
             }
-
-            //mapping remainaing dto props to userprofile object
-            var profile = new UserProfile
+            catch (Exception)
             {
-                IdentityId = id,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                ProfilePictureUrl = dto.ProfilePictureUrl,
-                UserRole = dto.UserRole,
-                RegistrationDate = DateTime.UtcNow
-            };
-
-            // saving to db
-            await _repo.AddAsync(profile);
-
-            // returning viewdto
-            return StaffMapper.ToViewDto(profile, dto.Email, dto.PhoneNumber);
+                // Rollback: Delete the identity user so the system isn't in a broken state
+                await _identityService.DeleteUserAsync(id);
+                throw new InvalidOperationException("Profile creation failed. Registration rolled back.");
+            }
 
         }
         public async Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto)
@@ -78,7 +86,7 @@ namespace Application.Services
         }
         public async Task<bool> UpdateStaffRoleAsync(Guid id, string role)
         {
-            if (role.ToUpper() != "ADMIN" || role.ToUpper() != "STAFF") throw new InvalidOperationException("Not a valid role");
+            if (role.ToUpper() != "ADMIN" && role.ToUpper() != "STAFF") throw new InvalidOperationException("Not a valid role");
             var userRole = (role.ToUpper() == UserRole.ADMIN.ToString()) ? UserRole.ADMIN : UserRole.STAFF;
             if (!await _repo.UpdateRoleAsync(id, userRole)) throw new DBConcurrencyException("Cannot update role");
             return true;
