@@ -45,7 +45,8 @@ const StaffManagement = () => {
   const handleRoleChange = async (id, newRole) => {
     try {
       setActionLoading(id);
-      await updateStaffRole(id, newRole);
+      const roleValue = newRole === 'Admin' ? 0 : 1;
+      await updateStaffRole(id, roleValue);
       // Update local state instead of doing full refresh to be snappy
       setStaffList(prev => prev.map(s => {
         if(s.identityId === id || s.id === id) {
@@ -141,7 +142,7 @@ const StaffManagement = () => {
                       <div className="text-slate-500 text-sm">{staff.email}</div>
                     </td>
                     <td className="py-5 px-6">
-                      <div className="text-slate-500 text-sm">{staff.phone}</div>
+                      <div className="text-slate-500 text-sm">{staff.phoneNumber || staff.phone}</div>
                     </td>
                     <td className="py-5 px-6">
                       <select 
