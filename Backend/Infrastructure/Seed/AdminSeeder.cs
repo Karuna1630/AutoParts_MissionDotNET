@@ -15,8 +15,8 @@ public static class AdminSeeder
         IConfiguration configuration,
         CancellationToken cancellationToken = default)
     {
-        var seedEmail = configuration["AdminSeed:Email"];
-        var seedPassword = configuration["AdminSeed:Password"];
+        var seedEmail = configuration["ADMIN_EMAIL"] ?? configuration["AdminSeed:Email"];
+        var seedPassword = configuration["ADMIN_PASSWORD"] ?? configuration["AdminSeed:Password"];
         var seedFullName = configuration["AdminSeed:FullName"] ?? "System Admin";
         var seedPhone = configuration["AdminSeed:Phone"] ?? "+10000000000";
 
