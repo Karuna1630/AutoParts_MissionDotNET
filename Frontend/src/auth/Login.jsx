@@ -43,8 +43,13 @@ const Login = () => {
         );
         
         // Redirect based on role
-        if (response.data.role === 'Admin') {
+        const userRole = response.data.role;
+        console.log('User logged in with role:', userRole);
+
+        if (userRole?.toLowerCase() === 'admin') {
           navigate('/admin');
+        } else if (userRole?.toLowerCase() === 'staff') {
+          navigate('/staff');
         } else {
           navigate('/dashboard');
         }
@@ -168,7 +173,6 @@ const Login = () => {
                       }`}
                     />
                   </div>
-                  <ErrorMessage name="password" component="p" className="mt-1.5 ml-1 text-xs font-medium text-red-600" />
                 </div>
 
                 {status?.message ? (
