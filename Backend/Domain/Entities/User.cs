@@ -28,7 +28,7 @@ public class User
 
     [Required]
     [MaxLength(20)]
-    public string Role { get; set; } = UserRole.Customer.ToString();
+    public string Role { get; set; } = UserRole.CUSTOMER.ToString();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

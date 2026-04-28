@@ -1,69 +1,81 @@
+using System.Security.Principal;
 using System.Text;
+using Application.Common.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
 using Application.Interfaces.Services;
 using Application.Services;
-using dotenv.net;
 using Infrastructure.Data;
+using Infrastructure.Identity;
 using Infrastructure.Repositories;
 using Infrastructure.Security;
 using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
+using dotenv.net;
+
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables from .env file (located in the project root)
-var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
-if (File.Exists(envPath))
-{
-    DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { envPath }));
-    Console.WriteLine($"[INFO] Loaded .env from: {envPath}");
-}
-else
-{
-    Console.WriteLine($"[WARN] No .env file found at: {envPath}");
-}
-
-// Add Environment Variables to Configuration
-builder.Configuration.AddEnvironmentVariables();
-
-// Add services to the container.
-builder.Services.AddControllers();
-
-// Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
+// --- 1. Configuration & Connection String ---
+var connectionString = builder.Configuration["CONNECTION_STRING"]
     ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+// --- 2. Database & Identity ---
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// --- 3. Core Services ---
+builder.Services.AddControllers();
+builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
+
+// Repositories
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUserRepo, UserRepo>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+builder.Services.AddScoped<IPurchaseInvoiceRepository, PurchaseInvoiceRepository>();
+
+// Application Services
+builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IVehicleService, VehicleService>();
-builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile));
 
-var jwtKey = builder.Configuration["JWT_KEY"] 
+// --- 4. Authentication & Security ---
+var jwtKey = builder.Configuration["JWT_KEY"]
     ?? builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is missing in configuration.");
 
-var jwtIssuer = builder.Configuration["JWT_ISSUER"] 
-    ?? builder.Configuration["Jwt:Issuer"] 
+var jwtIssuer = builder.Configuration["JWT_ISSUER"]
+    ?? builder.Configuration["Jwt:Issuer"]
     ?? "VehiclePartsAPI";
 
-var jwtAudience = builder.Configuration["JWT_AUDIENCE"] 
-    ?? builder.Configuration["Jwt:Audience"] 
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"]
+    ?? builder.Configuration["Jwt:Audience"]
     ?? "VehiclePartsClients";
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -75,12 +87,13 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
 
 builder.Services.AddAuthorization();
 
+// CORS
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>()
@@ -89,11 +102,7 @@ var allowedOrigins = builder.Configuration
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:5175",
-        "http://127.0.0.1:5175",
-        "http://localhost:5176",
-        "http://127.0.0.1:5176"
+        "http://127.0.0.1:5174"
     ];
 
 builder.Services.AddCors(options =>
@@ -107,17 +116,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Swagger docs
+// --- 5. Swagger ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new()
-    {
-        Title = "AutoParts API",
-        Version = "v1",
-        Description = "API for managing auto parts, orders, and users"
-    });
-
+    c.SwaggerDoc("v1", new() { Title = "AutoParts API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new()
     {
         Name = "Authorization",
@@ -126,51 +129,50 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header
     });
-
     c.AddSecurityRequirement(new()
-{
     {
-        new OpenApiSecurityScheme
         {
-            Reference = new OpenApiReference
+            new OpenApiSecurityScheme
             {
-                Type = ReferenceType.SecurityScheme,
-                Id = "Bearer"
-            }
-        },
-        new string[] {}
-    }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new string[] {}
+        }
+    });
 });
-}
-    );
 
 var app = builder.Build();
 
-await AdminSeeder.SeedAdminAsync(app.Services, builder.Configuration);
-
-app.UseStaticFiles();
-app.UseRouting();
-app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+// --- 6. Middleware Pipeline ---
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        options.RoutePrefix = "swagger";
-    });
+    app.UseSwaggerUI();
 }
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+app.UseStaticFiles();
+app.UseCors("FrontendClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+// --- 7. Seeding ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DbInitializer.SeedRolesAsync(services);
+        await AdminSeeder.SeedAdminAsync(services, builder.Configuration);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred during database seeding.");
+    }
+}
 
+app.MapControllers();
 app.Run();
