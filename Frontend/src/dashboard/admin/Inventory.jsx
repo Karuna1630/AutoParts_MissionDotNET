@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiPlus, FiSearch, FiEdit2, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiAlertCircle } from 'react-icons/fi';
 
 const Inventory = () => {
   const [items] = React.useState([
@@ -11,7 +11,7 @@ const Inventory = () => {
   ]);
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -23,15 +23,7 @@ const Inventory = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center bg-white px-4 py-2 rounded-xl border border-slate-200 w-96">
-        <FiSearch className="text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search inventory..."
-          className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-        />
-      </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

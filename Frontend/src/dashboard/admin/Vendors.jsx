@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiPlus, FiSearch, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 const Vendors = () => {
   const [vendors] = React.useState([
@@ -10,7 +10,7 @@ const Vendors = () => {
   ]);
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -22,15 +22,7 @@ const Vendors = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center bg-white px-4 py-2 rounded-xl border border-slate-200 w-96">
-        <FiSearch className="text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search vendors..."
-          className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-        />
-      </div>
+
 
       {/* Vendors Table */}
       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">

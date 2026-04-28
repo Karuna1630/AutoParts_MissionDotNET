@@ -5,9 +5,7 @@ import {
   FiUsers, 
   FiAlertTriangle, 
   FiTrendingUp, 
-  FiShoppingCart,
-  FiSearch,
-  FiBell
+  FiShoppingCart
 } from 'react-icons/fi';
 import { 
   AreaChart, 
@@ -74,41 +72,8 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header (Now part of the Dashboard Page) */}
-      <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
-        <div className="flex items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 w-96">
-          <FiSearch className="text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search data, reports..." 
-            className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-          />
-        </div>
-
-        <div className="flex items-center gap-6">
-          <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
-            <FiBell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-              6
-            </span>
-          </button>
-          
-          <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-            <div className="text-right">
-              <p className="text-sm font-bold text-slate-800">Alex Morgan</p>
-              <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">Admin</span>
-            </div>
-            <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold">
-              AM
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Content */}
-      <div className="p-8 space-y-8 animate-in fade-in duration-500">
-        {/* Page Title */}
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Page Title */}
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
           <p className="text-slate-500 mt-1">System-wide health, revenue and inventory at a glance.</p>
@@ -204,7 +169,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
