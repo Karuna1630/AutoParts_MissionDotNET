@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
 using Application.Interfaces.Services;
 using Application.Services;
+using dotenv.net;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Security;
@@ -14,12 +15,22 @@ using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
 
+// Load environment variables from .env file
+DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Environment Variables to Configuration
+builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(
-    builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure Database Connection from .env or appsettings
+var connectionString = builder.Configuration["CONNECTION_STRING"] 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
@@ -30,10 +41,17 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile));
 
-var jwtKey = builder.Configuration["Jwt:Key"]
+var jwtKey = builder.Configuration["JWT_KEY"] 
+    ?? builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is missing in configuration.");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "VehiclePartsAPI";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehiclePartsClients";
+
+var jwtIssuer = builder.Configuration["JWT_ISSUER"] 
+    ?? builder.Configuration["Jwt:Issuer"] 
+    ?? "VehiclePartsAPI";
+
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"] 
+    ?? builder.Configuration["Jwt:Audience"] 
+    ?? "VehiclePartsClients";
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
