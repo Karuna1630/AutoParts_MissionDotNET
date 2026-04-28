@@ -85,10 +85,10 @@ namespace Infrastructure.Repositories
                 .OrderBy(u => u.RegistrationDate);
 
             var totalCount = await query.CountAsync();
-
+            var pageSkips = (pageNumber > 1) ? pageNumber : 0;
             // select items
             var items = await query
-                .Skip(pageNumber - 1 * pageSize)
+                .Skip(pageNumber - pageSkips * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 

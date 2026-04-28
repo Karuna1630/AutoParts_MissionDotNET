@@ -29,9 +29,24 @@ namespace Infrastructure.Identity
         /// <returns></returns>
         public async Task<(bool Succeeded, Guid id)> CreateUserAsync(string email, string phoneNumber, string password)
         {
-            var user = new ApplicationUser { Email = email, PhoneNumber = phoneNumber };
-            var result = await _userManager.CreateAsync(user, password);
-            return (result.Succeeded, user.Id);
+            try
+            {
+                var user = new ApplicationUser 
+                { 
+                    UserName = email,
+                    Email = email, 
+                    PhoneNumber = phoneNumber 
+                };
+                
+                var result = await _userManager.CreateAsync(user, password);
+                
+                return (result.Succeeded, user.Id);
+            }
+            catch (Exception ex)
+            {
+                // Preserve the original exception details
+                throw new InvalidOperationException("An error occurred while creating the user.", ex);
+            }
         }
 
         /// <summary>
@@ -43,12 +58,20 @@ namespace Infrastructure.Identity
         /// <returns></returns>
         public async Task<bool> UpdateUserAsync(string id, string? email, string? phoneNumber)
         {
-            var identity = await _userManager.FindByIdAsync(id);
-            if (identity == null) return false;
-            identity.Email = !string.IsNullOrWhiteSpace(email) ? email : identity.Email;
-            identity.PhoneNumber = !string.IsNullOrWhiteSpace(phoneNumber) ? phoneNumber : identity.PhoneNumber;
-            var result = await _userManager.UpdateAsync(identity);
-            return result.Succeeded;
+            try
+            {
+                var identity = await _userManager.FindByIdAsync(id);
+                if (identity == null) return false;
+                identity.Email = !string.IsNullOrWhiteSpace(email) ? email : identity.Email;
+                identity.PhoneNumber = !string.IsNullOrWhiteSpace(phoneNumber) ? phoneNumber : identity.PhoneNumber;
+                var result = await _userManager.UpdateAsync(identity);
+                return result.Succeeded;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return false;
+            }
         }
 
         /// <summary>

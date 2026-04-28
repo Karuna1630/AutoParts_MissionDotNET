@@ -1,9 +1,16 @@
+using Application.Common.Interfaces;
+using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using Application.Services;
 using Infrastructure.Data;
 using Infrastructure.Identity;
+using Infrastructure.Repositories;
+using Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Security.Principal;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +23,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 //swagger docs
 builder.Services.AddEndpointsApiExplorer();
@@ -55,6 +65,20 @@ builder.Services.AddSwaggerGen(c =>
     );
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DbInitializer.SeedRolesAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

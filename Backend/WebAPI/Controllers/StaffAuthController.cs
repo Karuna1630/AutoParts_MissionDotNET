@@ -48,8 +48,8 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPatch]
-        public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole([FromQuery] Guid id, [FromQuery] string role)
+        [HttpPatch("{id}")]
+        public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
             var result = await _service.UpdateStaffRoleAsync(id, role);
             return Ok(result);
