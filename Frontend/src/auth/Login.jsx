@@ -41,8 +41,12 @@ const Login = () => {
           })
         );
         
-        // Redirect based on role or to dashboard
-        navigate('/dashboard');
+        // Redirect based on role
+        if (response.data.role === 'Admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error) {
       setStatus({
