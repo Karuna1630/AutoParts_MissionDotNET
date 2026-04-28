@@ -1,122 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Register from './auth/Register';
+import Login from './auth/Login';
+import Landing from './pages/Landing';
+import CustomerLayout from './dashboard/customer/CustomerLayout';
+import CustomerDashboard from './dashboard/customer/CustomerDashboard';
+import MyVehicles from './dashboard/customer/MyVehicles';
+import Appointments from './dashboard/customer/Appointments';
+import Notifications from './dashboard/customer/Notifications';
+import PartsShop from './dashboard/customer/PartsShop';
+import PartRequests from './dashboard/customer/PartRequests';
+import TransactionHistory from './dashboard/customer/TransactionHistory';
+import HealthPredictor from './dashboard/customer/HealthPredictor';
+import PointsWallet from './dashboard/customer/PointsWallet';
+import Rewards from './dashboard/customer/Rewards';
+import ProfileSettings from './dashboard/customer/ProfileSettings';
+import AdminLayout from './dashboard/admin/AdminLayout';
+import AdminDashboard from './dashboard/admin/AdminDashboard';
+import UserManagement from './dashboard/admin/UserManagement';
+import StaffManagement from './dashboard/admin/StaffManagement';
+import CreateStaff from './dashboard/admin/CreateStaff';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        
+        {/* Customer Dashboard Routes */}
+        <Route path="/dashboard" element={<CustomerLayout />}>
+          <Route index element={<CustomerDashboard />} />
+          <Route path="vehicles" element={<MyVehicles />} />
+          <Route path="appointments" element={<Appointments />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="shop" element={<PartsShop />} />
+          <Route path="requests" element={<PartRequests />} />
+          <Route path="history" element={<TransactionHistory />} />
+          <Route path="predictor" element={<HealthPredictor />} />
+          <Route path="wallet" element={<PointsWallet />} />
+          <Route path="rewards" element={<Rewards />} />
+          <Route path="profile" element={<ProfileSettings />} />
+        </Route>
 
-      <div className="ticks"></div>
+        {/* Admin Dashboard Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="staff" element={<StaffManagement />} />
+          <Route path="create-staff" element={<CreateStaff />} />
+        </Route>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
