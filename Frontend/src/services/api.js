@@ -1,12 +1,6 @@
 import axios from 'axios';
 
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-const rawApiBaseUrl = configuredApiBaseUrl || '/api';
-const baseApiUrlWithoutTrailingSlash = rawApiBaseUrl.replace(/\/+$/, '');
-
-const API_BASE_URL = baseApiUrlWithoutTrailingSlash.endsWith('/api')
-  ? baseApiUrlWithoutTrailingSlash
-  : `${baseApiUrlWithoutTrailingSlash}/api`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -1,14 +1,16 @@
 using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Services;
+using Domain.Constants;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class StaffAuthController : ControllerBase
     {
         private readonly ILogger<StaffAuthController> _logger;
@@ -40,15 +42,15 @@ namespace WebAPI.Controllers
 
             return Ok(result);
         }
-
-        [HttpPost]
+        
+        [HttpPost("register")]
         public async Task<ActionResult<ViewStaffDto>> AddStaff([FromBody] CreateStaffDto createStaffDto)
         {
             var result = await _service.RegisterStaffAsync(createStaffDto);
             return Ok(result);
         }
-
-        [HttpPatch("{id}")]
+        //[Authorize(Roles = UserRoles.Admin)]
+        [HttpPatch("update-role/{id}")]
         public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
             var result = await _service.UpdateStaffRoleAsync(id, role);

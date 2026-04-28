@@ -86,8 +86,10 @@ namespace Application.Services
         }
         public async Task<bool> UpdateStaffRoleAsync(Guid id, string role)
         {
-            if (role.ToUpper() != "ADMIN" && role.ToUpper() != "STAFF") throw new InvalidOperationException("Not a valid role");
-            var userRole = (role.ToUpper() == UserRole.ADMIN.ToString()) ? UserRole.ADMIN : UserRole.STAFF;
+            if (!Enum.TryParse<UserRole>(role, true, out var userRole) || userRole is UserRole.Customer)
+            {
+                throw new InvalidOperationException("Not a valid role");
+            }
             if (!await _repo.UpdateRoleAsync(id, userRole)) throw new DBConcurrencyException("Cannot update role");
             return true;
         }
