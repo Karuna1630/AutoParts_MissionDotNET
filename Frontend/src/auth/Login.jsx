@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaLock, FaArrowRight, FaCheck, FaCarSide } from 'react-icons/fa';
+import { FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { loginValidationSchema } from '../utils/LoginValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -36,6 +36,8 @@ const Login = () => {
             email: response.data.email,
             fullName: response.data.fullName,
             role: response.data.role,
+            avatarUrl: response.data.avatarUrl,
+            coverUrl: response.data.coverUrl,
           })
         );
         
@@ -85,7 +87,7 @@ const Login = () => {
               <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-300/30 bg-blue-400/20 text-xs text-blue-300">
                 <FaCheck />
               </span>
-              Manage appointments and AI maintenance alerts
+              Manage appointments and maintenance alerts
             </li>
           </ul>
         </div>
@@ -99,6 +101,9 @@ const Login = () => {
       <section className="flex flex-1 items-center justify-center bg-slate-50 p-6 sm:p-12 lg:flex-[1.2]">
         <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-2xl shadow-slate-200/60 sm:p-10">
           <div className="mb-8">
+            <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-800">
+              <FaArrowLeft /> Back to home
+            </Link>
             <h2 className="mb-2 text-3xl font-bold tracking-tight text-slate-800">Sign in</h2>
             <p className="text-sm text-slate-500">
               Don't have an account?{' '}

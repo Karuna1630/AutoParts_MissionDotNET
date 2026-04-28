@@ -22,7 +22,7 @@ const sidebarGroups = [
       { id: 'shop', label: 'Parts Shop', icon: FaShoppingBag, path: '/dashboard/shop' },
       { id: 'requests', label: 'Part Requests', icon: FaFileAlt, path: '/dashboard/requests' },
       { id: 'history', label: 'Transaction History', icon: FaHistory, path: '/dashboard/history' },
-      { id: 'predictor', label: 'AI Health Predictor', icon: FaWaveSquare, path: '/dashboard/predictor' },
+      { id: 'predictor', label: 'Health Predictor', icon: FaWaveSquare, path: '/dashboard/predictor' },
     ]
   },
   {

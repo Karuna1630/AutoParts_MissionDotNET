@@ -4,9 +4,9 @@ import { FaCarSide, FaBrain, FaCalendarAlt, FaTools, FaShieldAlt, FaArrowRight }
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-[#F4F7FA] font-sans text-slate-900">
+    <div className="min-h-screen bg-[#E1EFFF] font-sans text-slate-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 px-6 py-4 backdrop-blur-md md:px-12">
+      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 px-6 py-4 backdrop-blur-md md:px-12 lg:px-24 border-b border-blue-100/50">
         <div className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
             <FaCarSide className="text-xl text-white" />
@@ -28,10 +28,10 @@ const Landing = () => {
         {/* Hero Section */}
         <section className="flex flex-col lg:flex-row min-h-[75vh]">
           {/* Hero Left */}
-          <div className="flex flex-1 flex-col justify-center p-8 md:p-16 lg:p-24 bg-white">
+          <div className="flex flex-1 flex-col justify-center px-6 py-12 md:px-12 md:py-20 lg:px-24 lg:py-24 bg-[#E1EFFF] lg:border-r border-blue-100/50">
             <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-600">
               <FaBrain className="text-sm" />
-              AI-powered service center
+              Smart service center
             </div>
             <h1 className="mb-6 text-5xl font-extrabold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
               Your garage, <br />
@@ -54,10 +54,10 @@ const Landing = () => {
           </div>
 
           {/* Hero Right */}
-          <div className="relative flex flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 p-8 md:p-16 lg:p-24 text-white">
+          <div className="relative flex flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 px-6 py-12 md:px-12 md:py-20 lg:px-24 lg:py-24 text-white">
             <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
-            
+
             <div className="relative z-10 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 shadow-xl shadow-blue-500/30">
                 <FaCarSide className="text-2xl text-white" />
@@ -86,22 +86,22 @@ const Landing = () => {
         {/* Features Section */}
         <section className="px-6 py-20 md:px-12 lg:px-24">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <FeatureCard 
+            <FeatureCard
               Icon={FaBrain}
-              title="AI health alerts"
+              title="Smart health alerts"
               description="Predict part failures before they happen."
             />
-            <FeatureCard 
+            <FeatureCard
               Icon={FaCalendarAlt}
               title="Easy booking"
               description="Schedule any service in under 30 seconds."
             />
-            <FeatureCard 
+            <FeatureCard
               Icon={FaTools}
               title="Genuine parts"
               description="12-month warranty on every order."
             />
-            <FeatureCard 
+            <FeatureCard
               Icon={FaShieldAlt}
               title="Trusted workshop"
               description="Certified technicians, transparent pricing."
@@ -111,7 +111,7 @@ const Landing = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white px-6 py-12 md:px-12 lg:px-24">
+      <footer className="border-t border-blue-200 bg-[#E1EFFF] px-6 py-12 md:px-12 lg:px-24">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2 opacity-80 grayscale hover:grayscale-0 transition">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500">
@@ -132,7 +132,7 @@ const Landing = () => {
 };
 
 const FeatureCard = ({ Icon, title, description }) => (
-  <div className="group rounded-3xl border border-slate-100 bg-white p-8 shadow-xl shadow-slate-200/50 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-300/60">
+  <div className="group rounded-3xl border border-blue-100 bg-white p-8 shadow-xl shadow-blue-200/20 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-300/30">
     <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
       <Icon className="text-xl" />
     </div>

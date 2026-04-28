@@ -43,4 +43,6 @@ public class User
     public string? Address { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 }
