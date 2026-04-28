@@ -16,9 +16,11 @@ import Rewards from './dashboard/customer/Rewards';
 import ProfileSettings from './dashboard/customer/ProfileSettings';
 import AdminLayout from './dashboard/admin/AdminLayout';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
-import UserManagement from './dashboard/admin/UserManagement';
 import StaffManagement from './dashboard/admin/StaffManagement';
-import CreateStaff from './dashboard/admin/CreateStaff';
+import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
+import Inventory from './dashboard/admin/Inventory';
+import Vendors from './dashboard/admin/Vendors';
+import PurchaseInvoices from './dashboard/admin/PurchaseInvoices';
 
 function App() {
   return (
@@ -51,9 +53,11 @@ function App() {
         {/* Admin Dashboard Routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<UserManagement />} />
+          <Route path="analytics" element={<FinancialAnalytics />} />
           <Route path="staff" element={<StaffManagement />} />
-          <Route path="create-staff" element={<CreateStaff />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="vendors" element={<Vendors />} />
+          <Route path="invoices" element={<PurchaseInvoices />} />
         </Route>
 
         {/* Catch-all redirect */}
