@@ -44,7 +44,7 @@ const FinancialAnalytics = () => {
           <h1 className="text-3xl font-bold text-slate-900">Financial Analytics</h1>
           <p className="text-slate-500 mt-1">Revenue, expenses, and profit analysis</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 print:hidden">
           <div className="bg-slate-100 rounded-lg flex p-1">
             {['Daily', 'Monthly', 'Yearly'].map(type => (
               <button
@@ -60,8 +60,11 @@ const FinancialAnalytics = () => {
               </button>
             ))}
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-            <FiDownload /> Export Report
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+          >
+            <FiDownload /> Export PDF
           </button>
         </div>
       </div>

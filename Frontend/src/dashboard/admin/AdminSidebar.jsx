@@ -41,7 +41,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-[#0F172A] text-slate-400">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-[#0F172A] text-slate-400 print:hidden">
       <div className="flex h-20 items-center gap-3 px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
           <FaCarSide className="text-lg text-white" />

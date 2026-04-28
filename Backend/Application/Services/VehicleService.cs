@@ -12,6 +12,7 @@ public class VehicleService : IVehicleService
 {
     private readonly IGenericRepository<Vehicle> _vehicleRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IGenericRepository<Customer> _customerRepository;
     private readonly IMapper _mapper;
     private readonly IImageService _imageService;
     private readonly ILogger<VehicleService> _logger;
@@ -19,12 +20,14 @@ public class VehicleService : IVehicleService
     public VehicleService(
         IGenericRepository<Vehicle> vehicleRepository,
         IUserRepository userRepository,
+        IGenericRepository<Customer> customerRepository,
         IMapper mapper,
         IImageService imageService,
         ILogger<VehicleService> logger)
     {
         _vehicleRepository = vehicleRepository;
         _userRepository = userRepository;
+        _customerRepository = customerRepository;
         _mapper = mapper;
         _imageService = imageService;
         _logger = logger;
@@ -39,22 +42,30 @@ public class VehicleService : IVehicleService
             var customer = await _userRepository.GetByIdAsync(customerId);
             if (customer == null)
             {
-                return ApiResponse<VehicleResponseDto>.FailureResponse("Customer not found");
+                return ApiResponse<VehicleResponseDto>.FailureResponse("User not found");
             }
 
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null)
+            {
+                return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
+            }
+
+            int realCustomerId = actualCustomer.Id;
+
             // Check for duplicate vehicle number for this customer
-            var existingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId && v.VehicleNumber == dto.VehicleNumber);
+            var existingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId && v.VehicleNumber == dto.VehicleNumber);
             if (existingVehicles.Any())
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle number already registered for this customer");
             }
 
             var vehicle = _mapper.Map<Vehicle>(dto);
-            vehicle.CustomerId = customerId;
+            vehicle.CustomerId = realCustomerId;
             vehicle.CreatedAt = DateTime.UtcNow;
 
             // If it's the first vehicle, make it primary
-            var totalVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId);
+            var totalVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId);
             if (!totalVehicles.Any())
             {
                 vehicle.IsPrimary = true;
@@ -89,19 +100,27 @@ public class VehicleService : IVehicleService
     {
         try
         {
-            _logger.LogInformation("Fetching vehicles for customer {CustomerId}", customerId);
+            _logger.LogInformation("Fetching vehicles for user {UserId}", customerId);
+            
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null)
+            {
+                return ApiResponse<IEnumerable<VehicleResponseDto>>.FailureResponse("Customer profile not found");
+            }
+            int realCustomerId = actualCustomer.Id;
             
             var vehicles = await _vehicleRepository.GetAllWithIncludeAsync(
-                v => v.CustomerId == customerId,
-                v => v.Customer!
+                v => v.CustomerId == realCustomerId,
+                v => v.Customer!,
+                v => v.Customer!.User!
             );
 
-            var response = _mapper.Map<IEnumerable<VehicleResponseDto>>(vehicles);
-            return ApiResponse<IEnumerable<VehicleResponseDto>>.SuccessResponse(response);
+            var dtos = _mapper.Map<IEnumerable<VehicleResponseDto>>(vehicles);
+            return ApiResponse<IEnumerable<VehicleResponseDto>>.SuccessResponse(dtos);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching vehicles for customer {CustomerId}", customerId);
+            _logger.LogError(ex, "Error fetching vehicles for user {UserId}", customerId);
             return ApiResponse<IEnumerable<VehicleResponseDto>>.FailureResponse("An error occurred while fetching vehicles");
         }
     }
@@ -110,9 +129,21 @@ public class VehicleService : IVehicleService
     {
         try
         {
-            var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null)
+            {
+                return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
+            }
+            int realCustomerId = actualCustomer.Id;
+
+            var vehicles = await _vehicleRepository.GetAllWithIncludeAsync(
+                v => v.Id == vehicleId && v.CustomerId == realCustomerId,
+                v => v.Customer!,
+                v => v.Customer!.User!
+            );
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            var vehicle = vehicles.FirstOrDefault();
+            if (vehicle == null)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
@@ -122,7 +153,7 @@ public class VehicleService : IVehicleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching vehicle {VehicleId}", vehicleId);
+            _logger.LogError(ex, "Error fetching vehicle {VehicleId} for user {UserId}", vehicleId, customerId);
             return ApiResponse<VehicleResponseDto>.FailureResponse("An error occurred while fetching the vehicle");
         }
     }
@@ -131,9 +162,13 @@ public class VehicleService : IVehicleService
     {
         try
         {
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null) return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
+            int realCustomerId = actualCustomer.Id;
+
             var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.CustomerId != realCustomerId)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
@@ -141,7 +176,7 @@ public class VehicleService : IVehicleService
             // Check for duplicate vehicle number if changed
             if (vehicle.VehicleNumber != dto.VehicleNumber)
             {
-                var existing = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId && v.VehicleNumber == dto.VehicleNumber);
+                var existing = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId && v.VehicleNumber == dto.VehicleNumber);
                 if (existing.Any())
                 {
                     return ApiResponse<VehicleResponseDto>.FailureResponse("Another vehicle with this number already exists");
@@ -159,7 +194,7 @@ public class VehicleService : IVehicleService
             // Handle Primary logic if IsPrimary is requested
             if (dto.IsPrimary && !vehicle.IsPrimary)
             {
-                await UnsetOtherPrimaryVehicles(customerId);
+                await UnsetOtherPrimaryVehicles(realCustomerId);
                 vehicle.IsPrimary = true;
             }
 
@@ -172,6 +207,8 @@ public class VehicleService : IVehicleService
                     vehicle.ImageUrl = imageUrl;
                 }
             }
+
+            vehicle.UpdatedAt = DateTime.UtcNow;
 
             _vehicleRepository.Update(vehicle);
             await _vehicleRepository.SaveChangesAsync();
@@ -190,9 +227,13 @@ public class VehicleService : IVehicleService
     {
         try
         {
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null) return ApiResponse<bool>.FailureResponse("Customer profile not found");
+            int realCustomerId = actualCustomer.Id;
+
             var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.CustomerId != realCustomerId)
             {
                 return ApiResponse<bool>.FailureResponse("Vehicle not found");
             }
@@ -201,13 +242,13 @@ public class VehicleService : IVehicleService
             _vehicleRepository.Remove(vehicle);
             await _vehicleRepository.SaveChangesAsync();
 
-            // If we deleted a primary vehicle, make another one primary if exists
+            // If it was primary, make another vehicle primary if any exists
             if (wasPrimary)
             {
-                var others = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId);
-                if (others.Any())
+                var remainingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId);
+                var newPrimary = remainingVehicles.FirstOrDefault();
+                if (newPrimary != null)
                 {
-                    var newPrimary = others.First();
                     newPrimary.IsPrimary = true;
                     _vehicleRepository.Update(newPrimary);
                     await _vehicleRepository.SaveChangesAsync();
@@ -227,30 +268,42 @@ public class VehicleService : IVehicleService
     {
         try
         {
-            var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            if (actualCustomer == null) return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
+            int realCustomerId = actualCustomer.Id;
+
+            var vehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId);
+            var vehicleList = vehicles.ToList();
+
+            var vehicleToSet = vehicleList.FirstOrDefault(v => v.Id == vehicleId);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicleToSet == null)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
 
-            if (vehicle.IsPrimary)
+            // Remove primary status from all
+            foreach (var v in vehicleList)
             {
-                return ApiResponse<VehicleResponseDto>.SuccessResponse(_mapper.Map<VehicleResponseDto>(vehicle), "Vehicle is already primary");
+                if (v.IsPrimary)
+                {
+                    v.IsPrimary = false;
+                    _vehicleRepository.Update(v);
+                }
             }
 
-            await UnsetOtherPrimaryVehicles(customerId);
-            
-            vehicle.IsPrimary = true;
-            _vehicleRepository.Update(vehicle);
+            // Set new primary
+            vehicleToSet.IsPrimary = true;
+            _vehicleRepository.Update(vehicleToSet);
             await _vehicleRepository.SaveChangesAsync();
 
-            return ApiResponse<VehicleResponseDto>.SuccessResponse(_mapper.Map<VehicleResponseDto>(vehicle), "Vehicle set as primary");
+            var response = _mapper.Map<VehicleResponseDto>(vehicleToSet);
+            return ApiResponse<VehicleResponseDto>.SuccessResponse(response, "Primary vehicle updated successfully");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting primary vehicle {VehicleId}", vehicleId);
-            return ApiResponse<VehicleResponseDto>.FailureResponse("An error occurred while updating primary status");
+            return ApiResponse<VehicleResponseDto>.FailureResponse("An error occurred while setting primary vehicle");
         }
     }
 
@@ -262,5 +315,25 @@ public class VehicleService : IVehicleService
             v.IsPrimary = false;
             _vehicleRepository.Update(v);
         }
+    }
+
+    private async Task<Customer?> GetOrCreateCustomerProfileAsync(int userId)
+    {
+        var customer = (await _customerRepository.FindAsync(c => c.UserId == userId)).FirstOrDefault();
+        if (customer != null) return customer;
+
+        // Auto-create profile if user exists and is a customer
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null || user.Role != "Customer") return null;
+
+        var newCustomer = new Customer
+        {
+            UserId = userId,
+            CreditBalance = 0
+        };
+
+        await _customerRepository.AddAsync(newCustomer);
+        await _customerRepository.SaveChangesAsync();
+        return newCustomer;
     }
 }
