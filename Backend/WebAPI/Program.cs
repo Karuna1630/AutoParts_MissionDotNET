@@ -65,7 +65,12 @@ var jwtAudience = builder.Configuration["JWT_AUDIENCE"]
     ?? "VehiclePartsClients";
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -77,7 +82,7 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
 
@@ -143,7 +148,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-app.UseRouting();
 app.UseCors("FrontendClient");
 
 app.UseAuthentication();
