@@ -57,36 +57,34 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6 md:space-y-8 animate-[fade-in_0.45s_ease-out]">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a1035] via-[#1e1145] to-[#4c1d95] p-6 text-white shadow-xl shadow-violet-950/30 sm:p-8 lg:p-10">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-indigo-500/15 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] bg-size-[14px_14px]" />
-
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1a103d] via-[#2d1b69] to-[#4c1d95] p-8 text-white shadow-2xl shadow-violet-950/20 sm:p-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.05)_1px,transparent_0)] bg-size-[20px_20px]" />
+        
+        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold backdrop-blur">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
               <FaUserShield className="text-violet-300" />
               Admin Panel
             </div>
-            <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="mb-4 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
               Welcome, {firstName}
             </h1>
-            <p className="max-w-xl text-base text-violet-100/80 sm:text-lg">
+            <p className="max-w-xl text-lg font-medium text-violet-100/70">
               Manage your AutoParts platform — users, staff, and system operations from one place.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4">
             <Link
               to="/admin/create-staff"
-              className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-violet-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-violet-50 active:translate-y-0"
+              className="flex items-center gap-2 rounded-2xl bg-white px-7 py-4 text-sm font-bold text-violet-900 shadow-xl transition hover:-translate-y-1 hover:shadow-white/10"
             >
               <FaUserPlus className="text-violet-600" />
               Add Staff
             </Link>
             <Link
               to="/admin/users"
-              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+              className="flex items-center gap-2 rounded-2xl bg-[#312e81]/40 px-7 py-4 text-sm font-bold text-white backdrop-blur-md border border-white/10 transition hover:bg-[#312e81]/60"
             >
               <FaUsers className="text-violet-200" />
               View Users
@@ -96,111 +94,106 @@ const AdminDashboard = () => {
       </section>
 
       {/* Stats Cards */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
         {statCards.map((stat) => (
           <div
             key={stat.label}
-            className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+            className="group relative flex items-center justify-between rounded-[2rem] border border-slate-100 bg-white p-7 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{stat.label}</p>
-                <p className="text-3xl font-bold text-slate-800">
-                  {loading ? (
-                    <span className="inline-block h-8 w-16 animate-pulse rounded-lg bg-slate-100" />
-                  ) : (
-                    stat.value
-                  )}
-                </p>
-              </div>
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.gradient} text-white shadow-lg`}>
-                <stat.icon className="text-lg" />
-              </div>
+            <div>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-slate-400">{stat.label}</p>
+              <p className="text-4xl font-black text-slate-800">
+                {loading ? (
+                  <span className="inline-block h-10 w-20 animate-pulse rounded-xl bg-slate-100" />
+                ) : (
+                  stat.value
+                )}
+              </p>
             </div>
-            <div className={`absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r ${stat.gradient} opacity-0 transition-opacity group-hover:opacity-100`} />
+            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg transition-transform group-hover:scale-110 ${
+              stat.accent === 'violet' ? 'bg-violet-600 shadow-violet-200' :
+              stat.accent === 'blue' ? 'bg-blue-500 shadow-blue-200' :
+              stat.accent === 'emerald' ? 'bg-emerald-500 shadow-emerald-200' :
+              'bg-orange-500 shadow-orange-200'
+            } text-white`}>
+              <stat.icon className="text-2xl" />
+            </div>
           </div>
         ))}
       </section>
 
-      {/* Error State */}
-      {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* Recent Users Table */}
-      <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
-        <div className="mb-6 flex items-center justify-between">
+      {/* Recent Users Section */}
+      <section className="rounded-[2.5rem] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-10 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-800">Recent Users</h2>
-            <p className="text-sm text-slate-400">Latest registered users across the platform</p>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Recent Users</h2>
+            <p className="text-sm font-medium text-slate-400">Latest registered users across the platform</p>
           </div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700"
+            className="group flex items-center gap-2 text-sm font-bold text-violet-600 hover:text-violet-800 transition"
           >
-            View all <FaArrowRight className="text-xs" />
+            View all <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 rounded-xl bg-slate-50 p-4 animate-pulse">
-                <div className="h-10 w-10 rounded-full bg-slate-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-36 rounded bg-slate-200" />
-                  <div className="h-3 w-48 rounded bg-slate-100" />
-                </div>
-                <div className="h-6 w-16 rounded-full bg-slate-200" />
-              </div>
+              <div key={i} className="flex h-20 w-full animate-pulse rounded-2xl bg-slate-50" />
             ))}
           </div>
         ) : recentUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-            <FaUsers className="mb-3 text-3xl" />
-            <p className="font-medium">No users found</p>
+          <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+            <FaUsers className="mb-4 text-5xl opacity-20" />
+            <p className="font-bold">No registered users yet</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {recentUsers.map((u) => (
               <div
                 key={u.id}
-                className="group flex items-center gap-4 rounded-2xl border border-slate-100 p-4 transition hover:bg-slate-50 sm:p-5"
+                className="group flex items-center gap-5 rounded-2xl border border-slate-50 bg-white p-5 transition-all hover:bg-slate-50/50 hover:shadow-md"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
+                {/* Avatar */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-sm font-black text-white shadow-lg">
                   {u.fullName?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
                 </div>
+
+                {/* Info */}
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-semibold text-slate-800">{u.fullName}</h4>
-                    <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${
-                      u.role === 'Admin'
-                        ? 'bg-violet-100 text-violet-700'
-                        : u.role === 'Staff'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-blue-100 text-blue-700'
+                  <div className="flex items-center gap-3 mb-1">
+                    <h4 className="font-bold text-slate-800 text-lg tracking-tight group-hover:text-violet-600 transition-colors">{u.fullName}</h4>
+                    <span className={`rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                      u.role === 'Admin' ? 'bg-violet-100 text-violet-700' :
+                      u.role === 'Staff' ? 'bg-emerald-100 text-emerald-700' :
+                      'bg-blue-100 text-blue-700'
                     }`}>
                       {u.role}
                     </span>
                   </div>
-                  <p className="truncate text-xs text-slate-400">{u.email}</p>
+                  <p className="truncate text-sm font-medium text-slate-400">{u.email}</p>
                 </div>
-                <div className="hidden items-center gap-2 sm:flex">
-                  {u.isActive ? (
-                    <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-600">
-                      <FaCheckCircle className="text-[8px]" /> Active
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-500">
-                      <FaTimesCircle className="text-[8px]" /> Inactive
-                    </span>
-                  )}
-                </div>
-                <div className="hidden text-right text-xs text-slate-400 lg:block">
-                  <FaClock className="mb-0.5 inline text-[10px]" />{' '}
-                  {new Date(u.createdAt).toLocaleDateString()}
+
+                {/* Status & Date */}
+                <div className="flex items-center gap-8">
+                  <div className="hidden sm:block">
+                    {u.isActive ? (
+                      <span className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-emerald-600 border border-emerald-100">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2 rounded-full bg-rose-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-rose-500 border border-rose-100">
+                        <FaTimesCircle className="text-[10px]" />
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+                  <div className="hidden text-right text-xs font-bold text-slate-400 lg:flex items-center gap-2">
+                    <FaClock className="text-[10px]" />
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
             ))}
