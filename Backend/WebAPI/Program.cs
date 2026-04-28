@@ -15,10 +15,19 @@ using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
 
-// Load environment variables from .env file
-DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
-
 var builder = WebApplication.CreateBuilder(args);
+
+// Load environment variables from .env file (located in the project root)
+var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
+if (File.Exists(envPath))
+{
+    DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { envPath }));
+    Console.WriteLine($"[INFO] Loaded .env from: {envPath}");
+}
+else
+{
+    Console.WriteLine($"[WARN] No .env file found at: {envPath}");
+}
 
 // Add Environment Variables to Configuration
 builder.Configuration.AddEnvironmentVariables();
