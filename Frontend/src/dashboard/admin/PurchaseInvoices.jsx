@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiPlus, FiSearch, FiEye, FiDownload } from 'react-icons/fi';
+import { FiPlus, FiEye, FiDownload } from 'react-icons/fi';
 
 const PurchaseInvoices = () => {
   const [invoices] = React.useState([
@@ -11,7 +11,7 @@ const PurchaseInvoices = () => {
   ]);
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -23,15 +23,7 @@ const PurchaseInvoices = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center bg-white px-4 py-2 rounded-xl border border-slate-200 w-96">
-        <FiSearch className="text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search invoices..."
-          className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-        />
-      </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

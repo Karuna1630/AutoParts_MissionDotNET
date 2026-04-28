@@ -1,18 +1,16 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   FiLayout, 
   FiPieChart, 
   FiUsers, 
   FiBox, 
   FiTruck, 
-  FiFileText, 
-  FiLogOut 
+  FiFileText
 } from 'react-icons/fi';
 
 const AdminSidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const menuItems = [
     { 
@@ -32,10 +30,6 @@ const AdminSidebar = () => {
       ]
     }
   ];
-
-  const handleLogout = () => {
-    navigate('/login');
-  };
 
   return (
     <aside className="w-64 bg-[#0f172a] text-slate-300 flex flex-col fixed h-screen">
@@ -77,16 +71,6 @@ const AdminSidebar = () => {
           </div>
         ))}
       </nav>
-
-      <div className="p-4 border-t border-slate-800">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:text-white transition-colors text-sm font-medium"
-        >
-          <FiLogOut className="text-lg" />
-          <span>Sign out</span>
-        </button>
-      </div>
     </aside>
   );
 };
