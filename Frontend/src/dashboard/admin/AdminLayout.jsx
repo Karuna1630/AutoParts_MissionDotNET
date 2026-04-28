@@ -17,6 +17,7 @@ const sidebarGroups = [
     items: [
       { id: 'users', label: 'All Users', icon: FaUsers, path: '/admin/users' },
       { id: 'staff', label: 'Staff Management', icon: FaUserTie, path: '/admin/staff' },
+      { id: 'vendors', label: 'Vendor Portal', icon: FaCarSide, path: '/admin/vendors' },
     ]
   },
 ];

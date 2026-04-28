@@ -16,6 +16,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     public DbSet<UserProfile> UserProfiles { get; set; } = null!;
     public DbSet<User> AppUsers { get; set; } = null!;
     public DbSet<Vehicle> Vehicles { get; set; } = null!;
+    public DbSet<Vendor> Vendors { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
