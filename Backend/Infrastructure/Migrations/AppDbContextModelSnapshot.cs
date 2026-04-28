@@ -184,14 +184,7 @@ namespace Infrastructure.Migrations
 
                     b.ToTable("Users", (string)null);
                 });
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    // --- IDENTITY RELATIONSHIPS (feat/staff-mgmt) ---
+            // --- IDENTITY RELATIONSHIPS (feat/staff-mgmt) ---
             modelBuilder.Entity("Domain.Entities.UserProfile", b =>
                 {
                     b.HasOne("Infrastructure.Identity.ApplicationUser", null)
@@ -267,7 +260,6 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("Vehicles");
-                });
                 });
 #pragma warning restore 612, 618
         }

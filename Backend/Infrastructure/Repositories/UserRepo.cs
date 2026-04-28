@@ -85,18 +85,21 @@ namespace Infrastructure.Repositories
                 .OrderBy(u => u.RegistrationDate);
 
             var totalCount = await query.CountAsync();
-            var pageSkips = (pageNumber > 1) ? pageNumber : 0;
+            var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
+            var normalizedPageSize = pageSize < 1 ? 10 : pageSize;
+            var skip = (normalizedPageNumber - 1) * normalizedPageSize;
+
             // select items
             var items = await query
-                .Skip(pageNumber - pageSkips * pageSize)
-                .Take(pageSize)
+                .Skip(skip)
+                .Take(normalizedPageSize)
                 .ToListAsync();
 
             return new PagedResult<UserProfile>
             {
                 Items = items,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = normalizedPageNumber,
+                PageSize = normalizedPageSize,
                 TotalCount = totalCount
             };
         }

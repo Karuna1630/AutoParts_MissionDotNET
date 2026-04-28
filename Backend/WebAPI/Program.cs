@@ -21,12 +21,8 @@ using WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(connectionString));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -35,8 +31,7 @@ builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 // Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 

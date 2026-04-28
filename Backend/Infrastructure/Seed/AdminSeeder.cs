@@ -30,13 +30,13 @@ public static class AdminSeeder
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
         var normalizedEmail = seedEmail.Trim().ToLowerInvariant();
-        var adminExists = await dbContext.Users.AnyAsync(x => x.Email == normalizedEmail, cancellationToken);
+        var adminExists = await dbContext.AppUsers.AnyAsync(x => x.Email == normalizedEmail, cancellationToken);
         if (adminExists)
         {
             return;
         }
 
-        dbContext.Users.Add(new User
+        dbContext.AppUsers.Add(new User
         {
             Email = normalizedEmail,
             PasswordHash = passwordHasher.Hash(seedPassword),
