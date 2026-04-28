@@ -10,8 +10,11 @@ export const registerStaff = async (payload) => {
   return response.data;
 };
 
-export const updateStaffRole = async (id, roleName) => {
-  // Pass the role as a query string since controller expects [FromQuery]
-  const response = await apiClient.patch(`/StaffAuth/${id}?role=${encodeURIComponent(roleName)}`);
+export const updateStaffRole = async (id, roleValue) => {
+  // Pass the role as a numeric query string since endpoint expects an enum value
+  const response = await apiClient.patch(
+    `/StaffAuth/update-role/${id}?role=${encodeURIComponent(roleValue)}`
+  );
   return response.data;
 };
+  
