@@ -50,7 +50,7 @@ const StaffManagement = () => {
       // Update local state instead of doing full refresh to be snappy
       setStaffList(prev => prev.map(s => {
         if(s.identityId === id || s.id === id) {
-          return { ...s, role: newRole };
+          return { ...s, role: newRole, userRole: roleValue };
         }
         return s;
       }));
@@ -133,7 +133,9 @@ const StaffManagement = () => {
                    <td colSpan="5" className="py-8 text-center text-slate-500">No staff found.</td>
                 </tr>
               ) : (
-                staffList.map((staff, idx) => (
+                staffList.map((staff, idx) => {
+                  const roleLabel = staff.role || (staff.userRole === 0 ? 'Admin' : 'Staff');
+                  return (
                   <tr key={staff.identityId || staff.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
                     <td className="py-5 px-6">
                       <div className="font-semibold text-slate-800">{staff.firstName} {staff.lastName}</div>
@@ -146,11 +148,11 @@ const StaffManagement = () => {
                     </td>
                     <td className="py-5 px-6">
                       <select 
-                        value={staff.role || 'Staff'} 
+                        value={roleLabel} 
                         onChange={(e) => handleRoleChange(staff.identityId || staff.id, e.target.value)}
                         disabled={actionLoading === (staff.identityId || staff.id)}
                         className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer appearance-none outline-none ${
-                          staff.role === 'Admin' 
+                          roleLabel === 'Admin' 
                             ? 'bg-[#0F172A] text-white' 
                             : 'bg-[#64748B] text-white'
                         }`}
@@ -170,7 +172,8 @@ const StaffManagement = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+                })
               )}
             </tbody>
           </table>
