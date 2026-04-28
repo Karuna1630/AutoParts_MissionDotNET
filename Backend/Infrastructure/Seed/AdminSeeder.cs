@@ -5,6 +5,8 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
+using Infrastructure.Identity;
 
 namespace Infrastructure.Seed;
 
@@ -36,7 +38,8 @@ public static class AdminSeeder
             return;
         }
 
-        dbContext.Users.Add(new User
+        // 1. Create Domain User (for AuthService login)
+        var adminUser = new User
         {
             Email = normalizedEmail,
             PasswordHash = passwordHasher.Hash(seedPassword),
@@ -44,7 +47,29 @@ public static class AdminSeeder
             Phone = seedPhone,
             Role = UserRoles.Admin,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        dbContext.Users.Add(adminUser);
+
+        // 2. Create Identity User (for consistency across the system)
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var identityUser = await userManager.FindByEmailAsync(normalizedEmail);
+        
+        if (identityUser == null)
+        {
+            identityUser = new ApplicationUser
+            {
+                UserName = normalizedEmail,
+                Email = normalizedEmail,
+                PhoneNumber = seedPhone,
+                EmailConfirmed = true
+            };
+
+            var result = await userManager.CreateAsync(identityUser, seedPassword);
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(identityUser, UserRoles.Admin);
+            }
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

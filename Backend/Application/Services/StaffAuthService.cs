@@ -1,10 +1,12 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.Common.Exceptions;
 using Application.Common.Interfaces;
 using Application.Common.Mappers;
 using Application.DTOs;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Security;
 using Application.Interfaces.Services;
+using Application.Interfaces.Security;
 using Domain.Entities;
 using Domain.Enums;
 using System;
@@ -16,10 +18,12 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IUserRepo repo, IIdentityService identityService) : IStaffAuthService
+    public class StaffAuthService(IUserRepo repo, IIdentityService identityService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
     {
         private readonly IUserRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IPasswordHasher _passwordHasher = passwordHasher;
         public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto)
         {
             //making identity & assigning role
@@ -43,6 +47,19 @@ namespace Application.Services
 
                 // saving to db
                 await _repo.AddAsync(profile);
+
+                // ALSO save to the main Users table so they can login via AuthService
+                var domainUser = new User
+                {
+                    Email = dto.Email.Trim().ToLowerInvariant(),
+                    PasswordHash = _passwordHasher.Hash(dto.Password), 
+                    FullName = $"{dto.FirstName} {dto.LastName}",
+                    Phone = dto.PhoneNumber,
+                    Role = dto.UserRole.ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
+                
+                await _userRepository.AddAsync(domainUser);
 
                 // returning viewdto
                 return StaffMapper.ToViewDto(profile, dto.Email, dto.PhoneNumber);
