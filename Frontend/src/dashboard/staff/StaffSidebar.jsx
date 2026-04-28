@@ -2,16 +2,16 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FiLayout, 
-  FiPieChart, 
   FiUsers, 
-  FiBox, 
-  FiTruck, 
-  FiFileText,
-  FiLogOut
+  FiShoppingCart, 
+  FiSearch, 
+  FiBarChart2,
+  FiLogOut,
+  FiUser
 } from 'react-icons/fi';
 import { FaCarSide } from 'react-icons/fa';
 
-const AdminSidebar = () => {
+const StaffSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -19,17 +19,22 @@ const AdminSidebar = () => {
     { 
       section: 'OVERVIEW',
       items: [
-        { name: 'Dashboard', icon: <FiLayout />, path: '/admin' },
-        { name: 'Financial Analytics', icon: <FiPieChart />, path: '/admin/analytics' },
+        { name: 'Dashboard', icon: <FiLayout />, path: '/staff' },
       ]
     },
     {
-      section: 'OPERATIONS',
+      section: 'DAILY OPERATIONS',
       items: [
-        { name: 'Staff Management', icon: <FiUsers />, path: '/admin/staff' },
-        { name: 'Inventory', icon: <FiBox />, path: '/admin/inventory' },
-        { name: 'Vendors', icon: <FiTruck />, path: '/admin/vendors' },
-        { name: 'Purchase Invoices', icon: <FiFileText />, path: '/admin/invoices' },
+        { name: 'Customers', icon: <FiUsers />, path: '/staff/customers' },
+        { name: 'Point of Sale', icon: <FiShoppingCart />, path: '/staff/pos' },
+        { name: 'Global Search', icon: <FiSearch />, path: '/staff/search' },
+        { name: 'Reports', icon: <FiBarChart2 />, path: '/staff/reports' },
+      ]
+    },
+    {
+      section: 'ACCOUNT',
+      items: [
+        { name: 'Profile Settings', icon: <FiUser />, path: '/staff/profile' },
       ]
     }
   ];
@@ -81,7 +86,7 @@ const AdminSidebar = () => {
         ))}
       </nav>
 
-      <div className="border-t border-slate-800 p-4">
+      <div className="mt-auto border-t border-slate-800 p-4">
         <button
           onClick={handleSignOut}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all hover:bg-red-500/10 hover:text-red-500"
@@ -94,4 +99,4 @@ const AdminSidebar = () => {
   );
 };
 
-export default AdminSidebar;
+export default StaffSidebar;

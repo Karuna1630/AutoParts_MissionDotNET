@@ -23,6 +23,13 @@ import Vendors from './dashboard/admin/Vendors';
 import PurchaseInvoices from './dashboard/admin/PurchaseInvoices';
 import AdminProfile from './dashboard/admin/AdminProfile';
 import CreateStaff from './dashboard/admin/CreateStaff';
+import StaffLayout from './dashboard/staff/StaffLayout';
+import StaffDashboard from './dashboard/staff/StaffDashboard';
+import Customers from './dashboard/staff/Customers';
+import PointOfSale from './dashboard/staff/PointOfSale';
+import GlobalSearch from './dashboard/staff/GlobalSearch';
+import Reports from './dashboard/staff/Reports';
+import StaffProfile from './dashboard/staff/StaffProfile';
 
 function App() {
   return (
@@ -62,6 +69,16 @@ function App() {
           <Route path="vendors" element={<Vendors />} />
           <Route path="invoices" element={<PurchaseInvoices />} />
           <Route path="profile" element={<AdminProfile />} />
+        </Route>
+
+        {/* Staff Dashboard Routes */}
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="pos" element={<PointOfSale />} />
+          <Route path="search" element={<GlobalSearch />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="profile" element={<StaffProfile />} />
         </Route>
 
         {/* Catch-all redirect */}
