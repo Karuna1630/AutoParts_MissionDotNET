@@ -43,7 +43,7 @@ public class JwtTokenService : ITokenService
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Role, user.Role),
+            new(ClaimTypes.Role, NormalizeRole(user.Role)),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -59,5 +59,15 @@ public class JwtTokenService : ITokenService
             signingCredentials: signingCredentials);
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAtUtc);
+    }
+
+    /// <summary>
+    /// Normalizes role strings to PascalCase (e.g. "STAFF" → "Staff")
+    /// to match the UserRoles constants used in [Authorize] attributes.
+    /// </summary>
+    private static string NormalizeRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role)) return role;
+        return char.ToUpperInvariant(role[0]) + role[1..].ToLowerInvariant();
     }
 }

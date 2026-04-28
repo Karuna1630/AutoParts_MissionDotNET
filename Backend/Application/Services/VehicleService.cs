@@ -12,6 +12,7 @@ public class VehicleService : IVehicleService
 {
     private readonly IGenericRepository<Vehicle> _vehicleRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IGenericRepository<Customer> _customerRepository;
     private readonly IMapper _mapper;
     private readonly IImageService _imageService;
     private readonly ILogger<VehicleService> _logger;
@@ -19,28 +20,39 @@ public class VehicleService : IVehicleService
     public VehicleService(
         IGenericRepository<Vehicle> vehicleRepository,
         IUserRepository userRepository,
+        IGenericRepository<Customer> customerRepository,
         IMapper mapper,
         IImageService imageService,
         ILogger<VehicleService> logger)
     {
         _vehicleRepository = vehicleRepository;
         _userRepository = userRepository;
+        _customerRepository = customerRepository;
         _mapper = mapper;
         _imageService = imageService;
         _logger = logger;
     }
 
-    public async Task<ApiResponse<VehicleResponseDto>> AddVehicleAsync(int customerId, CreateVehicleDto dto)
+    public async Task<ApiResponse<VehicleResponseDto>> AddVehicleAsync(int userId, CreateVehicleDto dto)
     {
         try
         {
-            _logger.LogInformation("Adding new vehicle for customer {CustomerId}", customerId);
+            _logger.LogInformation("Adding new vehicle for user {UserId}", userId);
 
-            var customer = await _userRepository.GetByIdAsync(customerId);
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return ApiResponse<VehicleResponseDto>.FailureResponse("User not found");
+            }
+
+            var customerList = await _customerRepository.FindAsync(c => c.UserId == userId);
+            var customer = customerList.FirstOrDefault();
             if (customer == null)
             {
-                return ApiResponse<VehicleResponseDto>.FailureResponse("Customer not found");
+                return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
             }
+
+            int customerId = customer.Id;
 
             // Check for duplicate vehicle number for this customer
             var existingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId && v.VehicleNumber == dto.VehicleNumber);
@@ -74,25 +86,25 @@ public class VehicleService : IVehicleService
             await _vehicleRepository.SaveChangesAsync();
 
             var response = _mapper.Map<VehicleResponseDto>(vehicle);
-            response.CustomerName = customer.FullName;
+            response.CustomerName = user.FullName;
 
             return ApiResponse<VehicleResponseDto>.SuccessResponse(response, "Vehicle added successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding vehicle for customer {CustomerId}", customerId);
+            _logger.LogError(ex, "Error adding vehicle for user {UserId}", userId);
             return ApiResponse<VehicleResponseDto>.FailureResponse("An error occurred while adding the vehicle");
         }
     }
 
-    public async Task<ApiResponse<IEnumerable<VehicleResponseDto>>> GetCustomerVehiclesAsync(int customerId)
+    public async Task<ApiResponse<IEnumerable<VehicleResponseDto>>> GetCustomerVehiclesAsync(int userId)
     {
         try
         {
-            _logger.LogInformation("Fetching vehicles for customer {CustomerId}", customerId);
+            _logger.LogInformation("Fetching vehicles for user {UserId}", userId);
             
             var vehicles = await _vehicleRepository.GetAllWithIncludeAsync(
-                v => v.CustomerId == customerId,
+                v => v.Customer!.UserId == userId,
                 v => v.Customer!
             );
 
@@ -101,18 +113,18 @@ public class VehicleService : IVehicleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching vehicles for customer {CustomerId}", customerId);
+            _logger.LogError(ex, "Error fetching vehicles for user {UserId}", userId);
             return ApiResponse<IEnumerable<VehicleResponseDto>>.FailureResponse("An error occurred while fetching vehicles");
         }
     }
 
-    public async Task<ApiResponse<VehicleResponseDto>> GetVehicleByIdAsync(int vehicleId, int customerId)
+    public async Task<ApiResponse<VehicleResponseDto>> GetVehicleByIdAsync(int vehicleId, int userId)
     {
         try
         {
             var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.Customer!.UserId != userId)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
@@ -127,16 +139,18 @@ public class VehicleService : IVehicleService
         }
     }
 
-    public async Task<ApiResponse<VehicleResponseDto>> UpdateVehicleAsync(int vehicleId, int customerId, UpdateVehicleDto dto)
+    public async Task<ApiResponse<VehicleResponseDto>> UpdateVehicleAsync(int vehicleId, int userId, UpdateVehicleDto dto)
     {
         try
         {
             var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.Customer!.UserId != userId)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
+
+            int customerId = vehicle.CustomerId;
 
             // Check for duplicate vehicle number if changed
             if (vehicle.VehicleNumber != dto.VehicleNumber)
@@ -186,16 +200,18 @@ public class VehicleService : IVehicleService
         }
     }
 
-    public async Task<ApiResponse<bool>> DeleteVehicleAsync(int vehicleId, int customerId)
+    public async Task<ApiResponse<bool>> DeleteVehicleAsync(int vehicleId, int userId)
     {
         try
         {
-            var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId);
+            var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.Customer!.UserId != userId)
             {
                 return ApiResponse<bool>.FailureResponse("Vehicle not found");
             }
+
+            int customerId = vehicle.CustomerId;
 
             bool wasPrimary = vehicle.IsPrimary;
             _vehicleRepository.Remove(vehicle);
@@ -223,16 +239,18 @@ public class VehicleService : IVehicleService
         }
     }
 
-    public async Task<ApiResponse<VehicleResponseDto>> SetPrimaryVehicleAsync(int vehicleId, int customerId)
+    public async Task<ApiResponse<VehicleResponseDto>> SetPrimaryVehicleAsync(int vehicleId, int userId)
     {
         try
         {
             var vehicle = await _vehicleRepository.GetByIdWithIncludeAsync(vehicleId, v => v.Customer!);
             
-            if (vehicle == null || vehicle.CustomerId != customerId)
+            if (vehicle == null || vehicle.Customer!.UserId != userId)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
             }
+
+            int customerId = vehicle.CustomerId;
 
             if (vehicle.IsPrimary)
             {
