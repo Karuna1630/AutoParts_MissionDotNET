@@ -25,3 +25,9 @@ export const deleteUser = async (id) => {
   const response = await apiClient.delete(`/admin/users/${id}`);
   return response.data;
 };
+
+// Reports
+export const getFinancialReport = async (type, params = {}) => {
+  const response = await apiClient.get(`/admin/reports/${type.toLowerCase()}`, { params });
+  return response.data;
+};
