@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using WebAPI.Common;
 
 namespace WebAPI.Middlewares
@@ -43,7 +43,7 @@ namespace WebAPI.Middlewares
                     Success = false,
                     Message = message,
                     Errors = _environment.IsDevelopment()
-                        ? [ex.Message]
+                        ? [ex.InnerException?.Message ?? ex.Message]
                         : []
                 };
 
