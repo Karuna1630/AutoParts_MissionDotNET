@@ -6,7 +6,7 @@ export const getPagedStaff = async (pageNumber = 1, pageSize = 10) => {
 };
 
 export const registerStaff = async (payload) => {
-  const response = await apiClient.post('/StaffAuth', payload);
+  const response = await apiClient.post('/StaffAuth/register', payload);
   return response.data;
 };
 

@@ -42,14 +42,14 @@ namespace WebAPI.Controllers
 
             return Ok(result);
         }
-        
+        //[Authorize(Roles = UserRoles.Admin)]
         [HttpPost("register")]
         public async Task<ActionResult<ViewStaffDto>> AddStaff([FromBody] CreateStaffDto createStaffDto)
         {
             var result = await _service.RegisterStaffAsync(createStaffDto);
             return Ok(result);
         }
-        //[Authorize(Roles = UserRoles.Admin)]
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPatch("update-role/{id}")]
         public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
