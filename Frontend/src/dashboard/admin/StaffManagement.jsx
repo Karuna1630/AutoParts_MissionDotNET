@@ -7,10 +7,14 @@ import { createStaff } from '../../services/adminService';
 import { getApiErrorMessage } from '../../services/api';
 
 const staffValidationSchema = Yup.object().shape({
-  fullName: Yup.string().required('Full name is required'),
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required'),
   email: Yup.string().email('Invalid email').required('Email is required'),
-  phone: Yup.string().required('Phone number is required'),
+  phoneNumber: Yup.string().required('Phone number is required'),
   password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Confirm password is required'),
 });
 
 const StaffManagement = () => {
@@ -70,7 +74,8 @@ const StaffManagement = () => {
   const handleCreateStaff = async (values, { setSubmitting, setStatus, resetForm }) => {
     try {
       setStatus(null);
-      const res = await createStaff(values);
+      const payload = { ...values, userRole: 1 };
+      const res = await createStaff(payload);
       if (res?.success === false) {
         setStatus(res?.message || 'Failed to create staff account.');
         return;
@@ -93,7 +98,7 @@ const StaffManagement = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#0D1C2E] mb-2">Staff Management</h1>
-          <p className="text-slate-500 text-sm">Register administrators and staff members. Roles control which modules they can access.</p>
+          <p className="text-slate-500 text-sm">Register staff members. Roles are assigned automatically.</p>
         </div>
         <button
           type="button"
@@ -221,24 +226,38 @@ const StaffManagement = () => {
 
             <Formik
               key={formKey}
-              initialValues={{ fullName: '', email: '', phone: '', password: '' }}
+              initialValues={{ firstName: '', lastName: '', email: '', phoneNumber: '', password: '', confirmPassword: '' }}
               validationSchema={staffValidationSchema}
               onSubmit={handleCreateStaff}
             >
               {({ isSubmitting, status, errors, touched }) => (
                 <Form className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Full name</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">First name</label>
                     <Field
-                      name="fullName"
+                      name="firstName"
                       className={`w-full rounded-lg border bg-slate-50 px-4 py-2.5 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.fullName && errors.fullName
+                        touched.firstName && errors.firstName
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
                       }`}
-                      placeholder="John Doe"
+                      placeholder="John"
                     />
-                    <ErrorMessage name="fullName" component="div" className="mt-1 text-xs text-red-500" />
+                    <ErrorMessage name="firstName" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Last name</label>
+                    <Field
+                      name="lastName"
+                      className={`w-full rounded-lg border bg-slate-50 px-4 py-2.5 text-sm transition focus:outline-none focus:ring-2 ${
+                        touched.lastName && errors.lastName
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                      }`}
+                      placeholder="Doe"
+                    />
+                    <ErrorMessage name="lastName" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
                   <div>
@@ -259,15 +278,15 @@ const StaffManagement = () => {
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">Phone</label>
                     <Field
-                      name="phone"
+                      name="phoneNumber"
                       className={`w-full rounded-lg border bg-slate-50 px-4 py-2.5 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.phone && errors.phone
+                        touched.phoneNumber && errors.phoneNumber
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
                       }`}
                       placeholder="+1 234 567 890"
                     />
-                    <ErrorMessage name="phone" component="div" className="mt-1 text-xs text-red-500" />
+                    <ErrorMessage name="phoneNumber" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
                   <div>
@@ -283,6 +302,21 @@ const StaffManagement = () => {
                       placeholder="��������"
                     />
                     <ErrorMessage name="password" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Confirm password</label>
+                    <Field
+                      name="confirmPassword"
+                      type="password"
+                      className={`w-full rounded-lg border bg-slate-50 px-4 py-2.5 text-sm transition focus:outline-none focus:ring-2 ${
+                        touched.confirmPassword && errors.confirmPassword
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                      }`}
+                      placeholder="Confirm password"
+                    />
+                    <ErrorMessage name="confirmPassword" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
                   {status && (
