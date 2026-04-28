@@ -52,90 +52,136 @@ const StaffManagement = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Staff Management</h1>
-          <p className="text-slate-500 font-medium mt-1">Manage your team members and their administrative access.</p>
+          <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Team Members</h1>
+          <p className="text-slate-500 font-medium mt-2">Manage access levels and monitor your administrative team.</p>
         </div>
         <button 
           onClick={() => navigate('/admin/create-staff')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition active:scale-95"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition-all active:scale-95"
         >
-          <FiPlus /> Add Staff Member
+          <FiPlus size={20} /> Add New Staff
         </button>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-semibold">
+        <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 font-bold text-sm">
           {error}
         </div>
       )}
 
-      {/* Staff List */}
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+      {/* Stats Quick View (Optional but looks premium) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl text-xl">
+            <FiUser />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Staff</p>
+            <h3 className="text-2xl font-bold text-slate-900">{staff.length} Members</h3>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
+          <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl text-xl">
+            <FiShield />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Admins</p>
+            <h3 className="text-2xl font-bold text-slate-900">{staff.filter(s => s.role === 'ADMIN').length} Admins</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Container */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-5 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Team Member</th>
-                <th className="px-8 py-5 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Contact Info</th>
-                <th className="px-8 py-5 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Role & Access</th>
-                <th className="px-8 py-5 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-8 py-5 text-right text-xs font-bold text-slate-400 uppercase tracking-widest">Actions</th>
+                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Profile</th>
+                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Contact & Identity</th>
+                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Access Level</th>
+                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-10 py-6 text-right text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {staff.length > 0 ? staff.map((member) => (
-                <tr key={member.identityId} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                        {member.profilePictureUrl ? (
-                          <img src={member.profilePictureUrl} alt="" className="w-full h-full object-cover rounded-full" />
-                        ) : (
-                          <span>{member.firstName[0]}{member.lastName[0]}</span>
-                        )}
+                <tr key={member.identityId} className="hover:bg-slate-50/30 transition-colors group">
+                  {/* Profile Column */}
+                  <td className="px-10 py-8">
+                    <div className="flex items-center gap-5">
+                      <div className="relative">
+                        <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
+                          {member.profilePictureUrl ? (
+                            <img src={member.profilePictureUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{member.firstName[0]}{member.lastName[0]}</span>
+                          )}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full shadow-sm" />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{member.firstName} {member.lastName}</p>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+                        <p className="font-bold text-slate-900 text-lg leading-tight">{member.firstName} {member.lastName}</p>
+                        <p className="text-slate-400 text-xs font-medium mt-1 flex items-center gap-1.5">
                           <FiCalendar className="text-[10px]" /> 
                           Joined {new Date(member.registrationDate || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                        </div>
+                        </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <FiMail className="text-slate-400" size={14} />
+
+                  {/* Contact Column */}
+                  <td className="px-10 py-8">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                        <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
+                          <FiMail className="text-slate-400" size={12} />
+                        </div>
                         {member.email}
                       </div>
-                      <p className="text-xs text-slate-400 ml-5">{member.phoneNumber || 'No phone'}</p>
+                      <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                        <div className="w-6 h-6 bg-transparent" />
+                        ID: {member.identityId.toString().substring(0, 8)}...
+                      </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <select 
-                      value={member.role}
-                      onChange={(e) => handleRoleChange(member.identityId, e.target.value)}
-                      className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
-                    >
-                      <option value="STAFF">STAFF</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
+
+                  {/* Role Column */}
+                  <td className="px-10 py-8">
+                    <div className="relative inline-block w-40">
+                      <select 
+                        value={member.role}
+                        onChange={(e) => handleRoleChange(member.identityId, e.target.value)}
+                        className={`w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold transition focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 appearance-none cursor-pointer ${
+                          member.role === 'ADMIN' ? 'text-indigo-600' : 'text-slate-600'
+                        }`}
+                      >
+                        <option value="STAFF">Standard Staff</option>
+                        <option value="ADMIN">System Admin</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                        <FiShield size={14} />
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-8 py-6">
-                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100 w-fit">
+
+                  {/* Status Column */}
+                  <td className="px-10 py-8">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">
                       <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      ACTIVE
+                      ACCOUNT ACTIVE
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                  {/* Actions Column */}
+                  <td className="px-10 py-8 text-right">
+                    <div className="flex justify-end gap-3 transition-all">
                       <button 
                         onClick={() => handleDelete(member.identityId)}
-                        className="p-2 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition"
+                        className="w-11 h-11 flex items-center justify-center text-slate-400 bg-white border border-slate-100 shadow-sm hover:text-red-500 hover:bg-red-50 hover:border-red-100 rounded-2xl transition-all active:scale-90"
                         title="Delete Member"
                       >
                         <FiTrash2 size={18} />
@@ -145,11 +191,14 @@ const StaffManagement = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-400">
-                      <FiUser size={48} className="opacity-20" />
-                      <p className="font-medium text-lg">No staff members found</p>
-                      <button onClick={fetchStaff} className="text-blue-600 font-bold hover:underline">Refresh list</button>
+                  <td colSpan="5" className="px-10 py-32 text-center">
+                    <div className="flex flex-col items-center gap-4 text-slate-300">
+                      <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-2">
+                        <FiUsers size={40} className="opacity-20" />
+                      </div>
+                      <p className="font-bold text-xl text-slate-400">No team members found</p>
+                      <p className="text-sm text-slate-400 max-w-xs">Start building your team by adding your first staff member.</p>
+                      <button onClick={fetchStaff} className="text-blue-600 font-bold hover:underline mt-2">Refresh database</button>
                     </div>
                   </td>
                 </tr>

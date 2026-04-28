@@ -6,6 +6,7 @@ import { MdEmail } from 'react-icons/md';
 import { loginValidationSchema } from '../utils/LoginValidation';
 import { getApiErrorMessage } from '../services/api';
 import { login } from '../services/authService';
+import PasswordField from '../components/PasswordField';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -156,16 +157,15 @@ const Login = () => {
                   </div>
                   <div className="relative flex items-center">
                     <FaLock className="pointer-events-none absolute left-4 text-slate-400" />
-                    <Field
-                      type="password"
-                      id="password"
+                    <PasswordField
                       name="password"
-                      className={`w-full rounded-xl border bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-800 transition focus:outline-none focus:ring-4 ${
+                      id="password"
+                      placeholder="••••••••"
+                      className={`pl-11 pr-4 ${
                         touched.password && errors.password
                           ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-100'
                           : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
                       }`}
-                      placeholder="••••••••"
                     />
                   </div>
                   <ErrorMessage name="password" component="p" className="mt-1.5 ml-1 text-xs font-medium text-red-600" />
