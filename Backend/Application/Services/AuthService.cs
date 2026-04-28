@@ -131,6 +131,8 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Role = user.Role,
             Token = token,
+            AvatarUrl = user.AvatarUrl,
+            CoverUrl = user.CoverUrl,
             ExpiresAtUtc = expiresAtUtc
         };
     }

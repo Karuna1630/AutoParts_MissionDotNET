@@ -126,7 +126,7 @@ const CustomerDashboard = () => {
               </button>
               <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
                 <FaTools className="text-blue-200" />
-                AI health check
+                Smart health check
               </button>
               <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
                 <FaShoppingBasket className="text-blue-200" />

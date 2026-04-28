@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaCarSide } from 'react-icons/fa';
+import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { registerValidationSchema } from '../utils/RegisterValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -88,6 +88,8 @@ const Register = () => {
             email: response.data.email,
             fullName: response.data.fullName,
             role: response.data.role,
+            avatarUrl: response.data.avatarUrl,
+            coverUrl: response.data.coverUrl,
             expiresAtUtc: response.data.expiresAtUtc,
           }),
         );
@@ -126,7 +128,7 @@ const Register = () => {
         <div className="relative z-10 max-w-xl">
           <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight">Your garage, supercharged.</h1>
           <p className="mb-10 text-lg leading-relaxed text-white/80">
-            Track every vehicle, book service in one tap, get AI failure alerts before a part fails - all in one place.
+            Track every vehicle, book service in one tap, get smart failure alerts before a part fails - all in one place.
           </p>
 
           <ul className="space-y-5">
@@ -140,7 +142,7 @@ const Register = () => {
               <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-300/30 bg-blue-400/20 text-xs text-blue-300">
                 <FaCheck />
               </span>
-              Predictive AI maintenance alerts
+              Predictive maintenance alerts
             </li>
             <li className="flex items-center gap-4 text-base font-medium text-white/95">
               <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-300/30 bg-blue-400/20 text-xs text-blue-300">
@@ -159,6 +161,9 @@ const Register = () => {
       <section className="flex flex-1 items-center justify-center bg-slate-50 p-4 sm:p-8 lg:flex-[1.2]">
         <div className="w-full max-w-xl animate-[fade-in_0.45s_ease-out] rounded-3xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-10">
           <div className="mb-8">
+            <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-800">
+              <FaArrowLeft /> Back to home
+            </Link>
             <h2 className="mb-2 text-3xl font-bold tracking-tight text-slate-800">Create your account</h2>
             <p className="text-sm text-slate-500">
               Already a member?{' '}

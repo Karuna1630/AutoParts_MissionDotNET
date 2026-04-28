@@ -10,9 +10,7 @@ const API_BASE_URL = baseApiUrlWithoutTrailingSlash.endsWith('/api')
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: {},
   timeout: 15000,
 });
 
@@ -38,6 +36,10 @@ export const getApiErrorMessage = (error, fallback = 'Request failed.') => {
 
   if (statusCode === 401) {
     return 'Your session has expired. Please sign in again.';
+  }
+
+  if (apiError?.errors && typeof apiError.errors === 'object') {
+    return Object.values(apiError.errors).flat().join(' ');
   }
 
   if (Array.isArray(apiError?.errors) && apiError.errors.length > 0) {
