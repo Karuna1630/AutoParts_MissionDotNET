@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiAlertCircle, FiTrash2, FiX, FiLoader, FiSearch } from 'react-icons/fi';
 import { getInventory, addInventoryItem, deleteInventoryItem, updateInventoryItem } from '../../services/inventoryService';
+import { getVendors } from '../../services/vendorService';
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -11,17 +12,20 @@ const Inventory = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [vendorOptions, setVendorOptions] = useState([]);
   const itemsPerPage = 4;
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
     category: '',
+    vendor: '',
     price: '',
     stock: '',
   });
 
   useEffect(() => {
     fetchInventory();
+    fetchVendors();
   }, []);
 
   // Filter Logic
@@ -51,6 +55,24 @@ const Inventory = () => {
     }
   };
 
+  const fetchVendors = async () => {
+    try {
+      const response = await getVendors(1, 1000);
+      const responseData = response?.data || response?.Data || {};
+      const items = responseData.items || responseData.Items || [];
+      const normalizedVendors = items
+        .map((vendor) => ({
+          id: vendor.id || vendor.Id,
+          companyName: vendor.companyName || vendor.CompanyName
+        }))
+        .filter((vendor) => vendor.id && vendor.companyName);
+      setVendorOptions(normalizedVendors);
+    } catch (error) {
+      console.error('Failed to fetch vendors:', error);
+      setVendorOptions([]);
+    }
+  };
+
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditingItem(item);
@@ -58,12 +80,13 @@ const Inventory = () => {
         sku: item.sku,
         name: item.name,
         category: item.category || '',
+        vendor: item.vendor || item.vendorName || '',
         price: item.price,
         stock: item.stock,
       });
     } else {
       setEditingItem(null);
-      setFormData({ sku: '', name: '', category: '', price: '', stock: '' });
+      setFormData({ sku: '', name: '', category: '', vendor: '', price: '', stock: '' });
     }
     setIsModalOpen(true);
   };
@@ -73,6 +96,7 @@ const Inventory = () => {
     try {
       const itemData = {
         ...formData,
+        vendorName: formData.vendor,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
       };
@@ -80,15 +104,15 @@ const Inventory = () => {
       if (editingItem) {
         const response = await updateInventoryItem(editingItem.id, itemData);
         if (response.success) {
-          setItems(items.map(i => i.id === editingItem.id ? response.data : i));
+          setItems(items.map(i => i.id === editingItem.id ? { ...response.data, vendor: response.data.vendor || response.data.vendorName || formData.vendor } : i));
           setIsModalOpen(false);
         }
       } else {
         const response = await addInventoryItem(itemData);
         if (response.success) {
-          setItems([...items, response.data]);
+          setItems([...items, { ...response.data, vendor: response.data.vendor || response.data.vendorName || formData.vendor }]);
           setIsModalOpen(false);
-          setFormData({ sku: '', name: '', category: '', price: '', stock: '' });
+          setFormData({ sku: '', name: '', category: '', vendor: '', price: '', stock: '' });
         }
       }
     } catch (error) {
@@ -181,6 +205,7 @@ const Inventory = () => {
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">SKU</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Item Name</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Category</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Vendor</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Price</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Stock</th>
                 <th className="px-6 py-4 text-right text-sm font-bold text-slate-600">Actions</th>
@@ -189,7 +214,7 @@ const Inventory = () => {
             <tbody className="divide-y divide-slate-50">
               {paginatedItems.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400 font-medium">
+                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 font-medium">
                     No items found in inventory. Start by adding one!
                   </td>
                 </tr>
@@ -210,6 +235,7 @@ const Inventory = () => {
                         {item.category || 'Uncategorized'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.vendor || item.vendorName || 'N/A'}</td>
                     <td className="px-6 py-4 text-sm font-bold text-slate-900">${item.price.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                       <span className={item.stock < 10 ? 'text-rose-600 font-bold' : ''}>
@@ -328,6 +354,22 @@ const Inventory = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Vendor</label>
+                <select
+                  required
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                  value={formData.vendor}
+                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                >
+                  <option value="">Select vendor</option>
+                  {vendorOptions.map((vendor) => (
+                    <option key={vendor.id} value={vendor.companyName}>
+                      {vendor.companyName}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Item Name</label>

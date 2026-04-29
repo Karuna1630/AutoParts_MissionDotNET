@@ -1,15 +1,10 @@
-import axios from 'axios';
+import { apiClient } from './api';
 
-const API_URL = 'http://localhost:5052/api/PurchaseInvoice';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return { headers: { Authorization: `Bearer ${token}` } };
-};
+const API_URL = '/PurchaseInvoice';
 
 export const getInvoices = async () => {
     try {
-        const response = await axios.get(API_URL, getAuthHeader());
+        const response = await apiClient.get(API_URL);
         return response.data;
     } catch (error) {
         console.error('Error fetching invoices:', error);
@@ -19,7 +14,7 @@ export const getInvoices = async () => {
 
 export const addInvoice = async (invoice) => {
     try {
-        const response = await axios.post(API_URL, invoice, getAuthHeader());
+        const response = await apiClient.post(API_URL, invoice);
         return response.data;
     } catch (error) {
         console.error('Error adding invoice:', error);
@@ -29,7 +24,7 @@ export const addInvoice = async (invoice) => {
 
 export const updateInvoice = async (id, invoice) => {
     try {
-        const response = await axios.put(`${API_URL}/${id}`, invoice, getAuthHeader());
+        const response = await apiClient.put(`${API_URL}/${id}`, invoice);
         return response.data;
     } catch (error) {
         console.error('Error updating invoice:', error);
@@ -39,7 +34,7 @@ export const updateInvoice = async (id, invoice) => {
 
 export const deleteInvoice = async (id) => {
     try {
-        const response = await axios.delete(`${API_URL}/${id}`, getAuthHeader());
+        const response = await apiClient.delete(`${API_URL}/${id}`);
         return response.data;
     } catch (error) {
         console.error('Error deleting invoice:', error);

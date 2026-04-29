@@ -32,7 +32,7 @@ public static class AdminSeeder
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
         var normalizedEmail = seedEmail.Trim().ToLowerInvariant();
-        var adminExists = await dbContext.Users.AnyAsync(x => x.Email == normalizedEmail, cancellationToken);
+        var adminExists = await dbContext.AppUsers.AnyAsync(x => x.Email == normalizedEmail, cancellationToken);
         if (adminExists)
         {
             return;
@@ -48,7 +48,7 @@ public static class AdminSeeder
             Role = UserRoles.Admin,
             CreatedAt = DateTime.UtcNow
         };
-        dbContext.Users.Add(adminUser);
+        dbContext.AppUsers.Add(adminUser);
 
         // 2. Create Identity User (for consistency across the system)
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

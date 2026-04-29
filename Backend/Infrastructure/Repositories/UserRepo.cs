@@ -1,4 +1,4 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.DTOs;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -78,25 +78,38 @@ namespace Infrastructure.Repositories
             return result > 0;
         }
 
-        public async Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
         {
             // create a query to sort and count total
-            var query = _context.UserProfiles
-                .OrderBy(u => u.RegistrationDate);
+            IQueryable<UserProfile> query = _context.UserProfiles
+                .Where(u => u.UserRole != UserRole.Customer);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalized = $"%{search.Trim()}%";
+                query = query.Where(u =>
+                    EF.Functions.ILike(u.FirstName, normalized)
+                    || EF.Functions.ILike(u.LastName, normalized));
+            }
+
+            query = query.OrderBy(u => u.RegistrationDate);
 
             var totalCount = await query.CountAsync();
-            var pageSkips = (pageNumber - 1) * pageSize;
+            var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
+            var normalizedPageSize = pageSize < 1 ? 10 : pageSize;
+            var skip = (normalizedPageNumber - 1) * normalizedPageSize;
+
             // select items
             var items = await query
-                .Skip(pageSkips)
-                .Take(pageSize)
+                .Skip(skip)
+                .Take(normalizedPageSize)
                 .ToListAsync();
 
             return new PagedResult<UserProfile>
             {
                 Items = items,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = normalizedPageNumber,
+                PageSize = normalizedPageSize,
                 TotalCount = totalCount
             };
         }
