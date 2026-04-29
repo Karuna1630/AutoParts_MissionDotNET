@@ -16,13 +16,12 @@ import Rewards from './dashboard/customer/Rewards';
 import ProfileSettings from './dashboard/customer/ProfileSettings';
 import AdminLayout from './dashboard/admin/AdminLayout';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
+import UserManagement from './dashboard/admin/UserManagement';
 import StaffManagement from './dashboard/admin/StaffManagement';
-import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
+import VendorManagement from './dashboard/admin/VendorManagement';
 import Inventory from './dashboard/admin/Inventory';
-import Vendors from './dashboard/admin/Vendors';
 import PurchaseInvoices from './dashboard/admin/PurchaseInvoices';
-import AdminProfile from './dashboard/admin/AdminProfile';
-import CreateStaff from './dashboard/admin/CreateStaff';
+import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
 
 function App() {
   return (
@@ -55,13 +54,12 @@ function App() {
         {/* Admin Dashboard Routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
-          <Route path="analytics" element={<FinancialAnalytics />} />
+          <Route path="users" element={<UserManagement />} />
           <Route path="staff" element={<StaffManagement />} />
-          <Route path="create-staff" element={<CreateStaff />} />
           <Route path="inventory" element={<Inventory />} />
-          <Route path="vendors" element={<Vendors />} />
+          <Route path="vendors" element={<VendorManagement />} />
           <Route path="invoices" element={<PurchaseInvoices />} />
-          <Route path="profile" element={<AdminProfile />} />
+          <Route path="analytics" element={<FinancialAnalytics />} />
         </Route>
 
         {/* Catch-all redirect */}

@@ -18,6 +18,16 @@ public class PurchaseInvoiceController : ControllerBase
         _invoiceRepository = invoiceRepository;
     }
 
+    private static DateTime EnsureUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -36,6 +46,8 @@ public class PurchaseInvoiceController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PurchaseInvoice invoice)
     {
+        invoice.Date = EnsureUtc(invoice.Date);
+        invoice.DueDate = EnsureUtc(invoice.DueDate);
         invoice.CreatedAt = DateTime.UtcNow;
         invoice.UpdatedAt = DateTime.UtcNow;
         await _invoiceRepository.AddAsync(invoice);
@@ -51,8 +63,8 @@ public class PurchaseInvoiceController : ControllerBase
 
         invoice.InvoiceNo = updatedInvoice.InvoiceNo;
         invoice.VendorName = updatedInvoice.VendorName;
-        invoice.Date = updatedInvoice.Date;
-        invoice.DueDate = updatedInvoice.DueDate;
+        invoice.Date = EnsureUtc(updatedInvoice.Date);
+        invoice.DueDate = EnsureUtc(updatedInvoice.DueDate);
         invoice.TotalAmount = updatedInvoice.TotalAmount;
         invoice.Status = updatedInvoice.Status;
         invoice.UpdatedAt = DateTime.UtcNow;

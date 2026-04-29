@@ -25,3 +25,8 @@ export const deleteUser = async (id) => {
   const response = await apiClient.delete(`/admin/users/${id}`);
   return response.data;
 };
+
+export const createStaff = async (payload) => {
+  const response = await apiClient.post('/StaffAuth/register', payload);
+  return response.data;
+};

@@ -24,21 +24,15 @@ DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. Configuration & Connection String ---
-var connectionString = builder.Configuration["CONNECTION_STRING"]
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-// --- 2. Database & Identity ---
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
+// Add services to the container.
+builder.Services.AddControllers();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
 // --- 3. Core Services ---
 builder.Services.AddControllers();
-builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
+builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
 
 // Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -50,11 +44,21 @@ builder.Services.AddScoped<IPurchaseInvoiceRepository, PurchaseInvoiceRepository
 // Application Services
 builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+// Configure Database Connection from .env or appsettings
+var connectionString = builder.Configuration["CONNECTION_STRING"] 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]

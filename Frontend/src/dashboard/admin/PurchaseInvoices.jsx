@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEye, FiDownload, FiX, FiLoader, FiCalendar, FiDollarSign, FiTruck } from 'react-icons/fi';
 import { getInvoices, addInvoice, deleteInvoice } from '../../services/invoiceService';
+import { getVendors } from '../../services/vendorService';
+import { getApiErrorMessage } from '../../services/api';
 
 const PurchaseInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [vendors, setVendors] = useState([]);
+  const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [formData, setFormData] = useState({
     invoiceNo: '',
     vendorName: '',
@@ -17,25 +23,47 @@ const PurchaseInvoices = () => {
 
   useEffect(() => {
     fetchInvoices();
+    fetchVendors();
   }, []);
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await getInvoices();
       if (response.success) {
         setInvoices(response.data);
       }
     } catch (error) {
       console.error('Failed to fetch invoices:', error);
+      setError(getApiErrorMessage(error, 'Failed to fetch invoices.'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await getVendors(1, 1000);
+      const responseData = response?.data || response?.Data || {};
+      const items = responseData.items || responseData.Items || [];
+      const normalizedVendors = items
+        .map((vendor) => ({
+          id: vendor.id || vendor.Id,
+          companyName: vendor.companyName || vendor.CompanyName
+        }))
+        .filter((vendor) => vendor.id && vendor.companyName);
+      setVendors(normalizedVendors);
+    } catch (error) {
+      console.error('Failed to fetch vendors:', error);
+      setVendors([]);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setError(null);
       const response = await addInvoice({
         ...formData,
         totalAmount: parseFloat(formData.totalAmount)
@@ -54,6 +82,7 @@ const PurchaseInvoices = () => {
       }
     } catch (error) {
       console.error('Failed to add invoice:', error);
+      setError(getApiErrorMessage(error, 'Failed to create invoice.'));
     }
   };
 
@@ -103,6 +132,12 @@ const PurchaseInvoices = () => {
       </div>
 
       {/* Stats */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -153,7 +188,10 @@ const PurchaseInvoices = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-right">
                       <div className="flex justify-end gap-2">
-                        <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                        <button 
+                          onClick={() => { setSelectedInvoice(invoice); setIsViewModalOpen(true); }}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        >
                           <FiEye size={16} />
                         </button>
                         <button 
@@ -205,14 +243,19 @@ const PurchaseInvoices = () => {
                   <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                     <FiTruck className="text-blue-500" /> Vendor Name
                   </label>
-                  <input
+                  <select
                     required
-                    type="text"
-                    placeholder="AutoParts Solutions Ltd"
                     className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
                     value={formData.vendorName}
                     onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
-                  />
+                  >
+                    <option value="">Select vendor</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor.id} value={vendor.companyName}>
+                        {vendor.companyName}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -288,6 +331,64 @@ const PurchaseInvoices = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Invoice Modal */}
+      {isViewModalOpen && selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between p-8 border-b border-slate-100">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Invoice Details</h2>
+                <p className="text-slate-500 text-sm mt-1">{selectedInvoice.invoiceNo}</p>
+              </div>
+              <button onClick={() => setIsViewModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition">
+                <FiX size={24} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm font-bold text-slate-500">Vendor Name</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">{selectedInvoice.vendorName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-500">Status</p>
+                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
+                    selectedInvoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                    selectedInvoice.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                    'bg-rose-100 text-rose-700'
+                  }`}>
+                    {selectedInvoice.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-500">Invoice Date</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">{new Date(selectedInvoice.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-500">Due Date</p>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</p>
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
+                <span className="text-lg font-bold text-slate-700">Total Amount</span>
+                <span className="text-3xl font-bold text-emerald-600">${selectedInvoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+            
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition shadow-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
