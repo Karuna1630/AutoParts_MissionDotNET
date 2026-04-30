@@ -46,18 +46,19 @@ builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 // Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
+builder.Services.AddScoped<ISalesInvoiceRepository, SalesInvoiceRepository>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<ISalesInvoiceService, SalesInvoiceService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 
 // --- 4. Authentication & Security ---

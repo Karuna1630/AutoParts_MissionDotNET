@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -115,6 +115,31 @@ namespace Infrastructure.Identity
         {
             var result = await _userManager.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
             return result > 0;
+        }
+
+        /// <summary>
+        /// Verifies a plain-text password against ASP.NET Identity's hashed password.
+        /// Must NOT be confused with the domain Pbkdf2PasswordHasher.
+        /// </summary>
+        public async Task<bool> CheckPasswordAsync(string email, string password)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return false;
+            return await _userManager.CheckPasswordAsync(user, password);
+        }
+
+        /// <summary>
+        /// Finds an Identity user by email and returns their Id and primary assigned role.
+        /// Returns (false, Guid.Empty, "") if not found.
+        /// </summary>
+        public async Task<(bool Found, Guid IdentityId, string Role)> FindByEmailAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return (false, Guid.Empty, string.Empty);
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? string.Empty;
+            return (true, user.Id, role);
         }
 
     }

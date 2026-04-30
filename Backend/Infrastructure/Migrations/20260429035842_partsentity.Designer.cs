@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260429035842_partsentity")]
+    partial class partsentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,100 +100,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PurchaseInvoices");
-                });
-
-            modelBuilder.Entity("Domain.Entities.SalesInvoice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedByStaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CustomerEmail")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CustomerPhone")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("DueAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("InvoiceDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InvoiceNo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("PaidAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SalesInvoices");
-                });
-
-            modelBuilder.Entity("Domain.Entities.SalesInvoiceItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("InventoryItemId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("LineTotal")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("PartName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SalesInvoiceId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SalesInvoiceId");
-
-                    b.ToTable("SalesInvoiceItems");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -581,17 +490,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.SalesInvoiceItem", b =>
-                {
-                    b.HasOne("Domain.Entities.SalesInvoice", "SalesInvoice")
-                        .WithMany("Items")
-                        .HasForeignKey("SalesInvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SalesInvoice");
-                });
-
             modelBuilder.Entity("Domain.Entities.UserProfile", b =>
                 {
                     b.HasOne("Infrastructure.Identity.ApplicationUser", null)
@@ -661,11 +559,6 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Domain.Entities.SalesInvoice", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

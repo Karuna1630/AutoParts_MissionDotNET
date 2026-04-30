@@ -34,6 +34,7 @@ const Login = () => {
           'authUser',
           JSON.stringify({
             userId: response.data.userId,
+            identityId: response.data.identityId ?? null, // Guid for Staff/Admin, null for Customer
             email: response.data.email,
             fullName: response.data.fullName,
             role: response.data.role,
@@ -45,6 +46,8 @@ const Login = () => {
         // Redirect based on role
         if (response.data.role === 'Admin') {
           navigate('/admin');
+        } else if (response.data.role === 'Staff') {
+          navigate('/staff/sales');
         } else {
           navigate('/dashboard');
         }

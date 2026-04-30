@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers;
 
-[Authorize(Roles = UserRoles.Admin)]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class InventoryController : ControllerBase
@@ -18,6 +18,7 @@ public class InventoryController : ControllerBase
         _inventoryRepository = inventoryRepository;
     }
 
+    [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Staff}")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -25,6 +26,7 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, data = items });
     }
 
+    [Authorize(Roles = UserRoles.Admin)]
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] InventoryItem item)
     {
@@ -36,6 +38,7 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, data = item });
     }
 
+    [Authorize(Roles = UserRoles.Admin)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -48,6 +51,7 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, message = "Item deleted successfully" });
     }
 
+    [Authorize(Roles = UserRoles.Admin)]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] InventoryItem updatedItem)
     {

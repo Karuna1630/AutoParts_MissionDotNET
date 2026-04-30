@@ -19,6 +19,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     public DbSet<Vendor> Vendors { get; set; } = null!;
     public DbSet<InventoryItem> InventoryItems { get; set; } = null!;
     public DbSet<PurchaseInvoice> PurchaseInvoices { get; set; } = null!;
+    public DbSet<SalesInvoice> SalesInvoices { get; set; } = null!;
+    public DbSet<SalesInvoiceItem> SalesInvoiceItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

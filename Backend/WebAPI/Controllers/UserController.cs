@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Application.DTOs.User;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -98,5 +99,23 @@ public class UserController : ControllerBase
                 user.Address
             }
         });
+    }
+
+    [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Staff}")]
+    [HttpGet("customers")]
+    public async Task<IActionResult> GetCustomers(CancellationToken cancellationToken)
+    {
+        var customers = await _userRepository.GetByRoleAsync(UserRoles.Customer, cancellationToken);
+        var result = customers.Select(c => new
+        {
+            c.Id,
+            c.FullName,
+            c.Email,
+            c.Phone,
+            c.Address,
+            c.IsActive
+        });
+
+        return Ok(new { success = true, data = result });
     }
 }
