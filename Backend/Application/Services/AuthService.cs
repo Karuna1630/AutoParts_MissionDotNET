@@ -38,20 +38,6 @@ public class AuthService : IAuthService
             cancellationToken);
     }
 
-    public Task<OperationResult<AuthResponseDto>> CreateStaffAsync(
-        CreateStaffRequestDto request,
-        CancellationToken cancellationToken = default)
-    {
-        return CreateUserAsync(
-            request.Email,
-            request.Password,
-            request.FullName,
-            request.Phone,
-            UserRoles.Staff,
-            "Staff account created successfully.",
-            cancellationToken);
-    }
-
     public async Task<OperationResult<AuthResponseDto>> LoginAsync(
         LoginRequestDto request,
         CancellationToken cancellationToken = default)
