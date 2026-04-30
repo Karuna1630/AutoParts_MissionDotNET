@@ -13,10 +13,10 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
 {
-    public class UserRepo : IUserRepo
+    public class StaffRepo : IStaffRepo
     {
         private readonly AppDbContext _context;
-        public UserRepo(AppDbContext context) => _context = context;
+        public StaffRepo(AppDbContext context) => _context = context;
 
         /// <summary>
         /// get user by id

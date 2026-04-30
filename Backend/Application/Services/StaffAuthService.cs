@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IUserRepo repo, IIdentityService identityService) : IStaffAuthService
+    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService) : IStaffAuthService
     {
-        private readonly IUserRepo _repo = repo;
+        private readonly IStaffRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
         public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto)
         {

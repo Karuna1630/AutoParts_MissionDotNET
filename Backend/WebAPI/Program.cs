@@ -26,7 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IStaffRepo, StaffRepo>();
 builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
@@ -44,17 +44,11 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile));
 
-var jwtKey = builder.Configuration["JWT_KEY"] 
-    ?? builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("JWT key is missing in configuration.");
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is missing in configuration.");
 
-var jwtIssuer = builder.Configuration["JWT_ISSUER"] 
-    ?? builder.Configuration["Jwt:Issuer"] 
-    ?? "VehiclePartsAPI";
+var jwtIssuer =  builder.Configuration["Jwt:Issuer"] ?? "VehiclePartsAPI";
 
-var jwtAudience = builder.Configuration["JWT_AUDIENCE"] 
-    ?? builder.Configuration["Jwt:Audience"] 
-    ?? "VehiclePartsClients";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehiclePartsClients";
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -75,29 +69,13 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-var allowedOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>()
-    ??
-    [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:5175",
-        "http://127.0.0.1:5175",
-        "http://localhost:5176",
-        "http://127.0.0.1:5176"
-    ];
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendClient", policy =>
     {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
     });
 });
 
