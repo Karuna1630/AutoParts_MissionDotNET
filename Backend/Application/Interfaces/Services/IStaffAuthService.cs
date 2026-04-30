@@ -1,5 +1,7 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Auth;
+using Application.DTOs.Common;
 using Domain.Entities;
 using Domain.Enums;
 using System;
@@ -16,6 +18,7 @@ namespace Application.Interfaces.Services
     public interface IStaffAuthService
     {
         Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto);
+        Task<ApiResponse<AuthResponseDto>> StaffLoginAsync(LoginRequestDto request);
         Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto);
         Task<bool> DeleteStaffAsync(Guid id);
         Task<bool> UpdateStaffRoleAsync(Guid id, string role);

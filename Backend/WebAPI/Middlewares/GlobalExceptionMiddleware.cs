@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Application.Common.Exceptions;
+using System.Net;
 using WebAPI.Common;
 
 namespace WebAPI.Middlewares
@@ -55,6 +56,7 @@ namespace WebAPI.Middlewares
         {
             return ex switch
             {
+                NotFoundException => (HttpStatusCode.NotFound, ex.Message),
                 KeyNotFoundException => (HttpStatusCode.NotFound, "Requested resource was not found."),
                 UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "You are not authorized to perform this action."),
                 ArgumentException => (HttpStatusCode.BadRequest, ex.Message),
