@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  FaThLarge, FaUsers, FaUserTie, FaUserPlus,
+  FaThLarge, FaUsers, FaUserTie,
   FaSignOutAlt, FaUserCog, FaCarSide, FaShieldAlt
 } from 'react-icons/fa';
 
@@ -17,7 +17,6 @@ const sidebarGroups = [
     items: [
       { id: 'users', label: 'All Users', icon: FaUsers, path: '/admin/users' },
       { id: 'staff', label: 'Staff Management', icon: FaUserTie, path: '/admin/staff' },
-      { id: 'create-staff', label: 'Create Staff', icon: FaUserPlus, path: '/admin/create-staff' },
     ]
   },
 ];

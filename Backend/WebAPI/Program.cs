@@ -1,14 +1,18 @@
+using System.Security.Principal;
 using System.Text;
+using Application.Common.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
 using Application.Interfaces.Services;
 using Application.Services;
-using dotenv.net;
 using Infrastructure.Data;
+using Infrastructure.Identity;
 using Infrastructure.Repositories;
 using Infrastructure.Security;
 using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -17,27 +21,17 @@ using WebAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables from .env file (located in the project root)
-var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
-if (File.Exists(envPath))
-{
-    DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { envPath }));
-    Console.WriteLine($"[INFO] Loaded .env from: {envPath}");
-}
-else
-{
-    Console.WriteLine($"[WARN] No .env file found at: {envPath}");
-}
-
-// Add Environment Variables to Configuration
-builder.Configuration.AddEnvironmentVariables();
-
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 // Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
@@ -146,6 +140,21 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await DbInitializer.SeedRolesAsync(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
+
+// Configure the HTTP request pipeline.
 await AdminSeeder.SeedAdminAsync(app.Services, builder.Configuration);
 
 app.UseStaticFiles();
@@ -172,5 +181,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

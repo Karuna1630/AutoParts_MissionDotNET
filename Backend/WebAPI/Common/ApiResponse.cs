@@ -10,7 +10,7 @@
         public List<string>? Errors { get; set; }
     }
     /// <summary>
-    /// generic response object
+    /// for generic response object
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class ApiResponse<T> : ApiResponse

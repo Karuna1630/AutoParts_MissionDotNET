@@ -1,8 +1,15 @@
-namespace Domain.Enums;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public enum UserRole
+namespace Domain.Enums
 {
-    Admin = 1,
-    Staff = 2,
-    Customer = 3
+    public enum UserRole
+    {
+        Admin,
+        Staff,
+        Customer
+    }
 }
