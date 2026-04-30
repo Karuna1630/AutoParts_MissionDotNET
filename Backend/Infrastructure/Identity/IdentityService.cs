@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces;
+﻿using Application.Common.Exceptions;
+using Application.Common.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -18,6 +19,20 @@ namespace Infrastructure.Identity
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return (string.Empty, string.Empty);
             return (user.Email ?? string.Empty, user.PhoneNumber ?? string.Empty);
+        }
+
+       public async Task<bool> VerifyPassword(string id, string password)
+        {
+            var user = await _userManager.FindByIdAsync(id) ?? throw new NotFoundException("user email not found");
+            return await _userManager.CheckPasswordAsync(user, password);
+         
+        }
+
+        public async Task<(string id, string email, string phoneNumber)> FindByEmailAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            return (user == null) ? (string.Empty, string.Empty, string.Empty) : (user.Id.ToString(), user.Email ?? string.Empty, user.PhoneNumber ?? string.Empty);
+
         }
 
         /// <summary>

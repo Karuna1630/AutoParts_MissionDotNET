@@ -1,6 +1,9 @@
 using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Auth;
+using Application.DTOs.Common;
 using Application.Interfaces.Services;
+using Application.Services;
 using Domain.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -54,6 +57,21 @@ namespace WebAPI.Controllers
         public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
             var result = await _service.UpdateStaffRoleAsync(id, role);
+            return Ok(result);
+        }
+
+        [HttpPost("staff-login")]
+        [AllowAnonymous]
+        public async Task<ActionResult> Login(
+        [FromBody] LoginRequestDto request,
+        CancellationToken cancellationToken)
+        {
+            var result = await _service.StaffLoginAsync(request);
+            if (!result.Success)
+            {
+                return Unauthorized(result);
+            }
+
             return Ok(result);
         }
     }
