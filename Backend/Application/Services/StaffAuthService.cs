@@ -10,6 +10,7 @@ using Application.Interfaces.Security;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,12 +21,13 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService) : IStaffAuthService
+    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService, IImageService imageService) : IStaffAuthService
     {
         private readonly IStaffRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
         private readonly ITokenService _tokenService = tokenService;
-        public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto)
+        private readonly IImageService _imageService = imageService;
+        public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto, Guid? managedById = null)
         {
             //making identity & assigning role
   
@@ -43,14 +45,17 @@ namespace Application.Services
                     LastName = dto.LastName,
                     ProfilePictureUrl = dto.ProfilePictureUrl,
                     UserRole = dto.UserRole,
-                    RegistrationDate = DateTime.UtcNow
+                    RegistrationDate = DateTime.UtcNow,
+                    LastManagedBy = managedById ?? Guid.Empty,
+                    LastManagedDate = managedById.HasValue ? DateTime.UtcNow : default
                 };
 
                 // saving to db
                 await _repo.AddAsync(profile);
 
                 // returning viewdto
-                return StaffMapper.ToViewDto(profile, dto.Email, dto.PhoneNumber);
+                var managedByName = await ResolveManagedByNameAsync(profile.LastManagedBy);
+                return StaffMapper.ToViewDto(profile, dto.Email, dto.PhoneNumber, managedByName);
             }
             catch (Exception)
             {
@@ -84,14 +89,19 @@ namespace Application.Services
 
 
         }
-        public async Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto)
+        public async Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto, Guid? managedById = null)
         {
             // update identity
             var (email, phoneNumber) = await _identityService.FindByIdAsync(dto.IdentityId);
 
             // update profile
-            if (email != null)
+            if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(phoneNumber))
             {
+                if (!await _identityService.UpdateUserAsync(dto.IdentityId, dto.Email, dto.PhoneNumber))
+                {
+                    throw new InvalidOperationException("Failed to update identity details.");
+                }
+
                 var profile = await _repo.GetByIdAsync(Guid.Parse(dto.IdentityId));
 
                 if (profile != null)
@@ -99,10 +109,16 @@ namespace Application.Services
                     profile.FirstName = dto.FirstName;
                     profile.LastName = dto.LastName;
                     profile.ProfilePictureUrl = dto.ProfilePictureUrl;
+                    if (managedById.HasValue)
+                    {
+                        profile.LastManagedBy = managedById.Value;
+                        profile.LastManagedDate = DateTime.UtcNow;
+                    }
                     var updatedProfile = await _repo.UpdateAsync(profile);
-                    return StaffMapper.ToViewDto(updatedProfile, email, phoneNumber);
+                    var managedByName = await ResolveManagedByNameAsync(updatedProfile.LastManagedBy);
+                    return StaffMapper.ToViewDto(updatedProfile, dto.Email, dto.PhoneNumber, managedByName);
                 }
-                throw new InvalidOperationException("identity without profile data?");
+                throw new InvalidOperationException("Identity without profile data.");
             }
             else return null;
         }
@@ -134,20 +150,22 @@ namespace Application.Services
             if (email == null) throw new NotFoundException("Auth account missing");
 
             //return view
-            return StaffMapper.ToViewDto(profile, email, phoneNumber);
+            var managedByName = await ResolveManagedByNameAsync(profile.LastManagedBy);
+            return StaffMapper.ToViewDto(profile, email, phoneNumber, managedByName);
                      
         }
 
-        public async Task<PagedResult<ViewStaffDto>> GetPagedStaffAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<ViewStaffDto>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
         {
-            var pagedResult = await _repo.GetPagedStaffAsync(pageNumber, pageSize);
+            var pagedResult = await _repo.GetPagedStaffAsync(pageNumber, pageSize, search);
 
             // get identity info & convert items  to dto
             List<ViewStaffDto> items = [];
             foreach (var p in pagedResult.Items)
             {
                 var (email, phoneNumber) = await _identityService.FindByIdAsync(p.IdentityId.ToString());
-                var fullProfile = StaffMapper.ToViewDto(p, email, phoneNumber);
+                var managedByName = await ResolveManagedByNameAsync(p.LastManagedBy);
+                var fullProfile = StaffMapper.ToViewDto(p, email, phoneNumber, managedByName);
                 items.Add(fullProfile);
             }
             // results shows dto version
@@ -175,6 +193,47 @@ namespace Application.Services
                 CoverUrl = "",
                 ExpiresAtUtc = expiresAtUtc
             };
+        public async Task<ViewStaffDto?> UpdateStaffProfileImageAsync(Guid staffId, IFormFile image, Guid? managedById = null)
+        {
+            if (image == null || image.Length == 0)
+            {
+                throw new InvalidOperationException("Profile image is required.");
+            }
+
+            var profile = await _repo.GetByIdAsync(staffId);
+            if (profile == null)
+            {
+                throw new NotFoundException("Staff profile not found.");
+            }
+
+            var imageUrl = await _imageService.UploadImageAsync(image, "staff");
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                throw new InvalidOperationException("Failed to upload profile image.");
+            }
+
+            profile.ProfilePictureUrl = imageUrl;
+            if (managedById.HasValue)
+            {
+                profile.LastManagedBy = managedById.Value;
+                profile.LastManagedDate = DateTime.UtcNow;
+            }
+
+            var updatedProfile = await _repo.UpdateAsync(profile);
+            var (email, phoneNumber) = await _identityService.FindByIdAsync(updatedProfile.IdentityId.ToString());
+            var managedByName = await ResolveManagedByNameAsync(updatedProfile.LastManagedBy);
+            return StaffMapper.ToViewDto(updatedProfile, email, phoneNumber, managedByName);
+        }
+
+        private async Task<string?> ResolveManagedByNameAsync(Guid lastManagedBy)
+        {
+            if (lastManagedBy == Guid.Empty)
+            {
+                return null;
+            }
+
+            var managerProfile = await _repo.GetByIdAsync(lastManagedBy);
+            return managerProfile?.DisplayName;
         }
     }
 }

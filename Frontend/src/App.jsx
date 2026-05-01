@@ -18,6 +18,7 @@ import AdminLayout from './dashboard/admin/AdminLayout';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
 import UserManagement from './dashboard/admin/UserManagement';
 import StaffManagement from './dashboard/admin/StaffManagement';
+import VendorManagement from './dashboard/admin/VendorManagement';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="vendors" element={<VendorManagement />} />
         </Route>
 
         {/* Catch-all redirect */}

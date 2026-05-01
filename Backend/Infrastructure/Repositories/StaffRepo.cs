@@ -78,11 +78,21 @@ namespace Infrastructure.Repositories
             return result > 0;
         }
 
-        public async Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize)
+        public async Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
         {
             // create a query to sort and count total
-            var query = _context.UserProfiles
-                .OrderBy(u => u.RegistrationDate);
+            IQueryable<UserProfile> query = _context.UserProfiles
+                .Where(u => u.UserRole != UserRole.Customer);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var normalized = $"%{search.Trim()}%";
+                query = query.Where(u =>
+                    EF.Functions.ILike(u.FirstName, normalized)
+                    || EF.Functions.ILike(u.LastName, normalized));
+            }
+
+            query = query.OrderBy(u => u.RegistrationDate);
 
             var totalCount = await query.CountAsync();
             var normalizedPageNumber = pageNumber < 1 ? 1 : pageNumber;
