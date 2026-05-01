@@ -80,7 +80,7 @@ namespace Application.Services
             //form the jwt token
             var staffData = BuildStaffAuthResponse(profile);
 
-            return new ApiResponse<AuthResponseDto> { Message = "Email and password are required.", Success = true, Data = staffData };
+            return new ApiResponse<AuthResponseDto> { Message = "Login Success.", Success = true, Data = staffData };
 
 
         }
