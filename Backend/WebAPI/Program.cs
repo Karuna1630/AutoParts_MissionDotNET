@@ -59,6 +59,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]
