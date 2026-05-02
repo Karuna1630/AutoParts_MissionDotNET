@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IUserRepo repo, IIdentityService identityService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
+    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
     {
         private readonly IStaffRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
@@ -210,6 +210,8 @@ namespace Application.Services
                 CoverUrl = "",
                 ExpiresAtUtc = expiresAtUtc
             };
+        }
+
         public async Task<ViewStaffDto?> UpdateStaffProfileImageAsync(Guid staffId, IFormFile image, Guid? managedById = null)
         {
             if (image == null || image.Length == 0)

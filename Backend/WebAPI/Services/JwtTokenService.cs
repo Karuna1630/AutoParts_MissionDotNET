@@ -19,6 +19,38 @@ public class JwtTokenService : ITokenService
 
     public (string Token, DateTime ExpiresAtUtc) GenerateToken(User user)
     {
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Name, user.FullName),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Name, user.FullName),
+            new(ClaimTypes.Role, NormalizeRole(user.Role))
+        };
+
+        return CreateToken(claims);
+    }
+
+    public (string Token, DateTime ExpiresAtUtc) GenerateStaffToken(ViewStaffDto user)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, user.IdentityId.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Name, user.DisplayName),
+            new(ClaimTypes.NameIdentifier, user.IdentityId.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Name, user.DisplayName),
+            new(ClaimTypes.Role, NormalizeRole(user.UserRole.ToString()))
+        };
+
+        return CreateToken(claims);
+    }
+
+    private (string Token, DateTime ExpiresAtUtc) CreateToken(List<Claim> claims)
+    {
         var key = _configuration["JWT_KEY"]
             ?? _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT key is missing in configuration.");
@@ -30,23 +62,14 @@ public class JwtTokenService : ITokenService
         var audience = _configuration["JWT_AUDIENCE"]
             ?? _configuration["Jwt:Audience"]
             ?? "VehiclePartsClients";
+
         var expiryMinutes = int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var parsedMinutes)
             ? parsedMinutes
             : 120;
 
         var expiresAtUtc = DateTime.UtcNow.AddMinutes(expiryMinutes);
 
-        var claims = new List<Claim>
-        {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.Email, user.Email),
-            new(JwtRegisteredClaimNames.Name, user.FullName),
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Role, NormalizeRole(user.Role)),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
 
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
