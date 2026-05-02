@@ -19,6 +19,9 @@ import AdminDashboard from './dashboard/admin/AdminDashboard';
 import UserManagement from './dashboard/admin/UserManagement';
 import StaffManagement from './dashboard/admin/StaffManagement';
 import VendorManagement from './dashboard/admin/VendorManagement';
+import Inventory from './dashboard/admin/Inventory';
+import PurchaseInvoices from './dashboard/admin/PurchaseInvoices';
+import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
 
 function App() {
   return (
@@ -53,7 +56,10 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="staff" element={<StaffManagement />} />
+          <Route path="inventory" element={<Inventory />} />
           <Route path="vendors" element={<VendorManagement />} />
+          <Route path="invoices" element={<PurchaseInvoices />} />
+          <Route path="analytics" element={<FinancialAnalytics />} />
         </Route>
 
         {/* Catch-all redirect */}

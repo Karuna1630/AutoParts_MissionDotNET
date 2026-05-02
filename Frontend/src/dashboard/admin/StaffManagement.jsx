@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaEdit, FaTrashAlt, FaPlus, FaEye } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import * as Yup from 'yup';
 import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage } from '../../services/staffAuthService';
 import { createStaff } from '../../services/adminService';
@@ -39,17 +39,20 @@ const StaffManagement = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const fetchStaff = useCallback(async (pageNumber = 1, query = debouncedSearch) => {
     try {
       setLoading(true);
       setError(null);
       const res = await getPagedStaff(pageNumber, 10, query);
-      setStaffList(res.items || []);
-      setTotalPages(res.totalPages || 1);
-      setPage(res.pageNumber || 1);
+      setStaffList(res.items || res.Items || []);
+      setTotalPages(res.totalPages || res.TotalPages || 1);
+      setPage(res.pageNumber || res.PageNumber || 1);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to load staff members.'));
+      setError('Failed to fetch staff members.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -74,12 +77,12 @@ const StaffManagement = () => {
       await updateStaffRole(id, roleValue);
       // Update local state instead of doing full refresh to be snappy
       setStaffList(prev => prev.map(s => {
-        if(s.identityId === id || s.id === id) {
+        if (s.identityId === id || s.id === id) {
           return { ...s, role: newRole, userRole: roleValue };
         }
         return s;
       }));
-    } catch(err) {
+    } catch (err) {
       console.error(err);
       alert('Failed to update role');
     } finally {
@@ -92,6 +95,8 @@ const StaffManagement = () => {
     setEditingStaff(null);
     setProfileImageFile(null);
     setProfileImagePreview(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setFormKey((prev) => prev + 1);
   };
 
@@ -248,62 +253,65 @@ const StaffManagement = () => {
                 </tr>
               ) : staffList.length === 0 ? (
                 <tr>
-                   <td colSpan="5" className="py-8 text-center text-slate-500">No staff found.</td>
+                  <td colSpan="5" className="py-8 text-center text-slate-500">No staff found.</td>
                 </tr>
               ) : (
                 staffList.map((staff, idx) => {
                   const roleLabel = staff.role || (staff.userRole === 0 ? 'Admin' : 'Staff');
                   return (
-                  <tr key={staff.identityId || staff.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                    <td className="py-5 px-6">
-                      <div className="font-semibold text-slate-800">{staff.firstName} {staff.lastName}</div>
-                    </td>
-                    <td className="py-5 px-6">
-                      <div className="text-slate-500 text-sm">{staff.email}</div>
-                    </td>
-                    <td className="py-5 px-6">
-                      <div className="text-slate-500 text-sm">{staff.phoneNumber || staff.phone}</div>
-                    </td>
-                    <td className="py-5 px-6">
-                      <select 
-                        value={roleLabel} 
-                        onChange={(e) => handleRoleChange(staff.identityId || staff.id, e.target.value)}
-                        disabled={actionLoading === (staff.identityId || staff.id)}
-                        className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer appearance-none outline-none ${
-                          roleLabel === 'Admin' 
-                            ? 'bg-[#0F172A] text-white' 
-                            : 'bg-[#64748B] text-white'
-                        }`}
-                      >
-                        <option value="Admin">Admin</option>
-                        <option value="Staff">Staff</option>
-                      </select>
-                    </td>
-                    <td className="py-5 px-6">
-                      <div className="flex items-center justify-end gap-4">
-                        <button
-                          className="text-slate-500 hover:text-slate-700 transition"
-                          onClick={() => handleOpenEdit(staff)}
+                    <tr key={staff.identityId || staff.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                      <td className="py-5 px-6">
+                        <div className="font-semibold text-slate-800">{staff.firstName} {staff.lastName}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="text-slate-500 text-sm">{staff.email}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="text-slate-500 text-sm">{staff.phoneNumber || staff.phone}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <select
+                          value={roleLabel}
+                          onChange={(e) => handleRoleChange(staff.identityId || staff.id, e.target.value)}
                           disabled={actionLoading === (staff.identityId || staff.id)}
+                          className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer appearance-none outline-none ${roleLabel === 'Admin'
+                              ? 'bg-[#0F172A] text-white'
+                              : 'bg-[#64748B] text-white'
+                            }`}
                         >
-                          <FaEdit />
-                        </button>
-                        <button
-                          className="text-slate-500 hover:text-slate-700 transition"
-                          onClick={() => handleOpenView(staff)}
-                          disabled={actionLoading === (staff.identityId || staff.id)}
-                        >
-                          <FaEye />
-                        </button>
-                        <button className="text-red-400 hover:text-red-600 transition">
-                          <FaTrashAlt />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
+                          <option value="Admin">Admin</option>
+                          <option value="Staff">Staff</option>
+                        </select>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="flex items-center justify-end gap-4">
+                          <button
+                            className="text-slate-500 hover:text-slate-700 transition"
+                            onClick={() => handleOpenEdit(staff)}
+                            disabled={actionLoading === (staff.identityId || staff.id)}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="text-slate-500 hover:text-slate-700 transition"
+                            onClick={() => handleOpenView(staff)}
+                            disabled={actionLoading === (staff.identityId || staff.id)}
+                          >
+                            <FaEye />
+                          </button>
+                          <button className="text-red-400 hover:text-red-600 transition">
+                            <FaTrashAlt />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
                 })
               )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {viewingStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
@@ -377,11 +385,7 @@ const StaffManagement = () => {
           </div>
         </div>
       )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
+
       {/* Pagination Controls */}
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
@@ -434,11 +438,10 @@ const StaffManagement = () => {
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">First name</label>
                     <Field
                       name="firstName"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.firstName && errors.firstName
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.firstName && errors.firstName
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
+                        }`}
                       placeholder="John"
                     />
                     <ErrorMessage name="firstName" component="div" className="mt-1 text-xs text-red-500" />
@@ -448,11 +451,10 @@ const StaffManagement = () => {
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Last name</label>
                     <Field
                       name="lastName"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.lastName && errors.lastName
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.lastName && errors.lastName
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
+                        }`}
                       placeholder="Doe"
                     />
                     <ErrorMessage name="lastName" component="div" className="mt-1 text-xs text-red-500" />
@@ -463,11 +465,10 @@ const StaffManagement = () => {
                     <Field
                       name="email"
                       type="email"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.email && errors.email
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.email && errors.email
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
+                        }`}
                       placeholder="john@example.com"
                     />
                     <ErrorMessage name="email" component="div" className="mt-1 text-xs text-red-500" />
@@ -477,11 +478,10 @@ const StaffManagement = () => {
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Phone</label>
                     <Field
                       name="phoneNumber"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.phoneNumber && errors.phoneNumber
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.phoneNumber && errors.phoneNumber
                           ? 'border-red-300 focus:ring-red-100'
                           : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
+                        }`}
                       placeholder="+1 234 567 890"
                     />
                     <ErrorMessage name="phoneNumber" component="div" className="mt-1 text-xs text-red-500" />
@@ -509,33 +509,49 @@ const StaffManagement = () => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Password</label>
-                    <Field
-                      name="password"
-                      type="password"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.password && errors.password
-                          ? 'border-red-300 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <Field
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        className={`w-full rounded-lg border bg-slate-50 pl-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.password && errors.password
+                            ? 'border-red-300 focus:ring-red-100'
+                            : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                          }`}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                     <ErrorMessage name="password" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Confirm password</label>
-                    <Field
-                      name="confirmPassword"
-                      type="password"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-                        touched.confirmPassword && errors.confirmPassword
-                          ? 'border-red-300 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                      }`}
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <Field
+                        name="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className={`w-full rounded-lg border bg-slate-50 pl-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.confirmPassword && errors.confirmPassword
+                            ? 'border-red-300 focus:ring-red-100'
+                            : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                          }`}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                     <ErrorMessage name="confirmPassword" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
