@@ -30,6 +30,8 @@ import PointOfSale from './dashboard/staff/PointOfSale';
 import GlobalSearch from './dashboard/staff/GlobalSearch';
 import Reports from './dashboard/staff/Reports';
 import StaffProfile from './dashboard/staff/StaffProfile';
+import RegisterCustomer from './dashboard/staff/RegisterCustomer';
+import CustomerDetails from './dashboard/staff/CustomerDetails';
 
 function App() {
   return (
@@ -75,6 +77,8 @@ function App() {
         <Route path="/staff" element={<StaffLayout />}>
           <Route index element={<StaffDashboard />} />
           <Route path="customers" element={<Customers />} />
+          <Route path="customers/register" element={<RegisterCustomer />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
           <Route path="pos" element={<PointOfSale />} />
           <Route path="search" element={<GlobalSearch />} />
           <Route path="reports" element={<Reports />} />

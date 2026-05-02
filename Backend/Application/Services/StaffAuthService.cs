@@ -6,7 +6,6 @@ using Application.DTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
 using Application.Interfaces.Services;
-using Application.Interfaces.Security;
 using Domain.Entities;
 using Domain.Enums;
 using System;
