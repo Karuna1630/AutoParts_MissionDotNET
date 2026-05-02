@@ -31,6 +31,8 @@ public class RegisterCustomerWithVehicleDto
     public int VehicleYear { get; set; }
 
     public string? VehicleColor { get; set; }
+
+    public Microsoft.AspNetCore.Http.IFormFile? VehicleImage { get; set; }
 }
 
 public class CustomerSearchDto
@@ -45,6 +47,7 @@ public class CustomerResponseDto
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
     public decimal CreditBalance { get; set; }
     public List<CustomerVehicleResponseDto> Vehicles { get; set; } = new();
 }
@@ -57,6 +60,7 @@ public class CustomerVehicleResponseDto
     public string VehicleMake { get; set; } = string.Empty;
     public int VehicleYear { get; set; }
     public string? VehicleColor { get; set; }
+    public string? ImageUrl { get; set; }
     public bool IsPrimary { get; set; }
 }
 
@@ -75,4 +79,6 @@ public class AddVehicleToCustomerDto
     public int VehicleYear { get; set; }
 
     public string? VehicleColor { get; set; }
+
+    public Microsoft.AspNetCore.Http.IFormFile? VehicleImage { get; set; }
 }
