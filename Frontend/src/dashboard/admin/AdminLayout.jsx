@@ -1,7 +1,28 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { FiUser, FiLogOut, FiSearch, FiBell } from 'react-icons/fi';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  FaThLarge, FaUsers, FaUserTie,
+  FaSignOutAlt, FaUserCog, FaCarSide, FaShieldAlt
+} from 'react-icons/fa';
+import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
 import AdminSidebar from './AdminSidebar';
+
+const sidebarGroups = [
+  {
+    title: 'OVERVIEW',
+    items: [
+      { id: 'dashboard', label: 'Dashboard', icon: FaThLarge, path: '/admin' },
+    ]
+  },
+  {
+    title: 'USER MANAGEMENT',
+    items: [
+      { id: 'users', label: 'All Users', icon: FaUsers, path: '/admin/users' },
+      { id: 'staff', label: 'Staff Management', icon: FaUserTie, path: '/admin/staff' },
+      { id: 'vendors', label: 'Vendor Portal', icon: FaCarSide, path: '/admin/vendors' },
+    ]
+  },
+];
 
 const AdminLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
@@ -39,7 +60,7 @@ const AdminLayout = () => {
     if (url.startsWith('http') || url.startsWith('data:')) return url;
     // Assuming backend is on port 5052 based on api.js hints, 
     // or just use relative path if proxy is configured
-    return url; 
+    return url;
   };
 
   // Close dropdown when clicking outside
@@ -73,16 +94,9 @@ const AdminLayout = () => {
       {/* Content Wrapper */}
       <div className="flex-1 flex flex-col ml-64 print:ml-0 print:bg-white min-h-screen">
         {/* Global Header */}
-        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm print:hidden">
-          {/* Search Bar */}
-          <div className="flex items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 w-96">
-            <FiSearch className="text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search data, reports..." 
-              className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-            />
-          </div>
+        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
+          {/* Header Spacer */}
+          <div />
 
           <div className="flex items-center gap-6">
             {/* Notifications */}
@@ -95,7 +109,7 @@ const AdminLayout = () => {
 
             {/* Profile Dropdown */}
             <div className="relative border-l border-slate-200 pl-6" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="group flex items-center gap-3 transition-all"
               >
@@ -117,7 +131,7 @@ const AdminLayout = () => {
               {/* Dropdown Menu */}
               {isProfileOpen && (
                 <div className="absolute right-0 mt-3 w-48 origin-top-right rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl shadow-slate-200/50 animate-in fade-in zoom-in-95 duration-200">
-                  <button 
+                  <button
                     onClick={handleViewProfile}
                     className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-blue-600 w-full"
                   >
@@ -125,7 +139,7 @@ const AdminLayout = () => {
                     View Profile
                   </button>
                   <div className="h-px bg-slate-100 my-1 mx-2" />
-                  <button 
+                  <button
                     onClick={handleSignOut}
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"
                   >
@@ -139,7 +153,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="p-8 flex-1">
+        <main className="p-4 flex-1">
           <Outlet />
         </main>
       </div>

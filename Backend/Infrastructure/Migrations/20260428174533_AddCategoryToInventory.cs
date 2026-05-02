@@ -5,25 +5,25 @@
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddVehicleImageUrl : Migration
+    public partial class AddCategoryToInventory : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "ImageUrl",
-                table: "Vehicles",
-                type: "character varying(500)",
-                maxLength: 500,
-                nullable: true);
+                name: "Category",
+                table: "InventoryItems",
+                type: "text",
+                nullable: false,
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ImageUrl",
-                table: "Vehicles");
+                name: "Category",
+                table: "InventoryItems");
         }
     }
 }

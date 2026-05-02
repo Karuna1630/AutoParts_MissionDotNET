@@ -1,212 +1,567 @@
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiUser, FiMail, FiShield, FiCalendar } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
-import { getStaff, deleteStaff, updateStaffRole } from '../../services/staffService';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { FaEdit, FaTrashAlt, FaPlus, FaEye } from 'react-icons/fa';
+import * as Yup from 'yup';
+import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage } from '../../services/staffAuthService';
+import { createStaff } from '../../services/adminService';
+import { getApiErrorMessage } from '../../services/api';
+
+const staffCreateValidationSchema = Yup.object().shape({
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  phoneNumber: Yup.string().required('Phone number is required'),
+  password: Yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Confirm password is required'),
+});
+
+const staffEditValidationSchema = Yup.object().shape({
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  phoneNumber: Yup.string().required('Phone number is required'),
+});
 
 const StaffManagement = () => {
-  const navigate = useNavigate();
-  const [staff, setStaff] = useState([]);
+  const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const [editingStaff, setEditingStaff] = useState(null);
+  const [viewingStaff, setViewingStaff] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async (pageNumber = 1, query = debouncedSearch) => {
     try {
       setLoading(true);
-      const response = await getStaff();
-      if (response.success) {
-        setStaff(response.data.items);
-      }
+      setError(null);
+      const res = await getPagedStaff(pageNumber, 10, query);
+      setStaffList(res.items || res.Items || []);
+      setTotalPages(res.totalPages || res.TotalPages || 1);
+      setPage(res.pageNumber || res.PageNumber || 1);
     } catch (err) {
       setError('Failed to fetch staff members.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearch]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this staff member?')) {
-      try {
-        await deleteStaff(id);
-        setStaff(staff.filter(s => s.identityId !== id));
-      } catch (err) {
-        alert('Failed to delete staff member.');
-      }
-    }
-  };
+  useEffect(() => {
+    fetchStaff(page, debouncedSearch);
+  }, [fetchStaff, page, debouncedSearch]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [search]);
 
   const handleRoleChange = async (id, newRole) => {
     try {
-      await updateStaffRole(id, newRole);
-      setStaff(staff.map(s => s.identityId === id ? { ...s, role: newRole } : s));
+      setActionLoading(id);
+      const roleValue = newRole === 'Admin' ? 0 : 1;
+      await updateStaffRole(id, roleValue);
+      // Update local state instead of doing full refresh to be snappy
+      setStaffList(prev => prev.map(s => {
+        if (s.identityId === id || s.id === id) {
+          return { ...s, role: newRole, userRole: roleValue };
+        }
+        return s;
+      }));
     } catch (err) {
-      alert('Failed to update role.');
+      console.error(err);
+      alert('Failed to update role');
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  if (loading) return <div className="flex justify-center p-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingStaff(null);
+    setProfileImageFile(null);
+    setProfileImagePreview(null);
+    setFormKey((prev) => prev + 1);
+  };
+
+  const handleOpenCreate = () => {
+    setEditingStaff(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (staff) => {
+    setEditingStaff(staff);
+    setProfileImagePreview(staff?.profilePictureUrl || null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenView = (staff) => {
+    setViewingStaff(staff);
+  };
+
+  const handleCloseView = () => {
+    setViewingStaff(null);
+  };
+
+  const initialValues = useMemo(() => ({
+    firstName: editingStaff?.firstName || '',
+    lastName: editingStaff?.lastName || '',
+    email: editingStaff?.email || '',
+    phoneNumber: editingStaff?.phoneNumber || '',
+    password: '',
+    confirmPassword: '',
+  }), [editingStaff]);
+
+  const formatDate = (value) => {
+    if (!value) return 'Not available';
+    const dateValue = new Date(value);
+    if (Number.isNaN(dateValue.getTime()) || dateValue.getFullYear() <= 1) {
+      return 'Not available';
+    }
+    return dateValue.toLocaleString();
+  };
+
+  const handleSubmit = async (values, { setSubmitting, setStatus, resetForm }) => {
+    try {
+      setStatus(null);
+      if (editingStaff) {
+        const staffId = editingStaff.identityId || editingStaff.id;
+        if (!staffId) {
+          setStatus('Unable to update staff profile. Missing staff identifier.');
+          return;
+        }
+        const roleValue = typeof editingStaff?.userRole === 'number'
+          ? editingStaff.userRole
+          : editingStaff?.role === 'Admin'
+            ? 0
+            : 1;
+        const payload = {
+          identityId: staffId,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phoneNumber: values.phoneNumber,
+          profilePictureUrl: editingStaff.profilePictureUrl || null,
+          userRole: roleValue,
+        };
+        const updated = await updateStaff(payload.identityId, payload);
+        if (profileImageFile) {
+          await uploadStaffProfileImage(payload.identityId, profileImageFile);
+        }
+      } else {
+        const payload = { ...values, userRole: 1 };
+        const res = await createStaff(payload);
+        if (res?.success === false) {
+          setStatus(res?.message || 'Failed to create staff account.');
+          return;
+        }
+        if (profileImageFile && res?.identityId) {
+          await uploadStaffProfileImage(res.identityId, profileImageFile);
+        }
+      }
+
+      resetForm();
+      handleCloseModal();
+      setPage(1);
+      await fetchStaff(1, debouncedSearch);
+    } catch (err) {
+      setStatus(getApiErrorMessage(err, editingStaff ? 'Failed to update staff profile.' : 'Failed to create staff account.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    setProfileImageFile(file);
+    setProfileImagePreview(URL.createObjectURL(file));
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="w-full h-full bg-[#FAFBFF] min-h-screen p-8">
+      {/* Header Container */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Team Members</h1>
-          <p className="text-slate-500 font-medium mt-2">Manage access levels and monitor your administrative team.</p>
+          <h1 className="text-3xl font-bold text-[#0D1C2E] mb-2">Staff Management</h1>
+          <p className="text-slate-500 text-sm">Register staff members. Roles are assigned automatically.</p>
         </div>
-        <button 
-          onClick={() => navigate('/admin/create-staff')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 transition-all active:scale-95"
+        <button
+          type="button"
+          onClick={handleOpenCreate}
+          className="flex items-center gap-2 bg-[#4887FA] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-600 transition"
         >
-          <FiPlus size={20} /> Add New Staff
+          <FaPlus className="text-sm" /> Add member
         </button>
       </div>
 
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-1 items-center gap-3">
+          <input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Search by name..."
+            className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-600 shadow-sm focus:border-[#4887FA] focus:outline-none focus:ring-2 focus:ring-[#4887FA]/20"
+          />
+        </div>
+      </div>
+
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 font-bold text-sm">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
-      {/* Stats Quick View (Optional but looks premium) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl text-xl">
-            <FiUser />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Staff</p>
-            <h3 className="text-2xl font-bold text-slate-900">{staff.length} Members</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="p-4 bg-emerald-50 text-emerald-500 rounded-2xl text-xl">
-            <FiShield />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Admins</p>
-            <h3 className="text-2xl font-bold text-slate-900">{staff.filter(s => s.role === 'ADMIN').length} Admins</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table Container */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      {/* Main Table Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Profile</th>
-                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Contact & Identity</th>
-                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Access Level</th>
-                <th className="px-10 py-6 text-left text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-10 py-6 text-right text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+              <tr className="border-b border-slate-100">
+                <th className="py-4 px-6 text-sm font-semibold text-slate-500 w-[25%]">Name</th>
+                <th className="py-4 px-6 text-sm font-semibold text-slate-500 w-[25%]">Email</th>
+                <th className="py-4 px-6 text-sm font-semibold text-slate-500 w-[20%]">Phone</th>
+                <th className="py-4 px-6 text-sm font-semibold text-slate-500 w-[15%]">Role</th>
+                <th className="py-4 px-6 text-sm font-semibold text-slate-500 w-[15%] text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
-              {staff.length > 0 ? staff.map((member) => (
-                <tr key={member.identityId} className="hover:bg-slate-50/30 transition-colors group">
-                  {/* Profile Column */}
-                  <td className="px-10 py-8">
-                    <div className="flex items-center gap-5">
-                      <div className="relative">
-                        <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
-                          {member.profilePictureUrl ? (
-                            <img src={member.profilePictureUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{member.firstName[0]}{member.lastName[0]}</span>
-                          )}
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-white rounded-full shadow-sm" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 text-lg leading-tight">{member.firstName} {member.lastName}</p>
-                        <p className="text-slate-400 text-xs font-medium mt-1 flex items-center gap-1.5">
-                          <FiCalendar className="text-[10px]" /> 
-                          Joined {new Date(member.registrationDate || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Contact Column */}
-                  <td className="px-10 py-8">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                        <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center">
-                          <FiMail className="text-slate-400" size={12} />
-                        </div>
-                        {member.email}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                        <div className="w-6 h-6 bg-transparent" />
-                        ID: {member.identityId.toString().substring(0, 8)}...
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Role Column */}
-                  <td className="px-10 py-8">
-                    <div className="relative inline-block w-40">
-                      <select 
-                        value={member.role}
-                        onChange={(e) => handleRoleChange(member.identityId, e.target.value)}
-                        className={`w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs font-bold transition focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 appearance-none cursor-pointer ${
-                          member.role === 'ADMIN' ? 'text-indigo-600' : 'text-slate-600'
-                        }`}
-                      >
-                        <option value="STAFF">Standard Staff</option>
-                        <option value="ADMIN">System Admin</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                        <FiShield size={14} />
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Status Column */}
-                  <td className="px-10 py-8">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">
-                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                      ACCOUNT ACTIVE
-                    </span>
-                  </td>
-
-                  {/* Actions Column */}
-                  <td className="px-10 py-8 text-right">
-                    <div className="flex justify-end gap-3 transition-all">
-                      <button 
-                        onClick={() => handleDelete(member.identityId)}
-                        className="w-11 h-11 flex items-center justify-center text-slate-400 bg-white border border-slate-100 shadow-sm hover:text-red-500 hover:bg-red-50 hover:border-red-100 rounded-2xl transition-all active:scale-90"
-                        title="Delete Member"
-                      >
-                        <FiTrash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
+            <tbody>
+              {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-10 py-32 text-center">
-                    <div className="flex flex-col items-center gap-4 text-slate-300">
-                      <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mb-2">
-                        <FiUsers size={40} className="opacity-20" />
-                      </div>
-                      <p className="font-bold text-xl text-slate-400">No team members found</p>
-                      <p className="text-sm text-slate-400 max-w-xs">Start building your team by adding your first staff member.</p>
-                      <button onClick={fetchStaff} className="text-blue-600 font-bold hover:underline mt-2">Refresh database</button>
-                    </div>
-                  </td>
+                  <td colSpan="5" className="py-8 text-center text-slate-500">Loading...</td>
                 </tr>
+              ) : staffList.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-slate-500">No staff found.</td>
+                </tr>
+              ) : (
+                staffList.map((staff, idx) => {
+                  const roleLabel = staff.role || (staff.userRole === 0 ? 'Admin' : 'Staff');
+                  return (
+                    <tr key={staff.identityId || staff.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                      <td className="py-5 px-6">
+                        <div className="font-semibold text-slate-800">{staff.firstName} {staff.lastName}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="text-slate-500 text-sm">{staff.email}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="text-slate-500 text-sm">{staff.phoneNumber || staff.phone}</div>
+                      </td>
+                      <td className="py-5 px-6">
+                        <select
+                          value={roleLabel}
+                          onChange={(e) => handleRoleChange(staff.identityId || staff.id, e.target.value)}
+                          disabled={actionLoading === (staff.identityId || staff.id)}
+                          className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer appearance-none outline-none ${roleLabel === 'Admin'
+                              ? 'bg-[#0F172A] text-white'
+                              : 'bg-[#64748B] text-white'
+                            }`}
+                        >
+                          <option value="Admin">Admin</option>
+                          <option value="Staff">Staff</option>
+                        </select>
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="flex items-center justify-end gap-4">
+                          <button
+                            className="text-slate-500 hover:text-slate-700 transition"
+                            onClick={() => handleOpenEdit(staff)}
+                            disabled={actionLoading === (staff.identityId || staff.id)}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="text-slate-500 hover:text-slate-700 transition"
+                            onClick={() => handleOpenView(staff)}
+                            disabled={actionLoading === (staff.identityId || staff.id)}
+                          >
+                            <FaEye />
+                          </button>
+                          <button className="text-red-400 hover:text-red-600 transition">
+                            <FaTrashAlt />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {viewingStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h2 className="text-xl font-bold text-slate-800">Staff profile</h2>
+              <button
+                type="button"
+                onClick={handleCloseView}
+                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-4 text-sm text-slate-600 sm:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Name</div>
+                <div className="mt-1 text-slate-800">{viewingStaff.firstName} {viewingStaff.lastName}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Email</div>
+                <div className="mt-1 text-slate-800 break-all">{viewingStaff.email}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Phone</div>
+                <div className="mt-1 text-slate-800">{viewingStaff.phoneNumber || viewingStaff.phone}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Role</div>
+                <div className="mt-1 text-slate-800">{viewingStaff.role || (viewingStaff.userRole === 0 ? 'Admin' : 'Staff')}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Registered</div>
+                <div className="mt-1 text-slate-800">{formatDate(viewingStaff.registrationDate)}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Last managed date</div>
+                <div className="mt-1 text-slate-800">{formatDate(viewingStaff.lastManagedDate)}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 sm:col-span-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Last managed by</div>
+                <div className="mt-1 text-slate-800">{viewingStaff.lastManagedBy ? viewingStaff.lastManagedBy : 'Not available'}</div>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 sm:col-span-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Profile image</div>
+                <div className="mt-1">
+                  {viewingStaff.profilePictureUrl ? (
+                    <a
+                      href={viewingStaff.profilePictureUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#4887FA] hover:text-blue-600 font-semibold"
+                    >
+                      View image
+                    </a>
+                  ) : (
+                    <span className="text-slate-500">Not available</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={handleCloseView}
+                className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-slate-500">
+            Page {page} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
+            >
+              Previous
+            </button>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h2 className="text-xl font-bold text-slate-800">{editingStaff ? 'Edit staff profile' : 'Add new member'}</h2>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <Formik
+              key={formKey}
+              initialValues={initialValues}
+              validationSchema={editingStaff ? staffEditValidationSchema : staffCreateValidationSchema}
+              onSubmit={handleSubmit}
+              enableReinitialize
+            >
+              {({ isSubmitting, status, errors, touched }) => (
+                <Form className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">First name</label>
+                    <Field
+                      name="firstName"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.firstName && errors.firstName
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="John"
+                    />
+                    <ErrorMessage name="firstName" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Last name</label>
+                    <Field
+                      name="lastName"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.lastName && errors.lastName
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="Doe"
+                    />
+                    <ErrorMessage name="lastName" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Email</label>
+                    <Field
+                      name="email"
+                      type="email"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.email && errors.email
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="john@example.com"
+                    />
+                    <ErrorMessage name="email" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Phone</label>
+                    <Field
+                      name="phoneNumber"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.phoneNumber && errors.phoneNumber
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="+1 234 567 890"
+                    />
+                    <ErrorMessage name="phoneNumber" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Profile image</label>
+                    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full border border-slate-200 bg-white overflow-hidden flex items-center justify-center text-[10px] font-semibold text-slate-500">
+                          {profileImagePreview ? (
+                            <img src={profileImagePreview} alt="Staff" className="h-full w-full object-cover" />
+                          ) : (
+                            'N/A'
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          JPG, PNG up to 5MB
+                        </div>
+                      </div>
+                      <label className="text-xs font-semibold text-[#4887FA] cursor-pointer">
+                        Upload image
+                        <input type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Password</label>
+                    <Field
+                      name="password"
+                      type="password"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.password && errors.password
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="••••••••"
+                    />
+                    <ErrorMessage name="password" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Confirm password</label>
+                    <Field
+                      name="confirmPassword"
+                      type="password"
+                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.confirmPassword && errors.confirmPassword
+                          ? 'border-red-300 focus:ring-red-100'
+                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                        }`}
+                      placeholder="••••••••"
+                    />
+                    <ErrorMessage name="confirmPassword" component="div" className="mt-1 text-xs text-red-500" />
+                  </div>
+
+                  {status && (
+                    <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 sm:col-span-2">
+                      {status}
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="rounded-lg bg-[#4887FA] px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      {isSubmitting ? (editingStaff ? 'Saving...' : 'Creating...') : editingStaff ? 'Save' : 'Create'}
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

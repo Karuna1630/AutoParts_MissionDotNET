@@ -18,16 +18,16 @@ public class JwtTokenService : ITokenService
 
     public (string Token, DateTime ExpiresAtUtc) GenerateToken(User user)
     {
-        var key = _configuration["JWT_KEY"] 
+        var key = _configuration["JWT_KEY"]
             ?? _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT key is missing in configuration.");
 
-        var issuer = _configuration["JWT_ISSUER"] 
-            ?? _configuration["Jwt:Issuer"] 
+        var issuer = _configuration["JWT_ISSUER"]
+            ?? _configuration["Jwt:Issuer"]
             ?? "VehiclePartsAPI";
 
-        var audience = _configuration["JWT_AUDIENCE"] 
-            ?? _configuration["Jwt:Audience"] 
+        var audience = _configuration["JWT_AUDIENCE"]
+            ?? _configuration["Jwt:Audience"]
             ?? "VehiclePartsClients";
         var expiryMinutes = int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var parsedMinutes)
             ? parsedMinutes

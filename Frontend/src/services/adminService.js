@@ -26,8 +26,7 @@ export const deleteUser = async (id) => {
   return response.data;
 };
 
-// Reports
-export const getFinancialReport = async (type, params = {}) => {
-  const response = await apiClient.get(`/admin/reports/${type.toLowerCase()}`, { params });
+export const createStaff = async (payload) => {
+  const response = await apiClient.post('/StaffAuth/register', payload);
   return response.data;
 };
