@@ -25,6 +25,7 @@ const VendorManagement = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState(null);
+  const [vendorToDelete, setVendorToDelete] = useState(null);
   const [formKey, setFormKey] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -33,15 +34,32 @@ const VendorManagement = () => {
       setLoading(true);
       setError(null);
       const res = await getVendors(pageNumber, size, query);
-      if (!res?.success) {
-        throw new Error(res?.message || 'Failed to load vendors.');
+      
+      const isSuccess = res?.success !== undefined ? res.success : res?.Success;
+      if (isSuccess === false) {
+        throw new Error(res?.message || res?.Message || 'Failed to load vendors.');
       }
-      setVendors(res.data?.items || []);
-      const totalItems = res.data?.totalCount || 0;
+      
+      const responseData = res?.data || res?.Data || {};
+      const items = responseData.items || responseData.Items || [];
+      const normalizedItems = items.map(v => ({
+        id: v.id || v.Id,
+        companyName: v.companyName || v.CompanyName,
+        contactName: v.contactName || v.ContactName,
+        email: v.email || v.Email,
+        phone: v.phone || v.Phone,
+        address: v.address || v.Address
+      }));
+      setVendors(normalizedItems);
+      
+      const totalItems = responseData.totalCount || responseData.TotalCount || 0;
       setTotalCount(totalItems);
-      const computedTotalPages = res.data?.totalPages ?? Math.max(1, Math.ceil(totalItems / size));
+      
+      const resTotalPages = responseData.totalPages || responseData.TotalPages;
+      const computedTotalPages = resTotalPages ?? Math.max(1, Math.ceil(totalItems / size));
       setTotalPages(computedTotalPages);
-      const nextPage = res.data?.pageNumber || 1;
+      
+      const nextPage = responseData.pageNumber || responseData.PageNumber || 1;
       if (computedTotalPages > 0 && nextPage > computedTotalPages) {
         setPage(computedTotalPages);
         return;
@@ -102,10 +120,12 @@ const VendorManagement = () => {
         ? await updateVendor(editingVendor.id, payload)
         : await createVendor(payload);
 
-      if (!res?.success) {
-        const message = Array.isArray(res?.errors) && res.errors.length > 0
-          ? res.errors.join(' ')
-          : res?.message || 'Failed to save vendor.';
+      const isSuccess = res?.success !== undefined ? res.success : res?.Success;
+      if (isSuccess === false) {
+        const errorsList = res?.errors || res?.Errors;
+        const message = Array.isArray(errorsList) && errorsList.length > 0
+          ? errorsList.join(' ')
+          : res?.message || res?.Message || 'Failed to save vendor.';
         setStatus(message);
         return;
       }
@@ -123,16 +143,15 @@ const VendorManagement = () => {
   };
 
   const handleDelete = async (vendor) => {
-    const confirmed = window.confirm(`Delete ${vendor.companyName}?`);
-    if (!confirmed) return;
-
     try {
       setActionLoading(true);
       const res = await deleteVendor(vendor.id);
-      if (!res?.success) {
-        throw new Error(res?.message || 'Failed to delete vendor.');
+      const isSuccess = res?.success !== undefined ? res.success : res?.Success;
+      if (isSuccess === false) {
+        throw new Error(res?.message || res?.Message || 'Failed to delete vendor.');
       }
       await fetchVendors(page, pageSize, debouncedSearch);
+      setVendorToDelete(null);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to delete vendor.'));
     } finally {
@@ -244,7 +263,7 @@ const VendorManagement = () => {
                         <button
                           type="button"
                           className="text-red-400 hover:text-red-600 transition"
-                          onClick={() => handleDelete(vendor)}
+                          onClick={() => setVendorToDelete(vendor)}
                           disabled={actionLoading}
                         >
                           <FaTrashAlt />
@@ -412,6 +431,36 @@ const VendorManagement = () => {
                 </Form>
               )}
             </Formik>
+          </div>
+        </div>
+      )}
+
+      {vendorToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-slate-800">Delete vendor</h2>
+            <p className="mt-3 text-sm text-slate-600">
+              Are you sure you want to delete <span className="font-semibold text-slate-800">{vendorToDelete.companyName}</span>? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setVendorToDelete(null)}
+                className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                disabled={actionLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(vendorToDelete)}
+                className="rounded-lg bg-red-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                disabled={actionLoading}
+              >
+                {actionLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

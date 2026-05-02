@@ -30,3 +30,9 @@ export const createStaff = async (payload) => {
   const response = await apiClient.post('/StaffAuth/register', payload);
   return response.data;
 };
+
+export const getFinancialReport = async (type) => {
+  const endpoint = type.toLowerCase();
+  const response = await apiClient.get(`/admin/reports/${endpoint}`);
+  return response.data;
+};

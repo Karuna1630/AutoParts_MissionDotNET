@@ -1,4 +1,4 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.Common.Exceptions;
 using Application.Common.Interfaces;
 using Application.Common.Mappers;
@@ -21,20 +21,24 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService, IImageService imageService) : IStaffAuthService
+    public class StaffAuthService(IUserRepo repo, IIdentityService identityService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
     {
         private readonly IStaffRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
         private readonly ITokenService _tokenService = tokenService;
         private readonly IImageService _imageService = imageService;
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IPasswordHasher _passwordHasher = passwordHasher;
+
         public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto, Guid? managedById = null)
         {
             //making identity & assigning role
-  
+
             var (Succeeded, id) = await _identityService.CreateUserAsync(dto.Email, dto.PhoneNumber, dto.Password);
             if (!Succeeded) throw new InvalidOperationException("Identity creation failed.");
-            try { 
-            // add role
+            try
+            {
+                // add role
                 await _identityService.AddToRoleAsync(id, dto.UserRole.ToString());
 
                 //mapping remainaing dto props to userprofile object
@@ -52,6 +56,19 @@ namespace Application.Services
 
                 // saving to db
                 await _repo.AddAsync(profile);
+
+                // ALSO save to the main Users table so they can login via AuthService
+                var domainUser = new User
+                {
+                    Email = dto.Email.Trim().ToLowerInvariant(),
+                    PasswordHash = _passwordHasher.Hash(dto.Password),
+                    FullName = $"{dto.FirstName} {dto.LastName}",
+                    Phone = dto.PhoneNumber,
+                    Role = dto.UserRole.ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _userRepository.AddAsync(domainUser);
 
                 // returning viewdto
                 var managedByName = await ResolveManagedByNameAsync(profile.LastManagedBy);
@@ -126,7 +143,7 @@ namespace Application.Services
         {
             var profile = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Staff id not found.");
             if (!await _repo.DeleteAsync(id)) throw new DBConcurrencyException("Faild to delete user");
-            if (!await _identityService.DeleteUserAsync(id)) throw new DBConcurrencyException("Faild to delete user");    
+            if (!await _identityService.DeleteUserAsync(id)) throw new DBConcurrencyException("Faild to delete user");
             return true;
         }
         public async Task<bool> UpdateStaffRoleAsync(Guid id, string role)
@@ -152,7 +169,7 @@ namespace Application.Services
             //return view
             var managedByName = await ResolveManagedByNameAsync(profile.LastManagedBy);
             return StaffMapper.ToViewDto(profile, email, phoneNumber, managedByName);
-                     
+
         }
 
         public async Task<PagedResult<ViewStaffDto>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
@@ -176,7 +193,7 @@ namespace Application.Services
                 PageSize = pagedResult.PageSize,
                 TotalCount = pagedResult.TotalCount
             };
-            
+
         }
 
         private AuthResponseDto BuildStaffAuthResponse(ViewStaffDto user)

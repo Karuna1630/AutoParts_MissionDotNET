@@ -18,6 +18,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
+using dotenv.net;
+
+DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,12 +29,25 @@ builder.Services.AddControllers();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddScoped<IStaffRepo, StaffRepo>();
+
+// --- 3. Core Services ---
+builder.Services.AddControllers();
+builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
+
+// Repositories
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+builder.Services.AddScoped<IPurchaseInvoiceRepository, PurchaseInvoiceRepository>();
+
+// Application Services
 builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 // Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration["CONNECTION_STRING"] 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
@@ -41,19 +57,30 @@ builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
-builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile));
+builder.Services.AddScoped<IReportService, ReportService>();
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key is missing in configuration.");
+// --- 4. Authentication & Security ---
+var jwtKey = builder.Configuration["JWT_KEY"]
+    ?? builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("JWT key is missing in configuration.");
 
-var jwtIssuer =  builder.Configuration["Jwt:Issuer"] ?? "VehiclePartsAPI";
+var jwtIssuer = builder.Configuration["JWT_ISSUER"]
+    ?? builder.Configuration["Jwt:Issuer"]
+    ?? "VehiclePartsAPI";
 
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehiclePartsClients";
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"]
+    ?? builder.Configuration["Jwt:Audience"]
+    ?? "VehiclePartsClients";
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -65,11 +92,23 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
 
 builder.Services.AddAuthorization();
+
+// CORS
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ??
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
+    ];
 
 builder.Services.AddCors(options =>
 {
@@ -81,17 +120,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Swagger docs
+// --- 5. Swagger ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new()
-    {
-        Title = "AutoParts API",
-        Version = "v1",
-        Description = "API for managing auto parts, orders, and users"
-    });
-
+    c.SwaggerDoc("v1", new() { Title = "AutoParts API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new()
     {
         Name = "Authorization",
@@ -100,65 +133,50 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header
     });
-
     c.AddSecurityRequirement(new()
-{
     {
-        new OpenApiSecurityScheme
         {
-            Reference = new OpenApiReference
+            new OpenApiSecurityScheme
             {
-                Type = ReferenceType.SecurityScheme,
-                Id = "Bearer"
-            }
-        },
-        new string[] {}
-    }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            new string[] {}
+        }
+    });
 });
-}
-    );
 
 var app = builder.Build();
 
+// --- 6. Middleware Pipeline ---
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseStaticFiles();
+app.UseCors("FrontendClient");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// --- 7. Seeding ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         await DbInitializer.SeedRolesAsync(services);
+        await AdminSeeder.SeedAdminAsync(services, builder.Configuration);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "An error occurred during database seeding.");
     }
 }
-
-// Configure the HTTP request pipeline.
-await AdminSeeder.SeedAdminAsync(app.Services, builder.Configuration);
-
-app.UseStaticFiles();
-app.UseRouting();
-app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-app.UseMiddleware<GlobalExceptionMiddleware>();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        options.RoutePrefix = "swagger";
-    });
-}
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapControllers();
 app.Run();

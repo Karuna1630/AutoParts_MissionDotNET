@@ -44,5 +44,7 @@ public class User
 
     public bool IsActive { get; set; } = true;
 
+    public Customer? Customer { get; set; }
+
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
 }
