@@ -74,7 +74,10 @@ public class CustomerHistoryController : ControllerBase
     public async Task<IActionResult> ExportHistory([FromQuery] string format = "pdf")
     {
         var result = await _historyService.ExportHistoryAsPdfAsync(GetCustomerId());
-        if (!result.Success) return BadRequest(result);
+        if (!result.Success || result.Data == null) 
+        {
+            return BadRequest(result.Message ?? "Failed to generate history PDF");
+        }
         return File(result.Data, "application/pdf", $"CustomerHistory_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
@@ -82,7 +85,10 @@ public class CustomerHistoryController : ControllerBase
     public async Task<IActionResult> DownloadInvoice(int invoiceId)
     {
         var result = await _historyService.DownloadSingleInvoicePdfAsync(GetCustomerId(), invoiceId);
-        if (!result.Success) return NotFound(result);
+        if (!result.Success || result.Data == null)
+        {
+            return NotFound(result.Message ?? "Invoice PDF not found");
+        }
         return File(result.Data, "application/pdf", $"Invoice_{invoiceId}.pdf");
     }
 }

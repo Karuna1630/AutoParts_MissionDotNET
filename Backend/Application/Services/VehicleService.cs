@@ -55,18 +55,18 @@ public class VehicleService : IVehicleService
             int customerId = customer.Id;
 
             // Check for duplicate vehicle number for this customer
-            var existingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId && v.VehicleNumber == dto.VehicleNumber);
+            var existingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId && v.VehicleNumber == dto.VehicleNumber);
             if (existingVehicles.Any())
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle number already registered for this customer");
             }
 
             var vehicle = _mapper.Map<Vehicle>(dto);
-            vehicle.CustomerId = realCustomerId;
+            vehicle.CustomerId = customerId;
             vehicle.CreatedAt = DateTime.UtcNow;
 
             // If it's the first vehicle, make it primary
-            var totalVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId);
+            var totalVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId);
             if (!totalVehicles.Any())
             {
                 vehicle.IsPrimary = true;
@@ -122,19 +122,20 @@ public class VehicleService : IVehicleService
     {
         try
         {
-            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(userId);
             if (actualCustomer == null)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
             }
             int realCustomerId = actualCustomer.Id;
 
-            var vehicles = await _vehicleRepository.GetAllWithIncludeAsync(
+            var vehiclesList = await _vehicleRepository.GetAllWithIncludeAsync(
                 v => v.Id == vehicleId && v.CustomerId == realCustomerId,
                 v => v.Customer!,
                 v => v.Customer!.User!
             );
             
+            var vehicle = vehiclesList.FirstOrDefault();
             if (vehicle == null || vehicle.Customer!.UserId != userId)
             {
                 return ApiResponse<VehicleResponseDto>.FailureResponse("Vehicle not found");
@@ -145,7 +146,7 @@ public class VehicleService : IVehicleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching vehicle {VehicleId} for user {UserId}", vehicleId, customerId);
+            _logger.LogError(ex, "Error fetching vehicle {VehicleId} for user {UserId}", vehicleId, userId);
             return ApiResponse<VehicleResponseDto>.FailureResponse("An error occurred while fetching the vehicle");
         }
     }
@@ -154,7 +155,7 @@ public class VehicleService : IVehicleService
     {
         try
         {
-            var actualCustomer = await GetOrCreateCustomerProfileAsync(customerId);
+            var actualCustomer = await GetOrCreateCustomerProfileAsync(userId);
             if (actualCustomer == null) return ApiResponse<VehicleResponseDto>.FailureResponse("Customer profile not found");
             int realCustomerId = actualCustomer.Id;
 
@@ -237,7 +238,7 @@ public class VehicleService : IVehicleService
             // If it was primary, make another vehicle primary if any exists
             if (wasPrimary)
             {
-                var remainingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == realCustomerId);
+                var remainingVehicles = await _vehicleRepository.FindAsync(v => v.CustomerId == customerId);
                 var newPrimary = remainingVehicles.FirstOrDefault();
                 if (newPrimary != null)
                 {
@@ -280,7 +281,7 @@ public class VehicleService : IVehicleService
             _vehicleRepository.Update(vehicle);
             await _vehicleRepository.SaveChangesAsync();
 
-            var response = _mapper.Map<VehicleResponseDto>(vehicleToSet);
+            var response = _mapper.Map<VehicleResponseDto>(vehicle);
             return ApiResponse<VehicleResponseDto>.SuccessResponse(response, "Primary vehicle updated successfully");
         }
         catch (Exception ex)

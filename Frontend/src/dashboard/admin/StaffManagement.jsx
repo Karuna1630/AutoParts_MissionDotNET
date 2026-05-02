@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaEdit, FaTrashAlt, FaPlus, FaEye } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import * as Yup from 'yup';
 import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage } from '../../services/staffAuthService';
 import { createStaff } from '../../services/adminService';
@@ -39,6 +39,8 @@ const StaffManagement = () => {
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const fetchStaff = useCallback(async (pageNumber = 1, query = debouncedSearch) => {
     try {
@@ -93,6 +95,8 @@ const StaffManagement = () => {
     setEditingStaff(null);
     setProfileImageFile(null);
     setProfileImagePreview(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setFormKey((prev) => prev + 1);
   };
 
@@ -505,31 +509,49 @@ const StaffManagement = () => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Password</label>
-                    <Field
-                      name="password"
-                      type="password"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.password && errors.password
-                          ? 'border-red-300 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                        }`}
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <Field
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        className={`w-full rounded-lg border bg-slate-50 pl-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.password && errors.password
+                            ? 'border-red-300 focus:ring-red-100'
+                            : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                          }`}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                     <ErrorMessage name="password" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
-                  <div>
+                  <div className="relative">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600">Confirm password</label>
-                    <Field
-                      name="confirmPassword"
-                      type="password"
-                      className={`w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.confirmPassword && errors.confirmPassword
-                          ? 'border-red-300 focus:ring-red-100'
-                          : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
-                        }`}
-                      placeholder="••••••••"
-                    />
+                    <div className="relative">
+                      <Field
+                        name="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className={`w-full rounded-lg border bg-slate-50 pl-3 pr-10 py-2 text-sm transition focus:outline-none focus:ring-2 ${touched.confirmPassword && errors.confirmPassword
+                            ? 'border-red-300 focus:ring-red-100'
+                            : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                          }`}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                      >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
                     <ErrorMessage name="confirmPassword" component="div" className="mt-1 text-xs text-red-500" />
                   </div>
 
