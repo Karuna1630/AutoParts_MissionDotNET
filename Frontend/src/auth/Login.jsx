@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import {
@@ -20,34 +19,50 @@ const Login = () => {
     setStatus(undefined);
 
     try {
-       var response;
-      if (values.role === "staff") {
- response = await staffLogin({
-        email: values.email.trim(),
-        password: values.password,
-      });
-} else {
- 
-       response = await login({
-        email: values.email.trim(),
-        password: values.password,
-      });
-    }
-      if (!response?.success) {
-        setStatus({
-          type: "error",
-          message:
-            response?.message || "Login failed. Please check your credentials.",
-        });
-        return;
-      }
+  let res1 = null;
+let res2 = null;
 
+try {
+  // Try users table
+  res1 = await login({
+    email: values.email.trim(),
+    password: values.password,
+  });
+} catch (err) {
+  res1 = null;
+}
+
+// Try staff table ONLY if first failed
+if (!res1?.success) {
+  try {
+    res2 = await staffLogin({
+      email: values.email.trim(),
+      password: values.password,
+    });
+  } catch (err) {
+    res2 = null;
+  }
+}
+
+// If both failed
+if (!res1?.success && !res2?.success) {
+  setStatus({
+    type: "error",
+    message: "Login failed. Please check your credentials.",
+  });
+  return;
+}
+
+// Pick successful response
+const response = res1?.success ? res1 : res2;
+      console.log(response);
       if (response?.data?.token) {
         localStorage.setItem("authToken", response.data.token);
         localStorage.setItem(
           "authUser",
           JSON.stringify({
             userId: response.data.userId,
+            staffId: response.data.staffId,
             email: response.data.email,
             fullName: response.data.fullName,
             role: response.data.role,
@@ -66,6 +81,7 @@ const Login = () => {
           navigate("/dashboard");
         }
       }
+
     } catch (error) {
       setStatus({
         type: "error",
@@ -74,7 +90,8 @@ const Login = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+    }
+  
 
   return (
     <div className="flex min-h-screen w-full bg-white font-sans">
@@ -219,15 +236,6 @@ const Login = () => {
                     className="mt-1.5 ml-1 text-xs font-medium text-red-600"
                   />
                 </div>
-                <Field
-  as="select"
-  name="role"
-  className="w-full rounded-xl border bg-slate-50 py-3 px-4 text-sm"
->
-  <option value="">Select Role</option>
-  <option value="customer">Admin/Customer</option>
-  <option value="staff">Staff</option>
-</Field>
 
                 {status?.message ? (
                   <p
