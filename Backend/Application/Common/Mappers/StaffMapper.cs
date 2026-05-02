@@ -11,7 +11,7 @@ namespace Application.Common.Mappers
 {
     internal class StaffMapper
     {
-        public static ViewStaffDto ToViewDto(UserProfile p, string email, string phoneNumber)
+        public static ViewStaffDto ToViewDto(UserProfile p, string email, string phoneNumber, string? lastManagedBy = null)
         {
             return new ViewStaffDto
             {
@@ -21,7 +21,9 @@ namespace Application.Common.Mappers
                 Email = email,
                 PhoneNumber = phoneNumber ?? "N/A",
                 UserRole = p.UserRole,
-                RegistrationDate = p.RegistrationDate
+                RegistrationDate = p.RegistrationDate,
+                LastManagedBy = lastManagedBy ?? string.Empty,
+                LastManagedDate = p.LastManagedDate
             };
         }
     }
