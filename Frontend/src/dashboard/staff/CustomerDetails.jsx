@@ -94,7 +94,7 @@ const CustomerDetails = () => {
             <div className="space-y-4 pt-4">
               <DetailItem icon={FiMail} label="Email Address" value={customer.email} />
               <DetailItem icon={FiPhone} label="Phone Number" value={customer.phone} />
-              <DetailItem icon={FiCreditCard} label="Credit Balance" value={`$${customer.creditBalance.toFixed(2)}`} />
+              <DetailItem icon={FiCreditCard} label="Credit Balance" value={`Rs.${customer.creditBalance.toFixed(2)}`} />
             </div>
           </div>
         </div>

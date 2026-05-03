@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { FaEdit, FaTrashAlt, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import * as Yup from 'yup';
@@ -160,7 +160,7 @@ const StaffManagement = () => {
           profilePictureUrl: editingStaff.profilePictureUrl || null,
           userRole: roleValue,
         };
-        const updated = await updateStaff(payload.identityId, payload);
+       await updateStaff(payload.identityId, payload);
         if (profileImageFile) {
           await uploadStaffProfileImage(payload.identityId, profileImageFile);
         }

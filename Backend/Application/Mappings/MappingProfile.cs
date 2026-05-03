@@ -24,5 +24,11 @@ public class MappingProfile : Profile
         CreateMap<UpdateVendorDto, Vendor>()
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
         CreateMap<Vendor, VendorResponseDto>();
+        
+        // Inventory
+        CreateMap<Application.DTOs.Inventory.CreateInventoryItemDto, InventoryItem>()
+            .ForMember(dest => dest.ImageUrl, opt => opt.Ignore());
+        CreateMap<Application.DTOs.Inventory.UpdateInventoryItemDto, InventoryItem>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Application.Common;
 using Application.DTOs;
+using Application.DTOs.Auth;
+using Application.DTOs.Common;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +18,7 @@ namespace Application.Interfaces.Services
     /// </summary>
     public interface IStaffAuthService
     {
+        Task<ApiResponse<AuthResponseDto>> StaffLoginAsync(LoginRequestDto request);
         Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto, Guid? managedById = null);
         Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto, Guid? managedById = null);
         Task<ViewStaffDto?> UpdateStaffProfileImageAsync(Guid staffId, IFormFile image, Guid? managedById = null);

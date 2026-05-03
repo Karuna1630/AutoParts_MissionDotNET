@@ -88,7 +88,7 @@ const TransactionHistory = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <SummaryCard icon={<FiShoppingBag />} label="Total Invoices" value={summary.totalInvoices} color="blue" />
-        <SummaryCard icon={<FiFileText />} label="Total Spent" value={`$${summary.totalSpent.toLocaleString(undefined, {minimumFractionDigits: 2})}`} color="emerald" />
+        <SummaryCard icon={<FiFileText />} label="Total Spent" value={`Rs.${summary.totalSpent.toLocaleString(undefined, {minimumFractionDigits: 2})}`} color="emerald" />
         <SummaryCard icon={<FiTool />} label="Total Appointments" value={summary.totalAppointments} color="purple" />
         <SummaryCard icon={<FiCheckCircle />} label="Completed Services" value={summary.completedAppointments} color="blue" />
       </div>
@@ -194,7 +194,7 @@ const PurchaseCard = ({ purchase, onDownload }) => {
         <div className="flex items-center gap-6">
           <div className="text-right hidden md:block">
             <p className="text-xs text-slate-500 font-semibold">{purchase.items.length} items</p>
-            <p className="font-bold text-slate-900 text-lg">${purchase.finalAmount.toLocaleString()}</p>
+            <p className="font-bold text-slate-900 text-lg">Rs.{purchase.finalAmount.toLocaleString()}</p>
           </div>
           <button 
             onClick={onDownload}

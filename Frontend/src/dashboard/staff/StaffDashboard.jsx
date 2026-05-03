@@ -3,7 +3,7 @@ import { FiShoppingCart, FiUsers, FiCalendar, FiMessageSquare } from 'react-icon
 
 const StaffDashboard = () => {
   const stats = [
-    { label: 'SALES TODAY', value: '$0', subValue: '0 invoices', icon: <FiShoppingCart />, color: 'bg-emerald-100 text-emerald-600' },
+    { label: 'SALES TODAY', value: 'Rs.0', subValue: '0 invoices', icon: <FiShoppingCart />, color: 'bg-emerald-100 text-emerald-600' },
     { label: 'CUSTOMERS', value: '4', icon: <FiUsers />, color: 'bg-blue-100 text-blue-600' },
     { label: 'OPEN APPOINTMENTS', value: '3', icon: <FiCalendar />, color: 'bg-amber-100 text-amber-600' },
     { label: 'PENDING REQUESTS', value: '1', icon: <FiMessageSquare />, color: 'bg-indigo-100 text-indigo-600' },

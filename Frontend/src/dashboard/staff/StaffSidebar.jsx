@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FiLayout, 
   FiUsers, 
+  FiUserPlus,
   FiShoppingCart, 
   FiSearch, 
   FiBarChart2,
@@ -25,6 +26,7 @@ const StaffSidebar = () => {
     {
       section: 'DAILY OPERATIONS',
       items: [
+        { name: 'Register Customer', icon: <FiUserPlus />, path: '/staff/register-customer' },
         { name: 'Customers', icon: <FiUsers />, path: '/staff/customers' },
         { name: 'Point of Sale', icon: <FiShoppingCart />, path: '/staff/pos' },
         { name: 'Global Search', icon: <FiSearch />, path: '/staff/search' },

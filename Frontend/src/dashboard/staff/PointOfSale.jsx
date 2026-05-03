@@ -37,7 +37,7 @@ const PointOfSale = () => {
         <div className="p-6 border-t border-slate-50 space-y-4 bg-slate-50/50 rounded-b-3xl">
           <div className="flex justify-between text-slate-500 font-bold text-xs uppercase tracking-wider">
             <span>Total Amount</span>
-            <span>$0.00</span>
+            <span>Rs.0.00</span>
           </div>
           <button className="w-full bg-slate-200 text-slate-500 py-4 rounded-2xl font-bold cursor-not-allowed transition-all flex items-center justify-center gap-3">
             <FiCreditCard />
