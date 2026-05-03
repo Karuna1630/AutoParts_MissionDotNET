@@ -1,4 +1,7 @@
+using Application.DTOs.Inventory;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using AutoMapper;
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +15,14 @@ namespace WebAPI.Controllers;
 public class InventoryController : ControllerBase
 {
     private readonly IInventoryRepository _inventoryRepository;
+    private readonly IMapper _mapper;
+    private readonly IImageService _imageService;
 
-    public InventoryController(IInventoryRepository inventoryRepository)
+    public InventoryController(IInventoryRepository inventoryRepository, IMapper mapper, IImageService imageService)
     {
         _inventoryRepository = inventoryRepository;
+        _mapper = mapper;
+        _imageService = imageService;
     }
 
     [HttpGet]
@@ -26,9 +33,21 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Add([FromBody] InventoryItem item)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Add([FromForm] CreateInventoryItemDto dto)
     {
-        if (item == null) return BadRequest();
+        if (dto == null) return BadRequest();
+        
+        var item = _mapper.Map<InventoryItem>(dto);
+        
+        if (dto.Image != null)
+        {
+            var imageUrl = await _imageService.UploadImageAsync(dto.Image, "inventory");
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                item.ImageUrl = imageUrl;
+            }
+        }
         
         await _inventoryRepository.AddAsync(item);
         await _inventoryRepository.SaveChangesAsync();
@@ -49,16 +68,23 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] InventoryItem updatedItem)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Update(int id, [FromForm] UpdateInventoryItemDto dto)
     {
         var item = await _inventoryRepository.GetByIdAsync(id);
         if (item == null) return NotFound();
 
-        item.SKU = updatedItem.SKU;
-        item.Name = updatedItem.Name;
-        item.Category = updatedItem.Category;
-        item.Price = updatedItem.Price;
-        item.Stock = updatedItem.Stock;
+        _mapper.Map(dto, item);
+
+        if (dto.Image != null)
+        {
+            var imageUrl = await _imageService.UploadImageAsync(dto.Image, "inventory");
+            if (!string.IsNullOrEmpty(imageUrl))
+            {
+                item.ImageUrl = imageUrl;
+            }
+        }
+
         item.UpdatedAt = DateTime.UtcNow;
 
         _inventoryRepository.Update(item);

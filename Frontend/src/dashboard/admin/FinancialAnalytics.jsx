@@ -73,19 +73,19 @@ const FinancialAnalytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricCard 
           label="Total Revenue" 
-          value={`$${revenue.totalSalesRevenue.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
+          value={`Rs.${revenue.totalSalesRevenue.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
           icon={FiTrendingUp} 
           color="blue"
         />
         <MetricCard 
           label="Total Expenses" 
-          value={`$${costs.totalCogs.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
+          value={`Rs.${costs.totalCogs.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
           icon={FiBarChart2} 
           color="red"
         />
         <MetricCard 
           label="Gross Profit" 
-          value={`$${profit.grossProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
+          value={`Rs.${profit.grossProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
           icon={FiTrendingUp} 
           color="green"
         />
@@ -102,7 +102,7 @@ const FinancialAnalytics = () => {
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="label" stroke="#94a3b8" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
-              <YAxis stroke="#94a3b8" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={val => `$${val}`} dx={-10} />
+              <YAxis stroke="#94a3b8" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={val => `Rs.${val}`} dx={-10} />
               <Tooltip 
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
@@ -132,7 +132,7 @@ const FinancialAnalytics = () => {
                   </div>
                 </div>
                 <div className="text-sm font-bold text-slate-800">
-                  ${part.revenueGenerated.toLocaleString()}
+                  Rs.{part.revenueGenerated.toLocaleString()}
                 </div>
               </div>
             ))}
@@ -142,9 +142,9 @@ const FinancialAnalytics = () => {
         <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm flex flex-col">
           <h2 className="text-xl font-bold text-slate-900 mb-6">Other Metrics</h2>
           <div className="grid grid-cols-2 gap-4 flex-1">
-            <SmallMetric label="AVG ORDER VALUE" value={`$${revenue.averageOrderValue}`} />
+            <SmallMetric label="AVG ORDER VALUE" value={`Rs.${revenue.averageOrderValue}`} />
             <SmallMetric label="TOTAL INVOICES" value={reportData.transactions.totalSalesInvoices} />
-            <SmallMetric label="CREDIT BALANCE" value={`$${reportData.credit.totalOutstandingCreditBalance}`} />
+            <SmallMetric label="CREDIT BALANCE" value={`Rs.${reportData.credit.totalOutstandingCreditBalance}`} />
             <SmallMetric label="PROFIT MARGIN" value={`${profit.grossProfitMarginPercentage}%`} />
           </div>
         </div>

@@ -165,7 +165,7 @@ const CustomerCard = ({ customer, onClick }) => {
             </div>
             <div>
               <p className="text-[9px] font-bold text-slate-400 uppercase leading-none">Balance</p>
-              <p className="text-sm font-black text-slate-800">${customer.creditBalance.toFixed(2)}</p>
+              <p className="text-sm font-black text-slate-800">Rs.{customer.creditBalance.toFixed(2)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -101,9 +101,9 @@ const PurchaseInvoices = () => {
 
   const stats = [
     { label: 'Total Invoices', value: invoices.length },
-    { label: 'Total Amount', value: `$${invoices.reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
-    { label: 'Paid', value: `$${invoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
-    { label: 'Pending', value: `$${invoices.filter(i => i.status === 'Pending').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
+    { label: 'Total Amount', value: `Rs.${invoices.reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
+    { label: 'Paid', value: `Rs.${invoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
+    { label: 'Pending', value: `Rs.${invoices.filter(i => i.status === 'Pending').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
   ];
 
   if (loading) {
@@ -176,7 +176,7 @@ const PurchaseInvoices = () => {
                     <td className="px-6 py-4 text-sm text-slate-600 font-medium">{invoice.vendorName}</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(invoice.date).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(invoice.dueDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">${invoice.totalAmount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">Rs.{invoice.totalAmount.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                         invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
@@ -377,7 +377,7 @@ const PurchaseInvoices = () => {
               
               <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
                 <span className="text-lg font-bold text-slate-700">Total Amount</span>
-                <span className="text-3xl font-bold text-emerald-600">${selectedInvoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span className="text-3xl font-bold text-emerald-600">Rs.{selectedInvoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
             

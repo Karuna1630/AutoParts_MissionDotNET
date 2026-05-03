@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiAlertCircle, FiTrash2, FiX, FiLoader, FiSearch } from 'react-icons/fi';
 import { getInventory, addInventoryItem, deleteInventoryItem, updateInventoryItem } from '../../services/inventoryService';
 import { getVendors } from '../../services/vendorService';
+import { useFormik } from 'formik';
+import { inventorySchema } from '../../utils/validation/inventoryValidation';
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -13,14 +15,50 @@ const Inventory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [vendorOptions, setVendorOptions] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const itemsPerPage = 4;
-  const [formData, setFormData] = useState({
-    sku: '',
-    name: '',
-    category: '',
-    vendor: '',
-    price: '',
-    stock: '',
+
+  const formik = useFormik({
+    initialValues: {
+      sku: '',
+      name: '',
+      category: '',
+      vendor: '',
+      price: '',
+      stock: '',
+    },
+    validationSchema: inventorySchema,
+    onSubmit: async (values) => {
+      try {
+        const data = new FormData();
+        data.append('sku', values.sku);
+        data.append('name', values.name);
+        data.append('category', values.category);
+        data.append('vendor', values.vendor);
+        data.append('price', values.price);
+        data.append('stock', values.stock);
+        if (imageFile) {
+          data.append('image', imageFile);
+        }
+        
+        if (editingItem) {
+          const response = await updateInventoryItem(editingItem.id, data);
+          if (response.success) {
+            setItems(items.map(i => i.id === editingItem.id ? { ...response.data, vendor: response.data.vendor || response.data.vendorName || values.vendor } : i));
+            setIsModalOpen(false);
+          }
+        } else {
+          const response = await addInventoryItem(data);
+          if (response.success) {
+            setItems([...items, { ...response.data, vendor: response.data.vendor || response.data.vendorName || values.vendor }]);
+            setIsModalOpen(false);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save item:', error);
+      }
+    },
   });
 
   useEffect(() => {
@@ -54,6 +92,7 @@ const Inventory = () => {
       setLoading(false);
     }
   };
+  
 
   const fetchVendors = async () => {
     try {
@@ -72,11 +111,10 @@ const Inventory = () => {
       setVendorOptions([]);
     }
   };
-
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditingItem(item);
-      setFormData({
+      formik.setValues({
         sku: item.sku,
         name: item.name,
         category: item.category || '',
@@ -84,41 +122,25 @@ const Inventory = () => {
         price: item.price,
         stock: item.stock,
       });
+      setImagePreview(item.imageUrl);
+      setImageFile(null);
     } else {
       setEditingItem(null);
-      setFormData({ sku: '', name: '', category: '', vendor: '', price: '', stock: '' });
+      formik.resetForm();
+      setImagePreview(null);
+      setImageFile(null);
     }
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const itemData = {
-        ...formData,
-        vendorName: formData.vendor,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-      };
-      
-      if (editingItem) {
-        const response = await updateInventoryItem(editingItem.id, itemData);
-        if (response.success) {
-          setItems(items.map(i => i.id === editingItem.id ? { ...response.data, vendor: response.data.vendor || response.data.vendorName || formData.vendor } : i));
-          setIsModalOpen(false);
-        }
-      } else {
-        const response = await addInventoryItem(itemData);
-        if (response.success) {
-          setItems([...items, { ...response.data, vendor: response.data.vendor || response.data.vendorName || formData.vendor }]);
-          setIsModalOpen(false);
-          setFormData({ sku: '', name: '', category: '', vendor: '', price: '', stock: '' });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to save item:', error);
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
+
 
   const handleDeleteClick = (item) => {
     setItemToDelete(item);
@@ -202,6 +224,7 @@ const Inventory = () => {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
+                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600 w-16">Image</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">SKU</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Item Name</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Category</th>
@@ -220,7 +243,7 @@ const Inventory = () => {
                 </tr>
               ) : (
                 paginatedItems.map((item) => (
-                  <tr 
+                   <tr 
                     key={item.id} 
                     className={`group transition-all duration-200 ${
                       item.stock < 10 
@@ -228,6 +251,15 @@ const Inventory = () => {
                         : 'hover:bg-slate-50 border-l-4 border-l-transparent'
                     }`}
                   >
+                    <td className="px-6 py-4">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px] font-bold">NO IMG</div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm font-mono text-slate-500">{item.sku}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-slate-900">{item.name}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">
@@ -236,7 +268,7 @@ const Inventory = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{item.vendor || item.vendorName || 'N/A'}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">${item.price.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">Rs.{item.price.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                       <span className={item.stock < 10 ? 'text-rose-600 font-bold' : ''}>
                         {item.stock}
@@ -330,38 +362,62 @@ const Inventory = () => {
                 <FiX className="text-slate-500" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={formik.handleSubmit} className="p-6 space-y-4">
+              <div className="flex justify-center mb-2">
+                <div className="relative group cursor-pointer" onClick={() => document.getElementById('item-image').click()}>
+                  <div className="w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-400">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-center">
+                        <FiPlus className="mx-auto text-slate-400 mb-1" size={24} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Image</span>
+                      </div>
+                    )}
+                  </div>
+                  <input 
+                    id="item-image"
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleImageChange}
+                  />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">SKU Code</label>
                   <input
-                    required
+                    name="sku"
                     type="text"
                     placeholder="SKU-001"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-xl border ${formik.touched.sku && formik.errors.sku ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                    {...formik.getFieldProps('sku')}
                   />
+                  {formik.touched.sku && formik.errors.sku && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.sku}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Category</label>
                   <input
-                    required
+                    name="category"
                     type="text"
                     placeholder="Filters, Oil, etc."
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-xl border ${formik.touched.category && formik.errors.category ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                    {...formik.getFieldProps('category')}
                   />
+                  {formik.touched.category && formik.errors.category && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.category}</p>
+                  )}
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Vendor</label>
                 <select
-                  required
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                  value={formData.vendor}
-                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                  name="vendor"
+                  className={`w-full px-4 py-2 rounded-xl border ${formik.touched.vendor && formik.errors.vendor ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                  {...formik.getFieldProps('vendor')}
                 >
                   <option value="">Select vendor</option>
                   {vendorOptions.map((vendor) => (
@@ -370,41 +426,50 @@ const Inventory = () => {
                     </option>
                   ))}
                 </select>
+                {formik.touched.vendor && formik.errors.vendor && (
+                  <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.vendor}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Item Name</label>
                 <input
-                  required
+                  name="name"
                   type="text"
                   placeholder="Engine Oil 5L"
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={`w-full px-4 py-2 rounded-xl border ${formik.touched.name && formik.errors.name ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                  {...formik.getFieldProps('name')}
                 />
+                {formik.touched.name && formik.errors.name && (
+                  <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.name}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Price ($)</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Price (Rs.)</label>
                   <input
-                    required
+                    name="price"
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-xl border ${formik.touched.price && formik.errors.price ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                    {...formik.getFieldProps('price')}
                   />
+                  {formik.touched.price && formik.errors.price && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.price}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Stock Quantity</label>
                   <input
-                    required
+                    name="stock"
                     type="number"
                     placeholder="0"
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-xl border ${formik.touched.stock && formik.errors.stock ? 'border-red-500' : 'border-slate-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition`}
+                    {...formik.getFieldProps('stock')}
                   />
+                  {formik.touched.stock && formik.errors.stock && (
+                    <p className="text-red-500 text-[10px] mt-1 font-bold">{formik.errors.stock}</p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
@@ -417,9 +482,10 @@ const Inventory = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                  disabled={formik.isSubmitting}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
                 >
-                  {editingItem ? 'Save Changes' : 'Add Item'}
+                  {formik.isSubmitting ? 'Saving...' : (editingItem ? 'Save Changes' : 'Add Item')}
                 </button>
               </div>
             </form>
