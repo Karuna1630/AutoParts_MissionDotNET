@@ -1,11 +1,7 @@
-<<<<<<< HEAD
-using Application.Interfaces.Repositories;
-=======
 using Application.DTOs.Inventory;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using AutoMapper;
->>>>>>> origin/bishan
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -19,12 +15,6 @@ namespace WebAPI.Controllers;
 public class InventoryController : ControllerBase
 {
     private readonly IInventoryRepository _inventoryRepository;
-<<<<<<< HEAD
-
-    public InventoryController(IInventoryRepository inventoryRepository)
-    {
-        _inventoryRepository = inventoryRepository;
-=======
     private readonly IMapper _mapper;
     private readonly IImageService _imageService;
 
@@ -33,7 +23,6 @@ public class InventoryController : ControllerBase
         _inventoryRepository = inventoryRepository;
         _mapper = mapper;
         _imageService = imageService;
->>>>>>> origin/bishan
     }
 
     [HttpGet]
@@ -44,11 +33,6 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost]
-<<<<<<< HEAD
-    public async Task<IActionResult> Add([FromBody] InventoryItem item)
-    {
-        if (item == null) return BadRequest();
-=======
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Add([FromForm] CreateInventoryItemDto dto)
     {
@@ -64,7 +48,6 @@ public class InventoryController : ControllerBase
                 item.ImageUrl = imageUrl;
             }
         }
->>>>>>> origin/bishan
         
         await _inventoryRepository.AddAsync(item);
         await _inventoryRepository.SaveChangesAsync();
@@ -85,23 +68,12 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPut("{id}")]
-<<<<<<< HEAD
-    public async Task<IActionResult> Update(int id, [FromBody] InventoryItem updatedItem)
-=======
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(int id, [FromForm] UpdateInventoryItemDto dto)
->>>>>>> origin/bishan
     {
         var item = await _inventoryRepository.GetByIdAsync(id);
         if (item == null) return NotFound();
 
-<<<<<<< HEAD
-        item.SKU = updatedItem.SKU;
-        item.Name = updatedItem.Name;
-        item.Category = updatedItem.Category;
-        item.Price = updatedItem.Price;
-        item.Stock = updatedItem.Stock;
-=======
         _mapper.Map(dto, item);
 
         if (dto.Image != null)
@@ -113,7 +85,6 @@ public class InventoryController : ControllerBase
             }
         }
 
->>>>>>> origin/bishan
         item.UpdatedAt = DateTime.UtcNow;
 
         _inventoryRepository.Update(item);

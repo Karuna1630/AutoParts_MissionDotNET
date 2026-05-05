@@ -30,7 +30,6 @@ import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
 // Staff Components
 import StaffLayout from './dashboard/staff/StaffLayout';
 import StaffDashboard from './dashboard/staff/StaffDashboard';
-import RegisterCustomer from './dashboard/staff/RegisterCustomer';
 import Customers from './dashboard/staff/Customers';
 import CustomerDetails from './dashboard/staff/CustomerDetails';
 import PointOfSale from './dashboard/staff/PointOfSale';
@@ -80,7 +79,6 @@ function App() {
         {/* Staff Dashboard Routes */}
         <Route path="/staff" element={<StaffLayout />}>
           <Route index element={<StaffDashboard />} />
-          <Route path="register-customer" element={<RegisterCustomer />} />
           <Route path="customers" element={<Customers />} />
           <Route path="customers/:id" element={<CustomerDetails />} />
           <Route path="pos" element={<PointOfSale />} />

@@ -96,6 +96,10 @@ namespace Application.Services
                 return new ApiResponse<AuthResponseDto> { Message = "Invalid Email or password" , Success = false };
             }
             var userProfile = await _repo.GetByIdAsync(Guid.Parse(id));
+            if (userProfile == null)
+            {
+                return new ApiResponse<AuthResponseDto> { Message = "User profile not found.", Success = false };
+            }
 
             var profile = StaffMapper.ToViewDto(userProfile, email, phoneNumber);
 
