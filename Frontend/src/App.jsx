@@ -36,6 +36,7 @@ import PointOfSale from './dashboard/staff/PointOfSale';
 import GlobalSearch from './dashboard/staff/GlobalSearch';
 import Reports from './dashboard/staff/Reports';
 import StaffProfile from './dashboard/staff/StaffProfile';
+import StaffAppointments from './dashboard/staff/StaffAppointments';
 
 function App() {
   return (
@@ -84,6 +85,7 @@ function App() {
           <Route path="pos" element={<PointOfSale />} />
           <Route path="search" element={<GlobalSearch />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="appointments" element={<StaffAppointments />} />
           <Route path="profile" element={<StaffProfile />} />
         </Route>
 

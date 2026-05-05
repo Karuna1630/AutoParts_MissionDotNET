@@ -8,7 +8,8 @@ import {
   FiSearch, 
   FiBarChart2,
   FiLogOut,
-  FiUser
+  FiUser,
+  FiCalendar
 } from 'react-icons/fi';
 import { FaCarSide } from 'react-icons/fa';
 
@@ -29,6 +30,7 @@ const StaffSidebar = () => {
         { name: 'Customers', icon: <FiUsers />, path: '/staff/customers' },
         { name: 'Point of Sale', icon: <FiShoppingCart />, path: '/staff/pos' },
         { name: 'Global Search', icon: <FiSearch />, path: '/staff/search' },
+        { name: 'Appointments', icon: <FiCalendar />, path: '/staff/appointments' },
         { name: 'Reports', icon: <FiBarChart2 />, path: '/staff/reports' },
       ]
     },

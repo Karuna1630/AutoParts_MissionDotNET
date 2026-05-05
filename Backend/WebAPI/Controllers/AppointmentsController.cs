@@ -133,8 +133,10 @@ public class AppointmentsController : ControllerBase
         if (customer == null) return BadRequest(new { success = false, message = "Customer profile not found." });
 
         var appointments = await _appointmentRepo.Query()
+            .Include(a => a.Customer).ThenInclude(c => c.User)
             .Include(a => a.Vehicle)
             .Include(a => a.Review)
+            .Include(a => a.AssignedStaff)
             .Where(a => a.CustomerId == customer.Id)
             .OrderByDescending(a => a.PreferredDate)
             .Select(a => new ViewAppointmentDto
@@ -142,13 +144,18 @@ public class AppointmentsController : ControllerBase
                 Id = a.Id,
                 VehicleId = a.VehicleId,
                 VehicleName = $"{a.Vehicle!.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})",
+                VehicleImageUrl = a.Vehicle.ImageUrl,
                 ServiceType = a.ServiceType,
                 PreferredDate = a.PreferredDate,
                 PreferredTime = a.PreferredTime,
                 Priority = a.Priority,
                 Status = a.Status,
                 Notes = a.Notes,
+                CancellationReason = a.CancellationReason,
                 CreatedAt = a.CreatedAt,
+                CustomerAvatarUrl = a.Customer!.User!.AvatarUrl,
+                AssignedStaffId = a.AssignedStaffId,
+                AssignedStaffName = a.AssignedStaff != null ? a.AssignedStaff.FullName : null,
                 Review = a.Review != null ? new ViewReviewDto
                 {
                     Rating = a.Review.Rating,
@@ -178,10 +185,11 @@ public class AppointmentsController : ControllerBase
         if (appointment == null) return NotFound(new { success = false, message = "Appointment not found." });
         
         if (appointment.Status != "Completed") 
-            return BadRequest(new { success = false, message = "Reviews can only be submitted for completed appointments." });
+            return BadRequest(new { success = false, message = "Reviews can only be added for completed appointments." });
 
-        if (appointment.Review != null)
-            return BadRequest(new { success = false, message = "A review has already been submitted for this appointment." });
+        var existingReview = await _reviewRepo.Query().FirstOrDefaultAsync(r => r.AppointmentId == dto.AppointmentId);
+        if (existingReview != null)
+            return BadRequest(new { success = false, message = "A review already exists for this appointment." });
 
         if (dto.Comment.Length < 10)
             return BadRequest(new { success = false, message = "Comment must be at least 10 characters." });
@@ -198,7 +206,16 @@ public class AppointmentsController : ControllerBase
         await _reviewRepo.AddAsync(review);
         await _reviewRepo.SaveChangesAsync();
 
-        return Ok(new { success = true, message = "Review submitted successfully.", data = review });
+        return Ok(new { 
+            success = true, 
+            message = "Review submitted successfully.", 
+            data = new { 
+                review.Id, 
+                review.Rating, 
+                review.Comment, 
+                review.CreatedAt 
+            } 
+        });
     }
 
     [HttpPatch("{id}/cancel")]
@@ -233,9 +250,93 @@ public class AppointmentsController : ControllerBase
             .Include(a => a.Customer).ThenInclude(c => c.User)
             .Include(a => a.Vehicle)
             .Include(a => a.Review)
+            .Include(a => a.AssignedStaff)
             .OrderByDescending(a => a.PreferredDate)
+            .Select(a => new ViewAppointmentDto
+            {
+                Id = a.Id,
+                VehicleId = a.VehicleId,
+                VehicleName = $"{a.Vehicle!.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})",
+                VehicleImageUrl = a.Vehicle.ImageUrl,
+                ServiceType = a.ServiceType,
+                PreferredDate = a.PreferredDate,
+                PreferredTime = a.PreferredTime,
+                Priority = a.Priority,
+                Status = a.Status,
+                Notes = a.Notes,
+                CancellationReason = a.CancellationReason,
+                CreatedAt = a.CreatedAt,
+                CustomerName = a.Customer!.User!.FullName,
+                CustomerEmail = a.Customer!.User!.Email,
+                CustomerAvatarUrl = a.Customer!.User!.AvatarUrl,
+                AssignedStaffId = a.AssignedStaffId,
+                AssignedStaffName = a.AssignedStaff != null ? a.AssignedStaff.FullName : null,
+                Review = a.Review != null ? new ViewReviewDto
+                {
+                    Rating = a.Review.Rating,
+                    Comment = a.Review.Comment,
+                    WouldRecommend = a.Review.WouldRecommend,
+                    CreatedAt = a.Review.CreatedAt
+                } : null
+            })
             .ToListAsync();
 
         return Ok(new { success = true, data = appointments });
+    }
+
+    [HttpPatch("{id}/claim")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> Claim(int id)
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+        var appointment = await _appointmentRepo.GetByIdAsync(id);
+        if (appointment == null) return NotFound(new { success = false, message = "Appointment not found." });
+
+        if (appointment.Status != "Pending")
+            return BadRequest(new { success = false, message = "Only pending appointments can be claimed." });
+
+        appointment.Status = "Confirmed";
+        appointment.AssignedStaffId = userId;
+        _appointmentRepo.Update(appointment);
+        await _appointmentRepo.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Appointment claimed and confirmed." });
+    }
+
+    [HttpPatch("{id}/complete")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> Complete(int id)
+    {
+        var appointment = await _appointmentRepo.GetByIdAsync(id);
+        if (appointment == null) return NotFound(new { success = false, message = "Appointment not found." });
+
+        if (appointment.Status != "Confirmed")
+            return BadRequest(new { success = false, message = "Only confirmed appointments can be marked as completed." });
+
+        appointment.Status = "Completed";
+        _appointmentRepo.Update(appointment);
+        await _appointmentRepo.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Appointment marked as completed." });
+    }
+
+    [HttpPatch("{id}/staff-cancel")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> StaffCancel(int id, [FromBody] string reason)
+    {
+        var appointment = await _appointmentRepo.GetByIdAsync(id);
+        if (appointment == null) return NotFound(new { success = false, message = "Appointment not found." });
+
+        if (appointment.Status == "Completed" || appointment.Status == "Cancelled")
+            return BadRequest(new { success = false, message = "Cannot cancel completed or already cancelled appointments." });
+
+        appointment.Status = "Cancelled";
+        appointment.CancellationReason = reason;
+        _appointmentRepo.Update(appointment);
+        await _appointmentRepo.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Appointment cancelled by staff." });
     }
 }

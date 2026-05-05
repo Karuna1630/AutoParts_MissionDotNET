@@ -29,3 +29,20 @@ export const getAllAppointments = async () => {
   const response = await api.get('/appointments/all');
   return response.data;
 };
+
+export const claimAppointment = async (id) => {
+  const response = await api.patch(`/appointments/${id}/claim`);
+  return response.data;
+};
+
+export const completeAppointment = async (id) => {
+  const response = await api.patch(`/appointments/${id}/complete`);
+  return response.data;
+};
+
+export const staffCancelAppointment = async (id, reason) => {
+  const response = await api.patch(`/appointments/${id}/staff-cancel`, JSON.stringify(reason), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  return response.data;
+};

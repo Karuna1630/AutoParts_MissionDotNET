@@ -83,7 +83,14 @@ const Appointments = () => {
     setSubmitting(true); setError(null);
     try {
       const res = await submitReview({ appointmentId:selectedAppt.id, rating:reviewForm.rating, comment:reviewForm.comment, wouldRecommend:reviewForm.wouldRecommend });
-      if (res.success) { setSuccess('Review submitted!'); setModal(null); setReviewForm({rating:0,comment:'',wouldRecommend:true}); fetchData(); setTimeout(()=>setSuccess(null),4000); }
+      if (res.success) { 
+        setSuccess('Review submitted!'); 
+        setModal(null); 
+        setReviewForm({rating:0,comment:'',wouldRecommend:true}); 
+        await fetchData(); 
+        setSelectedAppt(null); // Clear selected state
+        setTimeout(()=>setSuccess(null),4000); 
+      }
     } catch (e) { setError(getApiErrorMessage(e)); }
     finally { setSubmitting(false); }
   };
@@ -209,6 +216,13 @@ const Appointments = () => {
               <h2 className="text-2xl font-black text-slate-900">Appointment Details</h2>
               <button onClick={()=>setModal(null)} className="p-2 hover:bg-slate-100 rounded-xl"><FiX size={20} className="text-slate-400"/></button>
             </div>
+            {selectedAppt.customerAvatarUrl && (
+              <div className="mb-6 flex justify-center">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                  <img src={selectedAppt.customerAvatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            )}
             <div className="space-y-3 mb-6">
               {[['Service', selectedAppt.serviceType],['Vehicle', selectedAppt.vehicleName],
                 ['Date', new Date(selectedAppt.preferredDate).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})],

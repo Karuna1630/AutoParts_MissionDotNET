@@ -44,6 +44,14 @@ public class ServiceAppointment
     [MaxLength(500)]
     public string? Notes { get; set; }
 
+    public int? AssignedStaffId { get; set; }
+
+    [ForeignKey(nameof(AssignedStaffId))]
+    public User? AssignedStaff { get; set; }
+
+    [MaxLength(500)]
+    public string? CancellationReason { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation property for review

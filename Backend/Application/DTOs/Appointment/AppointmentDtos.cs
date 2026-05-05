@@ -24,13 +24,25 @@ public class ViewAppointmentDto
     public int Id { get; set; }
     public int VehicleId { get; set; }
     public string VehicleName { get; set; } = string.Empty;
+    public string? VehicleImageUrl { get; set; }
     public string ServiceType { get; set; } = string.Empty;
     public DateTime PreferredDate { get; set; }
     public string PreferredTime { get; set; } = string.Empty;
     public string Priority { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; }
+    
+    // Customer Info
+    public string? CustomerName { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string? CustomerAvatarUrl { get; set; }
+    
+    // Staff Info
+    public int? AssignedStaffId { get; set; }
+    public string? AssignedStaffName { get; set; }
+    
     public ViewReviewDto? Review { get; set; }
 }
 
