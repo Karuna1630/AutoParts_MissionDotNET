@@ -21,7 +21,7 @@ const AdminDashboard = () => {
   const stats = [
     { 
       label: 'TOTAL REVENUE', 
-      value: '$31,939', 
+      value: 'Rs.31,939', 
       subtext: '7 invoices', 
       icon: <FiDollarSign />, 
       bgColor: 'bg-green-50', 
@@ -64,11 +64,11 @@ const AdminDashboard = () => {
   ];
 
   const recentSales = [
-    { name: 'James Carter', date: '4/23/2026', amount: '$2,690', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
-    { name: 'Sara Lee', date: '4/17/2026', amount: '$9,720', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
-    { name: 'Tom Becker', date: '3/11/2026', amount: '$6,480', status: 'Overdue', statusColor: 'bg-red-500 text-white' },
-    { name: 'Maya Iyer', date: '4/10/2026', amount: '$880', status: 'Credit', statusColor: 'bg-orange-100 text-orange-700' },
-    { name: 'James Carter', date: '2/24/2026', amount: '$6,219', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
+    { name: 'James Carter', date: '4/23/2026', amount: 'Rs.2,690', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
+    { name: 'Sara Lee', date: '4/17/2026', amount: 'Rs.9,720', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
+    { name: 'Tom Becker', date: '3/11/2026', amount: 'Rs.6,480', status: 'Overdue', statusColor: 'bg-red-500 text-white' },
+    { name: 'Maya Iyer', date: '4/10/2026', amount: 'Rs.880', status: 'Credit', statusColor: 'bg-orange-100 text-orange-700' },
+    { name: 'James Carter', date: '2/24/2026', amount: 'Rs.6,219', status: 'Paid', statusColor: 'bg-slate-100 text-slate-600' },
   ];
 
   return (
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
             </div>
             
             <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

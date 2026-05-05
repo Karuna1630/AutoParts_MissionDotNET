@@ -12,7 +12,7 @@ namespace Application.Interfaces.Repositories
     /// <summary>
     /// user repo activities for all roles
     /// </summary>
-    public interface IUserRepo
+    public interface IStaffRepo
     {
         Task<UserProfile?> GetByIdAsync(Guid id);
         Task<UserProfile> AddAsync(UserProfile profile);

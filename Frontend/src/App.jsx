@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Register from './auth/Register';
 import Login from './auth/Login';
 import Landing from './pages/Landing';
+
+// Customer Components
 import CustomerLayout from './dashboard/customer/CustomerLayout';
 import CustomerDashboard from './dashboard/customer/CustomerDashboard';
 import MyVehicles from './dashboard/customer/MyVehicles';
@@ -14,6 +16,8 @@ import HealthPredictor from './dashboard/customer/HealthPredictor';
 import PointsWallet from './dashboard/customer/PointsWallet';
 import Rewards from './dashboard/customer/Rewards';
 import ProfileSettings from './dashboard/customer/ProfileSettings';
+
+// Admin Components
 import AdminLayout from './dashboard/admin/AdminLayout';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
 import UserManagement from './dashboard/admin/UserManagement';
@@ -22,6 +26,17 @@ import VendorManagement from './dashboard/admin/VendorManagement';
 import Inventory from './dashboard/admin/Inventory';
 import PurchaseInvoices from './dashboard/admin/PurchaseInvoices';
 import FinancialAnalytics from './dashboard/admin/FinancialAnalytics';
+
+// Staff Components
+import StaffLayout from './dashboard/staff/StaffLayout';
+import StaffDashboard from './dashboard/staff/StaffDashboard';
+import RegisterCustomer from './dashboard/staff/RegisterCustomer';
+import Customers from './dashboard/staff/Customers';
+import CustomerDetails from './dashboard/staff/CustomerDetails';
+import PointOfSale from './dashboard/staff/PointOfSale';
+import GlobalSearch from './dashboard/staff/GlobalSearch';
+import Reports from './dashboard/staff/Reports';
+import StaffProfile from './dashboard/staff/StaffProfile';
 
 function App() {
   return (
@@ -60,6 +75,18 @@ function App() {
           <Route path="vendors" element={<VendorManagement />} />
           <Route path="invoices" element={<PurchaseInvoices />} />
           <Route path="analytics" element={<FinancialAnalytics />} />
+        </Route>
+
+        {/* Staff Dashboard Routes */}
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="register-customer" element={<RegisterCustomer />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
+          <Route path="pos" element={<PointOfSale />} />
+          <Route path="search" element={<GlobalSearch />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="profile" element={<StaffProfile />} />
         </Route>
 
         {/* Catch-all redirect */}

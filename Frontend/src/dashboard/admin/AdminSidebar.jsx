@@ -1,16 +1,19 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FiLayout, 
   FiPieChart, 
   FiUsers, 
   FiBox, 
   FiTruck, 
-  FiFileText
+  FiFileText,
+  FiLogOut
 } from 'react-icons/fi';
+import { FaCarSide } from 'react-icons/fa';
 
 const AdminSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { 
@@ -31,22 +34,28 @@ const AdminSidebar = () => {
     }
   ];
 
+  const handleSignOut = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+    navigate('/login');
+  };
+
   return (
-    <aside className="w-64 bg-[#0f172a] text-slate-300 flex flex-col fixed h-screen">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-          A
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-[#0F172A] text-slate-400 print:hidden">
+      <div className="flex h-20 items-center gap-3 px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
+          <FaCarSide className="text-lg text-white" />
         </div>
-        <div className="leading-none">
-          <h1 className="text-white font-bold text-lg leading-tight">AutoParts</h1>
-          <p className="text-[10px] text-slate-400 tracking-wider">VEHICLE MIS</p>
+        <div>
+          <h2 className="text-base font-bold leading-none tracking-tight text-white">AutoParts</h2>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500">Vehicle MIS</p>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 mt-4 space-y-8">
+      <nav className="flex-1 space-y-8 overflow-y-auto px-4 py-6">
         {menuItems.map((section, idx) => (
           <div key={idx}>
-            <h2 className="px-4 text-[11px] font-semibold text-slate-500 tracking-widest mb-4">
+            <h2 className="mb-4 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
               {section.section}
             </h2>
             <div className="space-y-1">
@@ -56,14 +65,14 @@ const AdminSidebar = () => {
                   <Link
                     key={item.name}
                     to={item.path}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
                       isActive 
-                        ? 'bg-blue-600 text-white' 
-                        : 'hover:bg-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                        : 'hover:bg-slate-800 hover:text-white'
                     }`}
                   >
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-sm font-medium">{item.name}</span>
+                    <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
+                    {item.name}
                   </Link>
                 );
               })}
@@ -71,6 +80,16 @@ const AdminSidebar = () => {
           </div>
         ))}
       </nav>
+
+      <div className="border-t border-slate-800 p-4">
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all hover:bg-red-500/10 hover:text-red-500"
+        >
+          <FiLogOut />
+          Sign out
+        </button>
+      </div>
     </aside>
   );
 };

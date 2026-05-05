@@ -89,12 +89,10 @@ const AdminLayout = () => {
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
       {/* Admin Sidebar */}
-      <div className="w-64 fixed inset-y-0 left-0 z-50">
-        <AdminSidebar />
-      </div>
+      <AdminSidebar />
 
       {/* Content Wrapper */}
-      <div className="flex-1 flex flex-col ml-64 min-h-screen">
+      <div className="flex-1 flex flex-col ml-64 print:ml-0 print:bg-white min-h-screen">
         {/* Global Header */}
         <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
           {/* Header Spacer */}

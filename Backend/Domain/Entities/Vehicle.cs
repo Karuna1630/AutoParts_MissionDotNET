@@ -14,7 +14,7 @@ public class Vehicle
     public int CustomerId { get; set; }
 
     [ForeignKey(nameof(CustomerId))]
-    public User? Customer { get; set; }
+    public Customer? Customer { get; set; }
 
     [Required]
     [MaxLength(20)]

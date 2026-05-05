@@ -3,10 +3,11 @@ using Application.Common.Exceptions;
 using Application.Common.Interfaces;
 using Application.Common.Mappers;
 using Application.DTOs;
+using Application.DTOs.Auth;
+using Application.DTOs.Common;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
 using Application.Interfaces.Services;
-using Application.Interfaces.Security;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -15,14 +16,16 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class StaffAuthService(IUserRepo repo, IIdentityService identityService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
+    public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
     {
-        private readonly IUserRepo _repo = repo;
+        private readonly IStaffRepo _repo = repo;
         private readonly IIdentityService _identityService = identityService;
+        private readonly ITokenService _tokenService = tokenService;
         private readonly IImageService _imageService = imageService;
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IPasswordHasher _passwordHasher = passwordHasher;
@@ -77,6 +80,30 @@ namespace Application.Services
                 await _identityService.DeleteUserAsync(id);
                 throw new InvalidOperationException("Profile creation failed. Registration rolled back.");
             }
+
+        }
+
+        public async Task<ApiResponse<AuthResponseDto>> StaffLoginAsync(LoginRequestDto request) 
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return new ApiResponse<AuthResponseDto> { Message = "Email and password are required.", Success = false };
+            }
+
+            var (id, email, phoneNumber) = await _identityService.FindByEmailAsync(request.Email);
+            if (id is null || (await _identityService.VerifyPassword(id, request.Password) == false))
+            {
+                return new ApiResponse<AuthResponseDto> { Message = "Invalid Email or password" , Success = false };
+            }
+            var userProfile = await _repo.GetByIdAsync(Guid.Parse(id));
+
+            var profile = StaffMapper.ToViewDto(userProfile, email, phoneNumber);
+
+            //form the jwt token
+            var staffData = BuildStaffAuthResponse(profile);
+
+            return new ApiResponse<AuthResponseDto> { Message = "Login Success.", Success = true, Data = staffData };
+
 
         }
         public async Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto, Guid? managedById = null)
@@ -169,6 +196,22 @@ namespace Application.Services
 
         }
 
+        private AuthResponseDto BuildStaffAuthResponse(ViewStaffDto user)
+        {
+            var (token, expiresAtUtc) =  _tokenService.GenerateStaffToken(user);
+            return new AuthResponseDto
+            {
+                StaffId = user.IdentityId.ToString(),
+                Email = user.Email,
+                FullName = user.DisplayName,
+                Role = user.UserRole.ToString(),
+                Token = token,
+                AvatarUrl = user.ProfilePictureUrl,
+                CoverUrl = "",
+                ExpiresAtUtc = expiresAtUtc
+            };
+        }
+
         public async Task<ViewStaffDto?> UpdateStaffProfileImageAsync(Guid staffId, IFormFile image, Guid? managedById = null)
         {
             if (image == null || image.Length == 0)
@@ -213,3 +256,4 @@ namespace Application.Services
         }
     }
 }
+

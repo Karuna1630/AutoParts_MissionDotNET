@@ -32,6 +32,10 @@ export const getApiErrorMessage = (error, fallback = 'Request failed.') => {
     return 'Your session has expired. Please sign in again.';
   }
 
+  if (statusCode === 403) {
+    return 'Access denied. You do not have permission for this action. Please sign out and sign in again, or contact an administrator.';
+  }
+
   if (apiError?.errors && typeof apiError.errors === 'object') {
     return Object.values(apiError.errors).flat().join(' ');
   }

@@ -6,19 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
 
-public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options)
-    {
-    }
-
-    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
-    public DbSet<User> AppUsers { get; set; } = null!;
-    public DbSet<Vehicle> Vehicles { get; set; } = null!;
-    public DbSet<Vendor> Vendors { get; set; } = null!;
-    public DbSet<InventoryItem> InventoryItems { get; set; } = null!;
-    public DbSet<PurchaseInvoice> PurchaseInvoices { get; set; } = null!;
+    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<User> AppUsers => Set<User>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<Vendor> Vendors => Set<Vendor>();
+    public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
+    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
