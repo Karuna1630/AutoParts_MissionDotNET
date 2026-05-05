@@ -53,7 +53,12 @@ TemporaryDependencyNodeTargetIdentifier=net9.0
 /warnaserror+:NU1605,SYSLIB0011
 
 [sourceFiles]
-Common/OperationResult.cs
+Common/
+ Exceptions/NotFoundException.cs
+ Interfaces/IIdentityService.cs
+ Mappers/StaffMapper.cs
+ OperationResult.cs
+ PagedResult.cs
 DTOs/Auth/
  AuthResponseDto.cs
  CreateStaffRequestDto.cs
@@ -61,18 +66,28 @@ DTOs/Auth/
  RegisterCustomerRequestDto.cs
 DTOs/
  Common/ApiResponse.cs
+ CreateStaffDto.cs
+ UpdateStaffDto.cs
  User/UpdateProfileRequestDto.cs
  Vehicle/VehicleDtos.cs
+ Vendor/VendorDtos.cs
+ ViewStaffDto.cs
 Interfaces/Repositories/
  IGenericRepository.cs
+ IInventoryRepository.cs
+ IPurchaseInvoiceRepository.cs
+ IUserRepo.cs
  IUserRepository.cs
+ IVendorRepository.cs
 Interfaces/Security/
  IPasswordHasher.cs
  ITokenService.cs
 Interfaces/Services/
  IAuthService.cs
  IImageService.cs
+ IStaffAuthService.cs
  IVehicleService.cs
+ IVendorService.cs
 Mappings/MappingProfile.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -80,7 +95,9 @@ obj/Debug/net9.0/
  Application.GlobalUsings.g.cs
 Services/
  AuthService.cs
+ StaffAuthService.cs
  VehicleService.cs
+ VendorService.cs
 
 [metadataReferences]
 ../Domain/obj/Debug/net9.0/ref/Domain.dll

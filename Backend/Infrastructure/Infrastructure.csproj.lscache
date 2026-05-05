@@ -58,17 +58,20 @@ Data/
  Configurations/
   UserConfiguration.cs
   VehicleConfiguration.cs
+Identity/
+ ApplicationUser.cs
+ IdentityService.cs
 Migrations/
- 20260426113804_AddAuthUserAndConstraints.cs
- 20260426113804_AddAuthUserAndConstraints.Designer.cs
- 20260427063917_UpdateUserSchema.cs
- 20260427063917_UpdateUserSchema.Designer.cs
- 20260427112746_AddUserImagesAndAddress.cs
- 20260427112746_AddUserImagesAndAddress.Designer.cs
- 20260427122518_AddVehicleManagementV2.cs
- 20260427122518_AddVehicleManagementV2.Designer.cs
- 20260428033806_AddVehicleImageUrl.cs
- 20260428033806_AddVehicleImageUrl.Designer.cs
+ 20260428155129_Vendortable.cs
+ 20260428155129_Vendortable.Designer.cs
+ 20260428173914_AddInventory.cs
+ 20260428173914_AddInventory.Designer.cs
+ 20260428174533_AddCategoryToInventory.cs
+ 20260428174533_AddCategoryToInventory.Designer.cs
+ 20260428175951_UpdateInventoryFields.cs
+ 20260428175951_UpdateInventoryFields.Designer.cs
+ 20260428182923_AddPurchaseInvoices.cs
+ 20260428182923_AddPurchaseInvoices.Designer.cs
  AppDbContextModelSnapshot.cs
 obj/Debug/net9.0/
  .NETCoreApp,Version=v9.0.AssemblyAttributes.cs
@@ -76,11 +79,17 @@ obj/Debug/net9.0/
  Infrastructure.GlobalUsings.g.cs
 Repositories/
  GenericRepository.cs
+ InventoryRepository.cs
+ PurchaseInvoiceRepository.cs
+ UserRepo.cs
  UserRepository.cs
+ VendorRepository.cs
 Security/
  CloudinaryImageService.cs
  Pbkdf2PasswordHasher.cs
-Seed/AdminSeeder.cs
+Seed/
+ AdminSeeder.cs
+ RoleInitializer.cs
 
 [metadataReferences]
 ../
@@ -393,9 +402,10 @@ Seed/AdminSeeder.cs
 <NUGET>/
  automapper/15.1.3/lib/net9.0/AutoMapper.dll
  cloudinarydotnet/1.28.0/lib/netstandard2.0/CloudinaryDotNet.dll
- microsoft.entityframeworkcore.abstractions/9.0.7/lib/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
- microsoft.entityframeworkcore.relational/9.0.7/lib/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
- microsoft.entityframeworkcore/9.0.7/lib/net8.0/Microsoft.EntityFrameworkCore.dll
+ microsoft.aspnetcore.identity.entityframeworkcore/9.0.15/lib/net9.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+ microsoft.entityframeworkcore.abstractions/9.0.15/lib/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
+ microsoft.entityframeworkcore.relational/9.0.15/lib/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
+ microsoft.entityframeworkcore/9.0.15/lib/net8.0/Microsoft.EntityFrameworkCore.dll
  microsoft.identitymodel.abstractions/8.14.0/lib/net9.0/Microsoft.IdentityModel.Abstractions.dll
  microsoft.identitymodel.jsonwebtokens/8.14.0/lib/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
  microsoft.identitymodel.logging/8.14.0/lib/net9.0/Microsoft.IdentityModel.Logging.dll
@@ -425,7 +435,7 @@ Seed/AdminSeeder.cs
 <NUGET>/microsoft.codeanalysis.analyzers/3.3.4/analyzers/dotnet/cs/
  Microsoft.CodeAnalysis.Analyzers.dll
  Microsoft.CodeAnalysis.CSharp.Analyzers.dll
-<NUGET>/microsoft.entityframeworkcore.analyzers/9.0.7/analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll
+<NUGET>/microsoft.entityframeworkcore.analyzers/9.0.15/analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll
 
 [analyzerConfigFiles]
 <DOTNET>/sdk/10.0.202/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_9_default.globalconfig
