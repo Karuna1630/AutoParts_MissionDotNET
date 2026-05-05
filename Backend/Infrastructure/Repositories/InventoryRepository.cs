@@ -4,7 +4,7 @@ using Infrastructure.Data;
 
 namespace Infrastructure.Repositories;
 
-public class InventoryRepository : GenericRepository<InventoryItem>, IInventoryRepository
+public class InventoryRepository : GenericRepository<Part>, IInventoryRepository
 {
     public InventoryRepository(AppDbContext context) : base(context)
     {

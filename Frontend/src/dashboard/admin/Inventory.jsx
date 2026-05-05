@@ -17,7 +17,7 @@ const inventoryValidationSchema = Yup.object().shape({
   category: Yup.string().required('Category is required'),
   vendor: Yup.string().required('Vendor is required'),
   price: Yup.number().typeError('Must be a number').positive('Price must be greater than 0').required('Price is required'),
-  stock: Yup.number().typeError('Must be a number').min(0, 'Stock cannot be negative').required('Stock is required'),
+  stockQuantity: Yup.number().typeError('Must be a number').min(0, 'Stock cannot be negative').required('Stock is required'),
 });
 
 const Inventory = () => {
@@ -109,7 +109,7 @@ const Inventory = () => {
       formData.append('name', values.name);
       formData.append('category', values.category);
       formData.append('price', values.price);
-      formData.append('stock', values.stock);
+      formData.append('stockQuantity', values.stockQuantity);
       
       if (selectedFile) {
         formData.append('image', selectedFile);
@@ -154,7 +154,7 @@ const Inventory = () => {
     category: editingItem?.category || '',
     vendor: '',
     price: editingItem?.price || '',
-    stock: editingItem?.stock || '',
+    stockQuantity: editingItem?.stockQuantity || '',
   }), [editingItem]);
 
   const filteredItems = items.filter(item => 
@@ -257,8 +257,8 @@ const Inventory = () => {
                       <div className="text-sm text-slate-600 font-medium">{item.category}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className={`text-sm font-bold ${item.stock <= 10 ? 'text-orange-500' : 'text-slate-700'}`}>
-                        {item.stock}
+                      <div className={`text-sm font-bold ${item.stockQuantity <= 10 ? 'text-orange-500' : 'text-slate-700'}`}>
+                        {item.stockQuantity}
                       </div>
                     </td>
                     <td className="py-4 px-6 font-bold text-slate-900 text-sm">
@@ -429,14 +429,14 @@ const Inventory = () => {
                     <div className="space-y-1">
                       <label className="block text-xs font-bold text-[#1E293B]">Stock Quantity</label>
                       <Field
-                        name="stock"
+                        name="stockQuantity"
                         type="number"
                         placeholder="0"
                         className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
-                          touched.stock && errors.stock ? 'border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
+                          touched.stockQuantity && errors.stockQuantity ? 'border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-[#4887FA] focus:ring-[#4887FA]/20'
                         }`}
                       />
-                      <ErrorMessage name="stock" component="div" className="text-[10px] text-red-500 font-bold ml-1" />
+                      <ErrorMessage name="stockQuantity" component="div" className="text-[10px] text-red-500 font-bold ml-1" />
                     </div>
                   </div>
 

@@ -20,7 +20,7 @@ public class CreateInventoryItemDto
 
     [Required]
     [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
-    public int Stock { get; set; }
+    public int StockQuantity { get; set; }
 
     public IFormFile? Image { get; set; }
 }

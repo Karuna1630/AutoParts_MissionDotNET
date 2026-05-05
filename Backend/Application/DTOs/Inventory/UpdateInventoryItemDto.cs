@@ -13,7 +13,7 @@ public class UpdateInventoryItemDto
     public decimal? Price { get; set; }
 
     [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
-    public int? Stock { get; set; }
+    public int? StockQuantity { get; set; }
 
     public IFormFile? Image { get; set; }
 }

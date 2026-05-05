@@ -20,4 +20,5 @@ public class Customer
     public decimal CreditBalance { get; set; } = 0;
 
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+    public virtual ICollection<SalesInvoice> SalesInvoices { get; set; } = new List<SalesInvoice>();
 }

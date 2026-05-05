@@ -26,9 +26,10 @@ public class MappingProfile : Profile
         CreateMap<Vendor, VendorResponseDto>();
         
         // Inventory
-        CreateMap<Application.DTOs.Inventory.CreateInventoryItemDto, InventoryItem>()
+        // Inventory/Parts
+        CreateMap<Application.DTOs.Inventory.CreateInventoryItemDto, Part>()
             .ForMember(dest => dest.ImageUrl, opt => opt.Ignore());
-        CreateMap<Application.DTOs.Inventory.UpdateInventoryItemDto, InventoryItem>()
+        CreateMap<Application.DTOs.Inventory.UpdateInventoryItemDto, Part>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }

@@ -2,6 +2,6 @@ using Domain.Entities;
 
 namespace Application.Interfaces.Repositories;
 
-public interface IInventoryRepository : IGenericRepository<InventoryItem>
+public interface IInventoryRepository : IGenericRepository<Part>
 {
 }

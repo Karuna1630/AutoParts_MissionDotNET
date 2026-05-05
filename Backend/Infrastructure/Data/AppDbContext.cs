@@ -14,7 +14,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
-    public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
+    public DbSet<Part> Parts => Set<Part>();
+    public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
+    public DbSet<SalesInvoiceItem> SalesInvoiceItems => Set<SalesInvoiceItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

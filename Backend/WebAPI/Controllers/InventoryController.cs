@@ -38,7 +38,7 @@ public class InventoryController : ControllerBase
     {
         if (dto == null) return BadRequest();
         
-        var item = _mapper.Map<InventoryItem>(dto);
+        var item = _mapper.Map<Part>(dto);
         
         if (dto.Image != null)
         {
