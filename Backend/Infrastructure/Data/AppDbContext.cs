@@ -15,6 +15,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
     public DbSet<Part> Parts => Set<Part>();
+    public DbSet<PartRequest> PartRequests { get; set; }
+    public DbSet<ServiceAppointment> ServiceAppointments { get; set; }
+    public DbSet<ServiceReview> ServiceReviews { get; set; }
     public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
     public DbSet<SalesInvoiceItem> SalesInvoiceItems => Set<SalesInvoiceItem>();
 
