@@ -133,7 +133,7 @@ public class AppointmentsController : ControllerBase
         if (customer == null) return BadRequest(new { success = false, message = "Customer profile not found." });
 
         var appointments = await _appointmentRepo.Query()
-            .Include(a => a.Customer).ThenInclude(c => c.User)
+            .Include(a => a.Customer).ThenInclude(c => c!.User)
             .Include(a => a.Vehicle)
             .Include(a => a.Review)
             .Include(a => a.AssignedStaff)
@@ -247,7 +247,7 @@ public class AppointmentsController : ControllerBase
     public async Task<IActionResult> GetAllAppointments()
     {
         var appointments = await _appointmentRepo.Query()
-            .Include(a => a.Customer).ThenInclude(c => c.User)
+            .Include(a => a.Customer).ThenInclude(c => c!.User)
             .Include(a => a.Vehicle)
             .Include(a => a.Review)
             .Include(a => a.AssignedStaff)
