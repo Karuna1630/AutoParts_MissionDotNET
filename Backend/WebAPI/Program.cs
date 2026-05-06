@@ -25,7 +25,6 @@ DotEnv.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -59,6 +58,9 @@ builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
+builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
+builder.Services.AddScoped<ISalesService, SalesService>();
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]

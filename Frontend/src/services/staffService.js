@@ -89,3 +89,8 @@ export const addVehicleToCustomer = async (customerId, vehicleData) => {
   });
   return response.data;
 };
+
+export const getCustomerHistory = async (customerId) => {
+  const response = await apiClient.get(`/staff/customers/${customerId}/history`);
+  return response.data;
+};

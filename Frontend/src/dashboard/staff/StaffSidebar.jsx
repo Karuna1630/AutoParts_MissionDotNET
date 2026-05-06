@@ -1,19 +1,20 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   FiLayout, 
   FiUsers, 
   FiShoppingCart, 
   FiSearch, 
   FiBarChart2,
-  FiLogOut,
-  FiUser
+  FiCalendar,
+  FiPackage,
+  FiFileText,
+  FiList
 } from 'react-icons/fi';
 import { FaCarSide } from 'react-icons/fa';
 
 const StaffSidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const menuItems = [
     { 
@@ -26,24 +27,16 @@ const StaffSidebar = () => {
       section: 'DAILY OPERATIONS',
       items: [
         { name: 'Customers', icon: <FiUsers />, path: '/staff/customers' },
+        { name: 'Bulk Orders', icon: <FiPackage />, path: '/staff/bulk-orders' },
         { name: 'Point of Sale', icon: <FiShoppingCart />, path: '/staff/pos' },
+        { name: 'Sales History', icon: <FiList />, path: '/staff/sales' },
         { name: 'Global Search', icon: <FiSearch />, path: '/staff/search' },
+        { name: 'Appointments', icon: <FiCalendar />, path: '/staff/appointments' },
+        { name: 'Part Requests', icon: <FiFileText />, path: '/staff/part-requests' },
         { name: 'Reports', icon: <FiBarChart2 />, path: '/staff/reports' },
-      ]
-    },
-    {
-      section: 'ACCOUNT',
-      items: [
-        { name: 'Profile Settings', icon: <FiUser />, path: '/staff/profile' },
       ]
     }
   ];
-
-  const handleSignOut = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-    navigate('/login');
-  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-[#0F172A] text-slate-400">
@@ -87,13 +80,9 @@ const StaffSidebar = () => {
       </nav>
 
       <div className="mt-auto border-t border-slate-800 p-4">
-        <button
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all hover:bg-red-500/10 hover:text-red-500"
-        >
-          <FiLogOut />
-          Sign out
-        </button>
+        <div className="px-4 py-3 text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center">
+          © AutoParts Systems
+        </div>
       </div>
     </aside>
   );

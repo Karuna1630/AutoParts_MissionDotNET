@@ -90,7 +90,15 @@ const StaffLayout = () => {
                 </div>
                 <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold transition-transform group-hover:scale-105 overflow-hidden border-2 border-slate-700 shadow-inner">
                   {staff.avatarUrl ? (
-                    <img src={getAvatarUrl(staff.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                    <img 
+                      src={getAvatarUrl(staff.avatarUrl)} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        setStaff(prev => ({ ...prev, avatarUrl: null }));
+                      }}
+                    />
                   ) : (
                     <span>{staff.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'ST'}</span>
                   )}
