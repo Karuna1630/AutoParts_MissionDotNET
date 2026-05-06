@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus } from 'react-icons/fi';
 import { getMyPartRequests, createPartRequest } from '../../services/partService';
 import { getApiErrorMessage } from '../../services/api';
