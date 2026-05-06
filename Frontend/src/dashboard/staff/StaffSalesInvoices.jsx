@@ -8,6 +8,7 @@ const StaffSalesInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const printRef = useRef(null);
@@ -30,10 +31,24 @@ const StaffSalesInvoices = () => {
     }
   };
 
-  const filteredInvoices = invoices.filter(inv =>
-    inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
-    inv.customerName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const customerCounts = invoices.reduce((acc, inv) => {
+    if (inv.customerName && inv.customerName !== 'Walk-in') {
+      acc[inv.customerName] = (acc[inv.customerName] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
+  const filteredInvoices = invoices.filter(inv => {
+    const matchesSearch = inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+                          inv.customerName?.toLowerCase().includes(search.toLowerCase());
+    
+    let matchesFilter = true;
+    if (filterType === 'high_spenders') matchesFilter = inv.finalAmount >= 5000;
+    if (filterType === 'pending_credits') matchesFilter = inv.paymentStatus === 'Credit';
+    if (filterType === 'regulars') matchesFilter = inv.customerName && customerCounts[inv.customerName] >= 2;
+
+    return matchesSearch && matchesFilter;
+  });
 
   // Pagination
   const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
@@ -42,10 +57,10 @@ const StaffSalesInvoices = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Reset to page 1 when search changes
+  // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, filterType]);
 
   const printInvoice = (invoice) => {
     const win = window.open('', '_blank');
@@ -124,6 +139,9 @@ const StaffSalesInvoices = () => {
 
     const totalRevenue = filteredInvoices.reduce((sum, i) => sum + (i.finalAmount || 0), 0);
     const totalDiscount = filteredInvoices.reduce((sum, i) => sum + (i.discountAmount || 0), 0);
+    const filterTitle = filterType === 'high_spenders' ? 'High Spenders Report' :
+                        filterType === 'pending_credits' ? 'Pending Credits Report' :
+                        filterType === 'regulars' ? 'Regular Customers Report' : 'Sales Report';
 
     win.document.write(`
       <html><head><title>Sales Report</title>
@@ -144,7 +162,7 @@ const StaffSalesInvoices = () => {
         @media print { body { padding: 20px; } }
       </style></head><body>
       <div class="header">
-        <div class="brand">AutoParts — Sales Report</div>
+        <div class="brand">AutoParts — ${filterTitle}</div>
         <div class="subtitle">Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · ${filteredInvoices.length} invoices</div>
       </div>
       <div class="summary">
@@ -182,6 +200,16 @@ const StaffSalesInvoices = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <select 
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all cursor-pointer"
+          >
+            <option value="all">All Sales</option>
+            <option value="regulars">Regular Customers</option>
+            <option value="high_spenders">High Spenders (Rs. 5000+)</option>
+            <option value="pending_credits">Pending Credits</option>
+          </select>
           <button
             onClick={exportAllPdf}
             className="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 hover:bg-slate-800 transition-all"
