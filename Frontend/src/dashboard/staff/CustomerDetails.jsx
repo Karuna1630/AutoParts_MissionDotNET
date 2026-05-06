@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   FiArrowLeft, FiUser, FiMail, FiPhone, 
   FiCreditCard, FiPlus, FiCheck,
-  FiCalendar, FiDroplet, FiHash, FiSave, FiX
+  FiCalendar, FiDroplet, FiHash, FiX,
+  FiClock, FiShoppingBag, FiFileText, FiTruck
 } from 'react-icons/fi';
 import { FaCar } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { getCustomerDetails, addVehicleToCustomer } from '../../services/staffService';
+import { getCustomerDetails, addVehicleToCustomer, getCustomerHistory } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
 
 const vehicleSchema = Yup.object({
@@ -23,21 +24,26 @@ const CustomerDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
+  const [history, setHistory] = useState({ purchases: [], services: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('vehicles'); // 'vehicles', 'purchases', 'orders'
 
   useEffect(() => {
-    fetchDetails();
+    fetchData();
   }, [id]);
 
-  const fetchDetails = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await getCustomerDetails(id);
-      if (response.success) {
-        setCustomer(response.data);
-      }
+      const [detailsRes, historyRes] = await Promise.all([
+        getCustomerDetails(id),
+        getCustomerHistory(id)
+      ]);
+      
+      if (detailsRes.success) setCustomer(detailsRes.data);
+      if (historyRes.success) setHistory(historyRes.data);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -99,52 +105,179 @@ const CustomerDetails = () => {
           </div>
         </div>
 
-        {/* Right Column: Vehicles */}
+        {/* Right Column: Tabs (Vehicles, Purchase History, Orders) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FiCar className="text-blue-600" size={20} />
-                <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">Registered Vehicles</h3>
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[600px]">
+            {/* Tab Header */}
+            <div className="px-8 pt-6 bg-slate-50/50 border-b border-slate-100">
+              <div className="flex gap-6">
+                <TabButton 
+                  active={activeTab === 'vehicles'} 
+                  onClick={() => setActiveTab('vehicles')} 
+                  icon={FaCar} 
+                  label="Vehicles" 
+                  count={customer.vehicles?.length || 0}
+                />
+                <TabButton 
+                  active={activeTab === 'purchases'} 
+                  onClick={() => setActiveTab('purchases')} 
+                  icon={FiShoppingBag} 
+                  label="Sales History" 
+                  count={history.purchases?.length || 0}
+                />
+                <TabButton 
+                  active={activeTab === 'services'} 
+                  onClick={() => setActiveTab('services')} 
+                  icon={FiCalendar} 
+                  label="Appointments" 
+                  count={history.services?.length || 0}
+                />
               </div>
-              <button 
-                onClick={() => setIsAddVehicleOpen(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-blue-100 transition"
-              >
-                <FiPlus /> Add Vehicle
-              </button>
             </div>
 
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {customer.vehicles.map((vehicle) => (
-                  <div key={vehicle.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4 group transition-all hover:bg-white hover:shadow-lg">
-                    {vehicle.imageUrl && (
-                      <div className="w-full h-32 rounded-2xl overflow-hidden bg-slate-100 mb-4">
-                        <img src={vehicle.imageUrl} alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`} className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                    <div className="flex justify-between items-start">
-                      <div className="p-3 bg-white rounded-2xl text-blue-600 shadow-sm">
-                        <FiCar size={20} />
-                      </div>
-                      {vehicle.isPrimary && (
-                        <span className="text-[9px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">Primary</span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-black text-slate-800 uppercase tracking-tight">{vehicle.vehicleMake} {vehicle.vehicleModel}</h4>
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                        <FiHash size={12} /> {vehicle.vehicleNumber}
-                      </div>
-                    </div>
-                    <div className="pt-2 flex gap-3">
-                       <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded-lg">YEAR: {vehicle.vehicleYear}</span>
-                       <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded-lg uppercase">{vehicle.vehicleColor || 'N/A'}</span>
-                    </div>
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto p-8 bg-white relative">
+              
+              {/* Vehicles Tab */}
+              {activeTab === 'vehicles' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">Registered Vehicles</h3>
+                    <button 
+                      onClick={() => setIsAddVehicleOpen(true)}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-blue-100 transition"
+                    >
+                      <FiPlus /> Add Vehicle
+                    </button>
                   </div>
-                ))}
-              </div>
+                  
+                  {customer.vehicles.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {customer.vehicles.map((vehicle) => (
+                        <div key={vehicle.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4 group transition-all hover:bg-white hover:shadow-lg">
+                          {vehicle.imageUrl && (
+                            <div className="w-full h-32 rounded-2xl overflow-hidden bg-slate-100 mb-4">
+                              <img src={vehicle.imageUrl} alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="flex justify-between items-start">
+                            <div className="p-3 bg-white rounded-2xl text-blue-600 shadow-sm">
+                              <FaCar size={20} />
+                            </div>
+                            {vehicle.isPrimary && (
+                              <span className="text-[9px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">Primary</span>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-black text-slate-800 uppercase tracking-tight">{vehicle.vehicleMake} {vehicle.vehicleModel}</h4>
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                              <FiHash size={12} /> {vehicle.vehicleNumber}
+                            </div>
+                          </div>
+                          <div className="pt-2 flex gap-3">
+                             <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded-lg">YEAR: {vehicle.vehicleYear}</span>
+                             <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded-lg uppercase">{vehicle.vehicleColor || 'N/A'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-300">
+                      <FaCar size={48} className="mb-4 opacity-50" />
+                      <p className="font-bold uppercase tracking-widest text-xs">No vehicles registered</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Purchase History Tab */}
+              {activeTab === 'purchases' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm mb-2">Sales Invoices</h3>
+                  {history.purchases.length > 0 ? (
+                    <div className="space-y-3">
+                      {history.purchases.map(invoice => (
+                        <div key={invoice.invoiceId} className="flex flex-col md:flex-row md:items-center justify-between p-5 border border-slate-100 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-md transition-all gap-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm border border-slate-100">
+                              <FiFileText size={20} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{invoice.invoiceNumber}</p>
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                <FiClock size={10} />
+                                {new Date(invoice.invoiceDate).toLocaleDateString()}
+                                <span className="w-1 h-1 bg-slate-300 rounded-full mx-1"></span>
+                                {invoice.itemCount} Items
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6 justify-between md:justify-end border-t border-slate-200 pt-3 md:pt-0 md:border-0">
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                              invoice.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {invoice.paymentStatus}
+                            </span>
+                            <div className="text-right">
+                              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
+                              <p className="text-base font-black text-slate-900 tracking-tight">Rs. {invoice.finalAmount?.toLocaleString()}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-300">
+                      <FiShoppingBag size={48} className="mb-4 opacity-50" />
+                      <p className="font-bold uppercase tracking-widest text-xs">No purchase history found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Services Tab */}
+              {activeTab === 'services' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm mb-2">Service Appointments</h3>
+                  {history.services?.length > 0 ? (
+                    <div className="space-y-3">
+                      {history.services.map(service => (
+                        <div key={service.appointmentId} className="p-5 border border-slate-100 rounded-2xl bg-slate-50 hover:bg-white hover:shadow-md transition-all">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{service.serviceType}</p>
+                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                <FiClock size={10} />
+                                {new Date(service.appointmentDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
+                              service.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                              service.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {service.status}
+                            </span>
+                          </div>
+
+                          {service.notes && (
+                            <div className="mt-4 p-3 bg-white rounded-xl border border-slate-100 text-xs text-slate-600 italic">
+                              <span className="font-bold not-italic text-slate-900 mr-2">Note:</span>
+                              "{service.notes}"
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-300">
+                      <FiCalendar size={48} className="mb-4 opacity-50" />
+                      <p className="font-bold uppercase tracking-widest text-xs">No service appointments found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
@@ -168,8 +301,8 @@ const CustomerDetails = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <ModalFormItem label="NUMBER" name="vehicleNumber" icon={FiHash} placeholder="ABC-123" />
                     <ModalFormItem label="YEAR" name="vehicleYear" icon={FiCalendar} type="number" />
-                    <ModalFormItem label="MAKE" name="vehicleMake" icon={FiCar} placeholder="e.g. Toyota" />
-                    <ModalFormItem label="MODEL" name="vehicleModel" icon={FiCar} placeholder="e.g. Camry" />
+                    <ModalFormItem label="MAKE" name="vehicleMake" icon={FaCar} placeholder="e.g. Toyota" />
+                    <ModalFormItem label="MODEL" name="vehicleModel" icon={FaCar} placeholder="e.g. Camry" />
                     <div className="col-span-2">
                       <ModalFormItem label="COLOR" name="vehicleColor" icon={FiDroplet} placeholder="e.g. White" />
                     </div>
@@ -206,6 +339,23 @@ const CustomerDetails = () => {
     </div>
   );
 };
+
+const TabButton = ({ active, onClick, icon: Icon, label, count }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-2 pb-4 px-2 border-b-2 transition-all font-bold text-xs uppercase tracking-widest ${
+      active 
+        ? 'border-blue-600 text-blue-600' 
+        : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+    }`}
+  >
+    <Icon size={14} />
+    {label}
+    <span className={`px-1.5 py-0.5 rounded text-[9px] ${active ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+      {count}
+    </span>
+  </button>
+);
 
 const DetailItem = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-4 group">
