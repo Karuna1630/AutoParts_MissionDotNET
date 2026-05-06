@@ -120,7 +120,7 @@ public class SalesService : ISalesService
         var invoices = await _invoiceRepo.Query()
             .Include(i => i.Customer).ThenInclude(c => c.User)
             .Include(i => i.Staff)
-            .Include(i => i.Items)
+            .Include(i => i.Items).ThenInclude(item => item.Part)
             .OrderByDescending(i => i.InvoiceDate)
             .ToListAsync();
 
