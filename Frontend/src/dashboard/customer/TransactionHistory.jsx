@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText, FiPackage, FiTruck } from 'react-icons/fi';
 import { customerHistoryService } from '../../services/customerHistoryService';
 
 const TransactionHistory = () => {
   const [activeTab, setActiveTab] = useState('purchases');
   const [purchases, setPurchases] = useState([]);
   const [services, setServices] = useState([]);
+  const [orderRequests, setOrderRequests] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +24,11 @@ const TransactionHistory = () => {
       if (combinedRes.success) {
         setPurchases(combinedRes.data.purchases);
         setServices(combinedRes.data.services);
+      }
+
+      const ordersRes = await customerHistoryService.getMyOrderRequests();
+      if (ordersRes.success) {
+        setOrderRequests(ordersRes.data);
       }
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -74,7 +80,7 @@ const TransactionHistory = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Purchase & Service History</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Your Activity History</h1>
           <p className="text-slate-500 mt-1 font-medium">Review your past orders, invoices, and service appointments.</p>
         </div>
         <button 
@@ -90,42 +96,22 @@ const TransactionHistory = () => {
         <SummaryCard icon={<FiShoppingBag />} label="Total Invoices" value={summary.totalInvoices} color="blue" />
         <SummaryCard icon={<FiFileText />} label="Total Spent" value={`Rs.${summary.totalSpent.toLocaleString(undefined, {minimumFractionDigits: 2})}`} color="emerald" />
         <SummaryCard icon={<FiTool />} label="Total Appointments" value={summary.totalAppointments} color="purple" />
-        <SummaryCard icon={<FiCheckCircle />} label="Completed Services" value={summary.completedAppointments} color="blue" />
+        <SummaryCard icon={<FiPackage />} label="Active Orders" value={orderRequests.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length} color="amber" />
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="flex border-b border-slate-200 px-2">
-          <button
-            onClick={() => setActiveTab('purchases')}
-            className={`px-6 py-4 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 ${
-              activeTab === 'purchases' 
-                ? 'border-blue-600 text-blue-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <FiShoppingBag /> Purchase History
-          </button>
-          <button
-            onClick={() => setActiveTab('services')}
-            className={`px-6 py-4 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 ${
-              activeTab === 'services' 
-                ? 'border-purple-600 text-purple-600' 
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <FiTool /> Service History
-          </button>
+        <div className="flex border-b border-slate-200 px-2 overflow-x-auto scrollbar-hide">
+          <TabButton active={activeTab === 'purchases'} onClick={() => setActiveTab('purchases')} icon={<FiShoppingBag />} label="Purchases" />
+          <TabButton active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} icon={<FiPackage />} label="Order Requests" />
+          <TabButton active={activeTab === 'services'} onClick={() => setActiveTab('services')} icon={<FiTool />} label="Services" />
         </div>
 
         <div className="p-6 bg-slate-50/50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-slate-800">
-              {activeTab === 'purchases' ? 'Recent Purchases' : 'Service Appointments'}
+              {activeTab === 'purchases' ? 'Finalized Invoices' : activeTab === 'orders' ? 'Active & Past Orders' : 'Service Appointments'}
             </h2>
-            <button className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-              <FiFilter /> Filter
-            </button>
           </div>
 
           <div className="space-y-4">
@@ -134,6 +120,13 @@ const TransactionHistory = () => {
                 key={purchase.invoiceId} 
                 purchase={purchase} 
                 onDownload={() => handleDownloadInvoice(purchase.invoiceId)} 
+              />
+            ))}
+
+            {activeTab === 'orders' && orderRequests.map((order) => (
+              <OrderRequestCard 
+                key={order.id} 
+                order={order} 
               />
             ))}
 
@@ -150,11 +143,25 @@ const TransactionHistory = () => {
   );
 };
 
+const TabButton = ({ active, onClick, icon, label }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-4 text-sm font-bold flex items-center gap-2 transition-colors border-b-2 whitespace-nowrap ${
+      active 
+        ? 'border-blue-600 text-blue-600' 
+        : 'border-transparent text-slate-500 hover:text-slate-800'
+    }`}
+  >
+    {icon} {label}
+  </button>
+);
+
 const SummaryCard = ({ icon, label, value, color }) => {
   const colorMap = {
     blue: 'bg-blue-50 text-blue-600',
     emerald: 'bg-emerald-50 text-emerald-600',
     purple: 'bg-purple-50 text-purple-600',
+    amber: 'bg-amber-50 text-amber-600',
   };
 
   return (
@@ -165,6 +172,56 @@ const SummaryCard = ({ icon, label, value, color }) => {
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</p>
         <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+      </div>
+    </div>
+  );
+};
+
+const OrderRequestCard = ({ order }) => {
+  const getStatusStyle = (status) => {
+    switch(status) {
+      case 'Pending': return 'bg-amber-100 text-amber-700';
+      case 'Reserved': return 'bg-blue-100 text-blue-700';
+      case 'Completed': return 'bg-emerald-100 text-emerald-700';
+      case 'Cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-slate-100 text-slate-700';
+    }
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition border-l-4" style={{ borderLeftColor: order.status === 'Pending' ? '#f59e0b' : order.status === 'Reserved' ? '#2563eb' : '#10b981' }}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h3 className="font-bold text-slate-900">Order #{order.id}</h3>
+            <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(order.status)}`}>
+              {order.status}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+            <FiClock className="text-xs" /> 
+            Requested on {new Date(order.requestDate).toLocaleDateString()}
+          </p>
+        </div>
+        
+        <div className="text-right">
+          <p className="text-xs text-slate-500 font-semibold">{order.items.length} items reserved</p>
+          <p className="font-bold text-slate-900 text-lg">Rs.{order.totalAmount.toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+        {order.items.map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between text-xs font-medium text-slate-600">
+            <span>{item.partName} <span className="text-slate-400 ml-1">({item.sku})</span></span>
+            <span className="font-bold">Qty: {item.quantity}</span>
+          </div>
+        ))}
+        {order.status === 'Reserved' && (
+          <div className="mt-3 p-3 bg-blue-50 text-[11px] text-blue-600 font-bold rounded-lg border border-blue-100 flex items-center gap-2">
+            <FiInfo size={14} /> These parts are reserved for you. Please visit the store for pickup and payment.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -210,7 +267,7 @@ const PurchaseCard = ({ purchase, onDownload }) => {
         {purchase.items.map((item, idx) => (
           <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
             <span className="text-sm font-medium text-slate-700 truncate mr-2">{item.partName}</span>
-            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{item.quantity} x ${item.unitPrice}</span>
+            <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{item.quantity} x Rs.{item.unitPrice.toLocaleString()}</span>
           </div>
         ))}
       </div>

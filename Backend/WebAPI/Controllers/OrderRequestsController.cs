@@ -109,6 +109,46 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, data = orders });
     }
 
+    [HttpGet("all")]
+    [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
+    public async Task<IActionResult> GetAll([FromQuery] string? status)
+    {
+        var baseQuery = _orderRepo.Query()
+            .Include(o => o.Customer).ThenInclude(c => c.User)
+            .Include(o => o.Items).ThenInclude(i => i.Part)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            baseQuery = baseQuery.Where(o => o.Status == status);
+        }
+
+        var orders = await baseQuery
+            .OrderByDescending(o => o.RequestDate)
+            .Select(o => new OrderRequestDto
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                CustomerName = o.Customer.User.FullName,
+                RequestDate = o.RequestDate,
+                Status = o.Status,
+                Notes = o.Notes,
+                TotalAmount = o.TotalAmount,
+                Items = o.Items.Select(i => new OrderRequestItemDto
+                {
+                    Id = i.Id,
+                    PartId = i.PartId,
+                    PartName = i.Part.Name,
+                    Sku = i.Part.SKU,
+                    Quantity = i.Quantity,
+                    UnitPriceAtRequest = i.UnitPriceAtRequest
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return Ok(new { success = true, data = orders });
+    }
+
     [HttpGet("pending")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
     public async Task<IActionResult> GetPendingOrders()

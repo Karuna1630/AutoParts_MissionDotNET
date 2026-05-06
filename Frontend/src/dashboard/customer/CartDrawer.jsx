@@ -136,33 +136,60 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
 
             {/* Footer */}
-            {!success && cart.length > 0 && (
-              <div className="border-t border-slate-100 px-6 py-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-bold">Estimated Subtotal</span>
-                  <span className="text-2xl font-black text-slate-900">Rs. {subtotal.toLocaleString()}</span>
-                </div>
-                
-                <div className="p-4 bg-blue-50 rounded-2xl text-[11px] text-blue-600 font-semibold border border-blue-100 flex gap-3">
-                  <FiInfo className="flex-shrink-0 mt-0.5" size={14} />
-                  <p>Final price and discounts (like loyalty rewards) will be applied when staff reviews your order and creates an invoice.</p>
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100">
-                    {error}
+            {!success && cart.length > 0 && (() => {
+              const hasDiscount = subtotal > 5000;
+              const discountAmount = hasDiscount ? subtotal * 0.10 : 0;
+              const estimatedTotal = subtotal - discountAmount;
+              
+              return (
+                <div className="border-t border-slate-100 px-6 py-6 space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500 font-semibold">Subtotal</span>
+                    <span className="font-bold text-slate-700">Rs. {subtotal.toLocaleString()}</span>
                   </div>
-                )}
 
-                <button 
-                  onClick={handleSubmitOrder}
-                  disabled={submitting}
-                  className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting Order...' : 'Submit Order Request'}
-                </button>
-              </div>
-            )}
+                  {hasDiscount && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+                        🎉 Loyalty Discount (10%)
+                      </span>
+                      <span className="font-bold text-emerald-600">- Rs. {discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <span className="text-slate-800 font-bold">Estimated Total</span>
+                    <span className="text-2xl font-black text-slate-900">Rs. {estimatedTotal.toLocaleString()}</span>
+                  </div>
+
+                  {hasDiscount ? (
+                    <div className="p-3 bg-emerald-50 rounded-xl text-[11px] text-emerald-700 font-semibold border border-emerald-100 flex gap-2">
+                      <FiCheckCircle className="flex-shrink-0 mt-0.5" size={14} />
+                      <p>You qualify for the <strong>10% Loyalty Discount</strong> since your order exceeds Rs. 5,000!</p>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-blue-50 rounded-xl text-[11px] text-blue-600 font-semibold border border-blue-100 flex gap-2">
+                      <FiInfo className="flex-shrink-0 mt-0.5" size={14} />
+                      <p>Spend over Rs. 5,000 to unlock a <strong>10% Loyalty Discount</strong> on your order!</p>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100">
+                      {error}
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleSubmitOrder}
+                    disabled={submitting}
+                    className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {submitting ? 'Submitting Order...' : 'Submit Order Request'}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

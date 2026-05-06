@@ -42,6 +42,7 @@ import StaffProfile from './dashboard/staff/StaffProfile';
 import StaffAppointments from './dashboard/staff/StaffAppointments';
 import StaffPartRequests from './dashboard/staff/StaffPartRequests';
 import StaffOrderRequests from './dashboard/staff/StaffOrderRequests';
+import StaffSalesInvoices from './dashboard/staff/StaffSalesInvoices';
 
 function App() {
   return (
@@ -89,6 +90,7 @@ function App() {
             <Route path="customers" element={<Customers />} />
             <Route path="customers/:id" element={<CustomerDetails />} />
             <Route path="pos" element={<PointOfSale />} />
+            <Route path="sales" element={<StaffSalesInvoices />} />
             <Route path="search" element={<GlobalSearch />} />
             <Route path="reports" element={<Reports />} />
             <Route path="appointments" element={<StaffAppointments />} />

@@ -1,41 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiAlertCircle } from 'react-icons/fi';
+import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 
 const StaffOrderRequests = () => {
+  const [activeTab, setActiveTab] = useState('pending');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
   useEffect(() => {
-    fetchPendingOrders();
-  }, []);
+    fetchOrders();
+  }, [activeTab]);
 
-  const fetchPendingOrders = async () => {
+  const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/OrderRequests/pending');
-      if (res.data.success) {
-        setOrders(res.data.data);
-      }
+      let endpoint = '/OrderRequests/pending';
+      if (activeTab === 'reserved') endpoint = '/OrderRequests/all?status=Reserved';
+      if (activeTab === 'completed') endpoint = '/OrderRequests/all?status=Completed';
+      const res = await apiClient.get(endpoint);
+      if (res.data.success) setOrders(res.data.data);
     } catch (err) {
-      setError('Failed to load pending orders.');
+      console.error('Failed to load orders.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateInvoice = async (orderId) => {
-    if (!window.confirm('Are you sure you want to create an invoice and reserve stock for this order?')) return;
-    
+    if (!window.confirm('Create invoice and reserve stock for this order?')) return;
     try {
       setProcessingId(orderId);
       const res = await apiClient.post(`/OrderRequests/${orderId}/create-invoice`);
       if (res.data.success) {
-        setSuccessMsg(res.data.message);
-        fetchPendingOrders();
+        setSuccessMsg('Invoice created! Order is now reserved for pickup.');
+        fetchOrders();
         setTimeout(() => setSuccessMsg(null), 5000);
       }
     } catch (err) {
@@ -45,15 +45,29 @@ const StaffOrderRequests = () => {
     }
   };
 
+  const handleCompleteOrder = async (orderId) => {
+    if (!window.confirm('Mark this order as Completed (Picked Up)?')) return;
+    try {
+      setProcessingId(orderId);
+      const res = await apiClient.patch(`/OrderRequests/${orderId}/complete`);
+      if (res.data.success) {
+        setSuccessMsg('Order completed!');
+        fetchOrders();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      }
+    } catch (err) {
+      alert('Failed to complete order.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm('Cancel this order request?')) return;
-    
     try {
       setProcessingId(orderId);
       const res = await apiClient.patch(`/OrderRequests/${orderId}/cancel`);
-      if (res.data.success) {
-        fetchPendingOrders();
-      }
+      if (res.data.success) fetchOrders();
     } catch (err) {
       alert('Failed to cancel order.');
     } finally {
@@ -61,100 +75,136 @@ const StaffOrderRequests = () => {
     }
   };
 
+  const tabs = [
+    { id: 'pending', label: 'Pending Requests', icon: FiClock },
+    { id: 'reserved', label: 'Ready for Pickup', icon: FiPackage },
+    { id: 'completed', label: 'Completed', icon: FiCheckCircle }
+  ];
+
+  const statusColor = {
+    Pending: 'bg-amber-100 text-amber-700',
+    Reserved: 'bg-blue-100 text-blue-700',
+    Completed: 'bg-emerald-100 text-emerald-700',
+    Cancelled: 'bg-red-100 text-red-700'
+  };
+
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="mb-10">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Pending Bulk Orders</h1>
-        <p className="text-slate-500 font-medium mt-1">Review customer cart submissions and convert them to invoices.</p>
+    <div>
+      {/* Header */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Order Management</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Track and fulfill customer bulk part requests.</p>
+        </div>
+        <div className="flex bg-white p-1 rounded-xl border border-slate-200">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === tab.id
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <tab.icon size={14} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {successMsg && (
-        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 font-bold text-sm flex items-center gap-3">
-          <FiCheckCircle size={20} /> {successMsg}
+        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 font-semibold text-sm flex items-center gap-2">
+          <FiCheckCircle size={16} /> {successMsg}
         </div>
       )}
 
       {loading ? (
-        <div className="space-y-6">
+        <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-48" />
+            <div key={i} className="bg-white rounded-xl p-5 border border-slate-200 animate-pulse h-28" />
           ))}
         </div>
       ) : orders.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
           {orders.map(order => (
-            <div key={order.id} className="bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-slate-200/30 transition-all">
-              <div className="p-8">
-                <div className="flex flex-col lg:flex-row justify-between gap-6 mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <FiUser size={28} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900">{order.customerName}</h3>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <FiClock /> {new Date(order.requestDate).toLocaleString()}
-                      </p>
-                    </div>
+            <div key={order.id} className="p-5 hover:bg-slate-50/50 transition-colors">
+              {/* Top Row */}
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                    <FiUser size={16} />
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right mr-4">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value</p>
-                      <p className="text-2xl font-black text-slate-900">Rs. {order.totalAmount.toLocaleString()}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleCreateInvoice(order.id)}
-                      disabled={processingId === order.id}
-                      className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <FiFileText />
-                      {processingId === order.id ? 'Processing...' : 'Create Invoice'}
-                    </button>
-                    <button 
-                      onClick={() => handleCancelOrder(order.id)}
-                      disabled={processingId === order.id}
-                      className="p-4 bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-                    >
-                      <FiXCircle size={20} />
-                    </button>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">{order.customerName}</h3>
+                    <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <FiClock size={10} /> {new Date(order.requestDate).toLocaleString()}
+                      <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${statusColor[order.status] || 'bg-slate-100 text-slate-600'}`}>
+                        {order.status}
+                      </span>
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-[24px] border border-slate-100 p-6">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Order Items</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {order.items.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100">
-                        <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
-                          <FiPackage size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.partName}</p>
-                          <p className="text-[10px] text-slate-400 font-bold">Qty: {item.quantity} × Rs.{item.unitPriceAtRequest.toLocaleString()}</p>
-                        </div>
-                      </div>
-                    ))}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase">Total</p>
+                    <p className="text-base font-bold text-slate-900">Rs. {order.totalAmount.toLocaleString()}</p>
                   </div>
-                </div>
 
-                {order.notes && (
-                  <div className="mt-6 flex gap-3 text-sm text-slate-500 bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50">
-                    <FiInfo className="flex-shrink-0 mt-0.5" />
-                    <p><strong>Customer Note:</strong> {order.notes}</p>
+                  {activeTab === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => handleCreateInvoice(order.id)}
+                        disabled={processingId === order.id}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        <FiFileText size={13} />
+                        {processingId === order.id ? 'Processing...' : 'Create Invoice'}
+                      </button>
+                      <button
+                        onClick={() => handleCancelOrder(order.id)}
+                        disabled={processingId === order.id}
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      >
+                        <FiXCircle size={16} />
+                      </button>
+                    </>
+                  )}
+
+                  {activeTab === 'reserved' && (
+                    <button
+                      onClick={() => handleCompleteOrder(order.id)}
+                      disabled={processingId === order.id}
+                      className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      <FiCheckCircle size={13} />
+                      {processingId === order.id ? 'Processing...' : 'Mark as Completed'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Items Row */}
+              <div className="flex flex-wrap gap-2 ml-12">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs">
+                    <FiPackage size={12} className="text-slate-400" />
+                    <span className="font-semibold text-slate-700">{item.partName}</span>
+                    <span className="text-slate-400">×{item.quantity}</span>
+                    <span className="text-slate-400">Rs.{item.unitPriceAtRequest.toLocaleString()}</span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex flex-col items-center justify-center text-center">
-          <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6">
-            <FiTruck size={40}/>
-          </div>
-          <h3 className="text-2xl font-bold text-slate-800">No pending orders</h3>
-          <p className="text-slate-500 mt-2 max-w-md">All customer bulk order requests have been processed.</p>
+        <div className="bg-white rounded-xl border border-slate-200 p-16 flex flex-col items-center justify-center text-center">
+          <FiShoppingBag className="text-slate-200 mb-3" size={36} />
+          <h3 className="text-lg font-bold text-slate-800">No {activeTab} orders</h3>
+          <p className="text-slate-500 text-sm mt-1">Check another tab or wait for new requests.</p>
         </div>
       )}
     </div>

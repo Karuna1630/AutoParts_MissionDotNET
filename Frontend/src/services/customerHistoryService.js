@@ -1,33 +1,32 @@
 import { apiClient } from './api';
 
 export const customerHistoryService = {
-  getPurchaseHistory: async (params) => {
-    const response = await apiClient.get('/customers/history/purchases', { params });
-    return response.data;
-  },
-
-  getServiceHistory: async (params) => {
-    const response = await apiClient.get('/customers/history/services', { params });
-    return response.data;
+  getSummary: async () => {
+    const res = await apiClient.get('/CustomerHistory/summary');
+    return res.data;
   },
 
   getCombinedHistory: async () => {
-    const response = await apiClient.get('/customers/history/all');
-    return response.data;
+    const res = await apiClient.get('/CustomerHistory/combined');
+    return res.data;
   },
 
-  getSummary: async () => {
-    const response = await apiClient.get('/customers/history/summary');
-    return response.data;
-  },
-
-  exportHistoryPdf: async () => {
-    const response = await apiClient.get('/customers/history/export', { responseType: 'blob' });
-    return response.data;
+  getMyOrderRequests: async () => {
+    const res = await apiClient.get('/OrderRequests/my-orders');
+    return res.data;
   },
 
   downloadInvoicePdf: async (invoiceId) => {
-    const response = await apiClient.get(`/customers/history/invoice/${invoiceId}/download`, { responseType: 'blob' });
-    return response.data;
+    const res = await apiClient.get(`/CustomerHistory/invoice/${invoiceId}/pdf`, {
+      responseType: 'blob'
+    });
+    return res.data;
+  },
+
+  exportHistoryPdf: async () => {
+    const res = await apiClient.get('/CustomerHistory/export/pdf', {
+      responseType: 'blob'
+    });
+    return res.data;
   }
 };
