@@ -3,6 +3,9 @@ import Register from './auth/Register';
 import Login from './auth/Login';
 import Landing from './pages/Landing';
 
+// Context
+import { CartProvider } from './context/CartContext';
+
 // Customer Components
 import CustomerLayout from './dashboard/customer/CustomerLayout';
 import CustomerDashboard from './dashboard/customer/CustomerDashboard';
@@ -37,62 +40,68 @@ import GlobalSearch from './dashboard/staff/GlobalSearch';
 import Reports from './dashboard/staff/Reports';
 import StaffProfile from './dashboard/staff/StaffProfile';
 import StaffAppointments from './dashboard/staff/StaffAppointments';
+import StaffPartRequests from './dashboard/staff/StaffPartRequests';
+import StaffOrderRequests from './dashboard/staff/StaffOrderRequests';
 
 function App() {
   return (
-    <Router
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        
-        {/* Customer Dashboard Routes */}
-        <Route path="/dashboard" element={<CustomerLayout />}>
-          <Route index element={<CustomerDashboard />} />
-          <Route path="vehicles" element={<MyVehicles />} />
-          <Route path="appointments" element={<Appointments />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="shop" element={<PartsShop />} />
-          <Route path="requests" element={<PartRequests />} />
-          <Route path="history" element={<TransactionHistory />} />
-          <Route path="predictor" element={<HealthPredictor />} />
-          <Route path="wallet" element={<PointsWallet />} />
-          <Route path="rewards" element={<Rewards />} />
-          <Route path="profile" element={<ProfileSettings />} />
-        </Route>
+    <CartProvider>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Customer Dashboard Routes */}
+          <Route path="/dashboard" element={<CustomerLayout />}>
+            <Route index element={<CustomerDashboard />} />
+            <Route path="vehicles" element={<MyVehicles />} />
+            <Route path="appointments" element={<Appointments />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="shop" element={<PartsShop />} />
+            <Route path="requests" element={<PartRequests />} />
+            <Route path="history" element={<TransactionHistory />} />
+            <Route path="predictor" element={<HealthPredictor />} />
+            <Route path="wallet" element={<PointsWallet />} />
+            <Route path="rewards" element={<Rewards />} />
+            <Route path="profile" element={<ProfileSettings />} />
+          </Route>
 
-        {/* Admin Dashboard Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<UserManagement />} />
-          <Route path="staff" element={<StaffManagement />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="vendors" element={<VendorManagement />} />
-          <Route path="invoices" element={<PurchaseInvoices />} />
-          <Route path="analytics" element={<FinancialAnalytics />} />
-        </Route>
+          {/* Admin Dashboard Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="staff" element={<StaffManagement />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="vendors" element={<VendorManagement />} />
+            <Route path="invoices" element={<PurchaseInvoices />} />
+            <Route path="analytics" element={<FinancialAnalytics />} />
+          </Route>
 
-        {/* Staff Dashboard Routes */}
-        <Route path="/staff" element={<StaffLayout />}>
-          <Route index element={<StaffDashboard />} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="customers/:id" element={<CustomerDetails />} />
-          <Route path="pos" element={<PointOfSale />} />
-          <Route path="search" element={<GlobalSearch />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="appointments" element={<StaffAppointments />} />
-          <Route path="profile" element={<StaffProfile />} />
-        </Route>
+          {/* Staff Dashboard Routes */}
+          <Route path="/staff" element={<StaffLayout />}>
+            <Route index element={<StaffDashboard />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="customers/:id" element={<CustomerDetails />} />
+            <Route path="pos" element={<PointOfSale />} />
+            <Route path="search" element={<GlobalSearch />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="appointments" element={<StaffAppointments />} />
+            <Route path="part-requests" element={<StaffPartRequests />} />
+            <Route path="bulk-orders" element={<StaffOrderRequests />} />
+            <Route path="profile" element={<StaffProfile />} />
+          </Route>
 
-        {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          {/* Catch-all redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </CartProvider>
   );
 }
 

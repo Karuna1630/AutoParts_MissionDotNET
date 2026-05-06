@@ -5,6 +5,9 @@ import {
   FaShoppingBag, FaFileAlt, FaHistory, FaWaveSquare,
   FaWallet, FaGift, FaUserCog, FaSignOutAlt, FaCarSide
 } from 'react-icons/fa';
+import { useCart } from '../../context/CartContext';
+import CartDrawer from './CartDrawer';
+import { FiShoppingBag } from 'react-icons/fi';
 
 const sidebarGroups = [
   {
@@ -37,6 +40,8 @@ const sidebarGroups = [
 
 const CustomerLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  const [isCartOpen, setIsCartOpen] = React.useState(false);
+  const { itemCount } = useCart();
   const dropdownRef = React.useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -116,7 +121,22 @@ const CustomerLayout = () => {
       {/* Main Content */}
       <div className="flex-1 pl-64">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-end bg-white/80 px-8 backdrop-blur-md">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-end bg-white/80 px-8 backdrop-blur-md gap-6">
+          {/* Cart Button */}
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="relative p-2.5 rounded-xl bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all border border-slate-100 group"
+          >
+            <FiShoppingBag size={20} />
+            {itemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-black h-5 w-5 flex items-center justify-center rounded-full shadow-lg shadow-blue-600/30 animate-in zoom-in">
+                {itemCount}
+              </span>
+            )}
+          </button>
+
+          <div className="h-8 w-px bg-slate-100" />
+
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -159,6 +179,8 @@ const CustomerLayout = () => {
             )}
           </div>
         </header>
+
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         <main className="p-8">
           <Outlet />

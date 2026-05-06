@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<ServiceReview> ServiceReviews { get; set; }
     public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
     public DbSet<SalesInvoiceItem> SalesInvoiceItems => Set<SalesInvoiceItem>();
+    public DbSet<OrderRequest> OrderRequests => Set<OrderRequest>();
+    public DbSet<OrderRequestItem> OrderRequestItems => Set<OrderRequestItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

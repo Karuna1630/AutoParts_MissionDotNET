@@ -27,8 +27,15 @@ public class PartRequest
     public string? VehicleInfo { get; set; }
 
     [Required]
+    public int Quantity { get; set; } = 1;
+
+    [Required]
     [MaxLength(20)]
-    public string Status { get; set; } = "Pending"; // Pending, Approved, Ordered, Completed, Cancelled
+    public string Urgency { get; set; } = "Normal"; // Normal, Soon, Urgent
+
+    [Required]
+    [MaxLength(20)]
+    public string Status { get; set; } = "Pending"; // Pending, Checking, Ordered, Arrived, Notified
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

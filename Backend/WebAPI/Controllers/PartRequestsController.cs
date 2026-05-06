@@ -44,6 +44,8 @@ public class PartRequestsController : ControllerBase
             PartName = dto.PartName,
             Description = dto.Description,
             VehicleInfo = dto.VehicleInfo,
+            Quantity = dto.Quantity,
+            Urgency = dto.Urgency,
             Status = "Pending",
             CreatedAt = DateTime.UtcNow
         };
@@ -81,6 +83,8 @@ public class PartRequestsController : ControllerBase
                 PartName = r.PartName,
                 Description = r.Description,
                 VehicleInfo = r.VehicleInfo,
+                Quantity = r.Quantity,
+                Urgency = r.Urgency,
                 Status = r.Status,
                 CreatedAt = r.CreatedAt
             })
@@ -100,4 +104,25 @@ public class PartRequestsController : ControllerBase
 
         return Ok(new { success = true, data = requests });
     }
+
+    [HttpPatch("{id}/status")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto)
+    {
+        var request = await _requestRepo.GetByIdAsync(id);
+        if (request == null) return NotFound(new { success = false, message = "Request not found." });
+
+        request.Status = dto.Status;
+        request.UpdatedAt = DateTime.UtcNow;
+
+        _requestRepo.Update(request);
+        await _requestRepo.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Status updated successfully." });
+    }
+}
+
+public class UpdateStatusDto
+{
+    public string Status { get; set; } = string.Empty;
 }

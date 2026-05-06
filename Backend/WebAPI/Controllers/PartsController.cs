@@ -21,6 +21,13 @@ public class PartsController : ControllerBase
         _salesService = salesService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var parts = await _salesService.SearchPartsAsync("");
+        return Ok(new { success = true, data = parts });
+    }
+
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string query = "")
     {
