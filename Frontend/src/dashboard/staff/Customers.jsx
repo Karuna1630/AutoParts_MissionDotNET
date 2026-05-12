@@ -58,7 +58,7 @@ const Customers = () => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    if (query.length > 2) {
+    if (query.length > 0) {
       try {
         const response = await searchCustomers(query);
         if (response.success) {
@@ -67,7 +67,7 @@ const Customers = () => {
       } catch (err) {
         console.error('Search error:', err);
       }
-    } else if (query.length === 0) {
+    } else {
       fetchCustomers();
     }
   };
@@ -99,16 +99,13 @@ const Customers = () => {
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text"
-            placeholder="Search by name, email, phone or vehicle number..."
+            placeholder="Search by ID, name, phone or vehicle number..."
             value={searchQuery}
             onChange={handleSearch}
             className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-semibold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button className="flex items-center gap-2 px-6 py-4 bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-100 transition">
-            <FiFilter /> Filters
-          </button>
           <button 
             onClick={fetchCustomers}
             className="p-4 bg-slate-50 text-slate-600 rounded-2xl hover:bg-slate-100 transition"
@@ -343,7 +340,7 @@ const CustomerCard = ({ customer, onClick }) => {
           )}
           <div>
             <h3 className="font-black text-slate-800 uppercase tracking-tight group-hover:text-blue-600 transition-colors">{customer.fullName}</h3>
-            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">Customer ID: #{customer.id}</span>
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">Customer ID: {customer.id}</span>
           </div>
         </div>
 

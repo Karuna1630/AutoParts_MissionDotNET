@@ -60,15 +60,7 @@ const StaffLayout = () => {
       <StaffSidebar />
 
       <div className="flex-1 flex flex-col ml-64 min-h-screen">
-        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
-          <div className="flex items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 w-96">
-            <FiSearch className="text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search customers, appointments..." 
-              className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-            />
-          </div>
+        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-end px-8 shadow-sm">
 
           <div className="flex items-center gap-6">
             <NotificationDropdown />

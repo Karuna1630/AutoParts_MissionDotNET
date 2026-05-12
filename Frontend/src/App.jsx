@@ -92,8 +92,6 @@ function App() {
             <Route path="customers/:id" element={<CustomerDetails />} />
             <Route path="pos" element={<PointOfSale />} />
             <Route path="sales" element={<StaffSalesInvoices />} />
-            <Route path="search" element={<GlobalSearch />} />
-            <Route path="reports" element={<Reports />} />
             <Route path="appointments" element={<StaffAppointments />} />
             <Route path="part-requests" element={<StaffPartRequests />} />
             <Route path="bulk-orders" element={<StaffOrderRequests />} />
