@@ -13,7 +13,7 @@ import {
 const statCards = [
   { label: 'Vehicles', value: '2', icon: FaCar, accent: 'blue' },
   { label: 'Upcoming', value: '1', icon: FaClock, accent: 'emerald' },
-  { label: 'Lifetime Spend', value: '$8,909', icon: FaDollarSign, accent: 'indigo' },
+  { label: 'Lifetime Spend', value: 'Rs.8,909', icon: FaDollarSign, accent: 'indigo' },
   { label: 'Silver Member', value: '8,909 pts', icon: FaCrown, accent: 'blue' },
 ];
 
@@ -38,13 +38,13 @@ const recentActivities = [
   {
     title: 'Brake Pad Set (Front) + 1 more',
     date: 'April 23, 2026',
-    amount: '$2,690',
+    amount: 'Rs.2,690',
     status: 'Paid',
   },
   {
     title: 'Timing Belt Kit + 1 more',
     date: 'February 24, 2026',
-    amount: '$6,219',
+    amount: 'Rs.6,219',
     status: 'Paid',
   },
 ];

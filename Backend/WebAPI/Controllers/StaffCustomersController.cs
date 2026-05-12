@@ -16,10 +16,12 @@ namespace WebAPI.Controllers;
 public class StaffCustomersController : ControllerBase
 {
     private readonly IStaffCustomerService _staffCustomerService;
+    private readonly ICustomerHistoryService _historyService;
 
-    public StaffCustomersController(IStaffCustomerService staffCustomerService)
+    public StaffCustomersController(IStaffCustomerService staffCustomerService, ICustomerHistoryService historyService)
     {
         _staffCustomerService = staffCustomerService;
+        _historyService = historyService;
     }
 
     [HttpPost("register")]
@@ -105,5 +107,13 @@ public class StaffCustomersController : ControllerBase
             Message = "Vehicle added successfully",
             Data = result.Data
         });
+    }
+
+    [HttpGet("{customerId}/history")]
+    public async Task<IActionResult> GetCustomerHistory(int customerId)
+    {
+        var history = await _historyService.GetCombinedHistoryAsync(customerId);
+        if (!history.Success) return NotFound(new { success = false, message = history.Message });
+        return Ok(new { success = true, data = history.Data });
     }
 }

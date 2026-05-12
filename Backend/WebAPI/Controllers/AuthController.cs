@@ -49,21 +49,6 @@ public class AuthController : ControllerBase
         return Ok(ToApiResponse(result));
     }
 
-    [HttpPost("staff")]
-    [Authorize(Roles = UserRoles.Admin)]
-    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> CreateStaff(
-        [FromBody] CreateStaffRequestDto request,
-        CancellationToken cancellationToken)
-    {
-        var result = await _authService.CreateStaffAsync(request, cancellationToken);
-        if (!result.Success)
-        {
-            return BadRequest(ToApiResponse(result));
-        }
-
-        return Ok(ToApiResponse(result));
-    }
-
     private static ApiResponse<AuthResponseDto> ToApiResponse(OperationResult<AuthResponseDto> result)
     {
         return new ApiResponse<AuthResponseDto>

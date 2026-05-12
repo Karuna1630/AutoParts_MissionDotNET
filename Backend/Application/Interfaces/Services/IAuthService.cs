@@ -9,10 +9,6 @@ public interface IAuthService
         RegisterCustomerRequestDto request,
         CancellationToken cancellationToken = default);
 
-    Task<OperationResult<AuthResponseDto>> CreateStaffAsync(
-        CreateStaffRequestDto request,
-        CancellationToken cancellationToken = default);
-
     Task<OperationResult<AuthResponseDto>> LoginAsync(
         LoginRequestDto request,
         CancellationToken cancellationToken = default);

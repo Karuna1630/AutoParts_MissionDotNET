@@ -1,5 +1,6 @@
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json.Serialization;
 using Application.Common.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
@@ -24,14 +25,7 @@ DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. Configuration & Connection String ---
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-// --- 2. Database & Identity ---
-builder.Services.AddDbContext<AppDbContext>(options => 
-    options.UseNpgsql(connectionString));
-
+// Add services to the container.
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -40,36 +34,52 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
-builder.Services.AddAutoMapper(typeof(Application.Mappings.MappingProfile).Assembly);
+builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
 
 // Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IUserRepo, UserRepo>();
-builder.Services.AddScoped<IUserRepository, UserRepository>(); // Keep both for now to avoid breaking other parts
+builder.Services.AddScoped<IStaffRepo, StaffRepo>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+builder.Services.AddScoped<IPurchaseInvoiceRepository, PurchaseInvoiceRepository>();
 
 // Application Services
 builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+// Configure Database Connection from .env or appsettings
+var connectionString = builder.Configuration["CONNECTION_STRING"] 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
+builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
+builder.Services.AddScoped<ISalesService, SalesService>();
+builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
 
 // --- 4. Authentication & Security ---
-var jwtKey = builder.Configuration["JWT_KEY"] 
+var jwtKey = builder.Configuration["JWT_KEY"]
     ?? builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is missing in configuration.");
 
-var jwtIssuer = builder.Configuration["JWT_ISSUER"] 
-    ?? builder.Configuration["Jwt:Issuer"] 
+var jwtIssuer = builder.Configuration["JWT_ISSUER"]
+    ?? builder.Configuration["Jwt:Issuer"]
     ?? "VehiclePartsAPI";
 
-var jwtAudience = builder.Configuration["JWT_AUDIENCE"] 
-    ?? builder.Configuration["Jwt:Audience"] 
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"]
+    ?? builder.Configuration["Jwt:Audience"]
     ?? "VehiclePartsClients";
 
 builder.Services
@@ -112,10 +122,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendClient", policy =>
     {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
     });
 });
 

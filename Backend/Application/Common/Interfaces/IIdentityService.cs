@@ -10,6 +10,8 @@ namespace Application.Common.Interfaces
     public interface IIdentityService
     {
         Task<(string email, string phoneNumber)> FindByIdAsync(string id);
+        Task<(string id, string email, string phoneNumber)> FindByEmailAsync(string email);
+        Task<bool> VerifyPassword(string id, string password);
         Task<(bool Succeeded, Guid id)> CreateUserAsync(string email, string phoneNumber, string password);
         Task<bool> UpdateUserAsync(string id, string? email, string? phoneNumber);
         Task<bool> AddToRoleAsync(Guid userId, string role);

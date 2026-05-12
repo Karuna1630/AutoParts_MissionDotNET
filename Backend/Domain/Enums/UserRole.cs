@@ -8,8 +8,8 @@ namespace Domain.Enums
 {
     public enum UserRole
     {
-        ADMIN,
-        STAFF,
-        CUSTOMER
+        Admin,
+        Staff,
+        Customer
     }
 }

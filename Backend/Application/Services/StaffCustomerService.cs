@@ -105,8 +105,13 @@ public class StaffCustomerService : IStaffCustomerService
             return OperationResult<List<CustomerResponseDto>>.Ok(new List<CustomerResponseDto>());
         }
 
+        int.TryParse(query, out int id);
         var customers = await _customerRepository.GetAllWithIncludeAsync(
-            c => c.User.Email.Contains(query) || c.User.Phone.Contains(query) || c.User.FullName.Contains(query) || c.Vehicles.Any(v => v.VehicleNumber.Contains(query)),
+            c => c.User.Email.Contains(query) || 
+                 c.User.Phone.Contains(query) || 
+                 c.User.FullName.Contains(query) || 
+                 c.Vehicles.Any(v => v.VehicleNumber.Contains(query)) ||
+                 c.Id == id,
             c => c.User,
             c => c.Vehicles
         );

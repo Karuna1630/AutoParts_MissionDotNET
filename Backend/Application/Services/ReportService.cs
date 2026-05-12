@@ -12,13 +12,12 @@ public class ReportService : IReportService
 {
     public Task<OperationResult<FinancialReportDto>> GenerateDailyReportAsync(DateTime date)
     {
-        return Task.FromResult(OperationResult<FinancialReportDto>.Ok(GenerateMockData("Daily", date, 24)));
+        return Task.FromResult(OperationResult<FinancialReportDto>.Ok(GenerateMockData("Daily", date, 7)));
     }
 
     public Task<OperationResult<FinancialReportDto>> GenerateMonthlyReportAsync(int year, int month)
     {
-        var daysInMonth = DateTime.DaysInMonth(year, month);
-        return Task.FromResult(OperationResult<FinancialReportDto>.Ok(GenerateMockData("Monthly", new DateTime(year, month, 1), daysInMonth)));
+        return Task.FromResult(OperationResult<FinancialReportDto>.Ok(GenerateMockData("Monthly", new DateTime(year, month, 1), 6)));
     }
 
     public Task<OperationResult<FinancialReportDto>> GenerateYearlyReportAsync(int year)
@@ -102,8 +101,9 @@ public class ReportService : IReportService
             string label = type switch
             {
                 "Yearly" => new DateTime(date.Year, i, 1).ToString("MMM"),
-                "Monthly" => i.ToString(),
-                _ => $"{i - 1:D2}:00"
+                "Monthly" => $"Day {i * 5}",
+                "Daily" => date.AddDays(-dataPoints + i).ToString("ddd, MMM dd"),
+                _ => $"{(i - 1) * 4:D2}:00"
             };
 
             var pointRev = Math.Round((totalRevenue / dataPoints) * (decimal)(0.5 + random.NextDouble()), 2);

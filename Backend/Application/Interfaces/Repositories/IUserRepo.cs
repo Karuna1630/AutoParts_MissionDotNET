@@ -19,6 +19,6 @@ namespace Application.Interfaces.Repositories
         Task<UserProfile> UpdateAsync(UserProfile profile);
         Task<bool> UpdateRoleAsync(Guid id, UserRole newRole);
         Task<bool> DeleteAsync(Guid id);
-        Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber,  int pageSize);
+        Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null);
     }
 }

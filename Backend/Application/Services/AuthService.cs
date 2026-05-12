@@ -13,15 +13,18 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
+    private readonly IGenericRepository<Customer> _customerRepository;
 
     public AuthService(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IGenericRepository<Customer> customerRepository)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
+        _customerRepository = customerRepository;
     }
 
     public Task<OperationResult<AuthResponseDto>> RegisterCustomerAsync(
@@ -115,6 +118,18 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.AddAsync(user, cancellationToken);
+
+        // Create Customer profile if role is Customer
+        if (role == UserRoles.Customer)
+        {
+            var customer = new Customer
+            {
+                UserId = user.Id,
+                CreditBalance = 0
+            };
+            await _customerRepository.AddAsync(customer);
+            await _customerRepository.SaveChangesAsync();
+        }
 
         return OperationResult<AuthResponseDto>.Ok(
             BuildAuthResponse(user),

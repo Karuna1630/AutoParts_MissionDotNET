@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { FiUser, FiLogOut, FiSearch, FiBell } from 'react-icons/fi';
 import StaffSidebar from './StaffSidebar';
+import NotificationDropdown from '../../components/NotificationDropdown';
 
 const StaffLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
@@ -59,23 +60,10 @@ const StaffLayout = () => {
       <StaffSidebar />
 
       <div className="flex-1 flex flex-col ml-64 min-h-screen">
-        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm">
-          <div className="flex items-center bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 w-96">
-            <FiSearch className="text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search customers, appointments..." 
-              className="bg-transparent border-none focus:outline-none ml-3 text-sm w-full"
-            />
-          </div>
+        <header className="sticky top-0 z-40 h-20 bg-white border-b border-slate-200 flex items-center justify-end px-8 shadow-sm">
 
           <div className="flex items-center gap-6">
-            <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
-              <FiBell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                3
-              </span>
-            </button>
+            <NotificationDropdown />
 
             <div className="relative border-l border-slate-200 pl-6" ref={dropdownRef}>
               <button 
@@ -90,7 +78,15 @@ const StaffLayout = () => {
                 </div>
                 <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-white font-bold transition-transform group-hover:scale-105 overflow-hidden border-2 border-slate-700 shadow-inner">
                   {staff.avatarUrl ? (
-                    <img src={getAvatarUrl(staff.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                    <img 
+                      src={getAvatarUrl(staff.avatarUrl)} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        setStaff(prev => ({ ...prev, avatarUrl: null }));
+                      }}
+                    />
                   ) : (
                     <span>{staff.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'ST'}</span>
                   )}

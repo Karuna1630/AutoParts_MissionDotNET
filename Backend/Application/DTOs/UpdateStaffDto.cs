@@ -1,5 +1,6 @@
 ﻿
     using Domain.Enums;
+    using Microsoft.AspNetCore.Http;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
@@ -25,4 +26,10 @@ namespace Application.DTOs
             public string? ProfilePictureUrl { get; set; }
             public UserRole UserRole { get; set; }
         }
+    }
+
+    public class UpdateStaffProfileImageDto
+    {
+        [Required(ErrorMessage = "Profile image is required")]
+        public IFormFile Image { get; set; } = null!;
     }
