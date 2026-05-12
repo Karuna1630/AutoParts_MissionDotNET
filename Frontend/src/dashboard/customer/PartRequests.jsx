@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus, FiX, FiImage } from 'react-icons/fi';
 import { getMyPartRequests, createPartRequest } from '../../services/partService';
+import { getMyVehicles } from '../../services/vehicleService';
 import { getApiErrorMessage } from '../../services/api';
 
 const PartRequests = () => {
   const [requests, setRequests] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -16,7 +18,8 @@ const PartRequests = () => {
     quantity: 1,
     urgency: 'Normal',
     description: '',
-    vehicleInfo: ''
+    vehicleInfo: '',
+    image: null
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,10 +30,14 @@ const PartRequests = () => {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const res = await getMyPartRequests();
-      if (res.success) {
-        setRequests(res.data);
-      }
+      const [reqRes, vehRes] = await Promise.all([
+        getMyPartRequests(),
+        getMyVehicles()
+      ]);
+      
+      if (reqRes.success) setRequests(reqRes.data);
+      if (vehRes.success) setVehicles(vehRes.data);
+      
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -44,7 +51,8 @@ const PartRequests = () => {
       quantity: 1,
       urgency: 'Normal',
       description: '',
-      vehicleInfo: ''
+      vehicleInfo: '',
+      image: null
     });
     setShowModal(true);
   };
@@ -53,7 +61,15 @@ const PartRequests = () => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      const res = await createPartRequest(requestForm);
+      const formData = new FormData();
+      formData.append('partName', requestForm.partName);
+      formData.append('quantity', requestForm.quantity);
+      formData.append('urgency', requestForm.urgency);
+      if (requestForm.description) formData.append('description', requestForm.description);
+      if (requestForm.vehicleInfo) formData.append('vehicleInfo', requestForm.vehicleInfo);
+      if (requestForm.image) formData.append('image', requestForm.image);
+
+      const res = await createPartRequest(formData);
       if (res.success) {
         setSuccess('Your special request has been submitted successfully!');
         setShowModal(false);
@@ -122,9 +138,13 @@ const PartRequests = () => {
             return (
               <div key={req.id} className="bg-white rounded-[32px] border border-slate-100 p-8 hover:shadow-xl hover:shadow-slate-200/30 transition-all group">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-                  {/* Status Icon */}
-                  <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
-                    {React.cloneElement(status.icon, { size: 28 })}
+                  {/* Status Icon or Image */}
+                  <div className={`w-16 h-16 rounded-[24px] overflow-hidden flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
+                    {req.imageUrl ? (
+                      <img src={req.imageUrl} alt={req.partName} className="w-full h-full object-cover" />
+                    ) : (
+                      React.cloneElement(status.icon, { size: 28 })
+                    )}
                   </div>
 
                   {/* Main Content */}
@@ -189,7 +209,7 @@ const PartRequests = () => {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900">Special Request</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                <FiPackage size={20} className="text-slate-400" />
+                <FiX size={24} className="text-slate-400 hover:text-slate-700" />
               </button>
             </div>
 
@@ -233,15 +253,35 @@ const PartRequests = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Vehicle Info (Optional)</label>
-                <input 
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
-                  placeholder="e.g. 2022 Honda Civic"
-                  value={requestForm.vehicleInfo}
-                  onChange={(e) => setRequestForm({...requestForm, vehicleInfo: e.target.value})}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Vehicle Info (Optional)</label>
+                  <select 
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none"
+                    value={requestForm.vehicleInfo}
+                    onChange={(e) => setRequestForm({...requestForm, vehicleInfo: e.target.value})}
+                  >
+                    <option value="">Select a vehicle...</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={`${v.vehicleYear} ${v.vehicleMake} ${v.vehicleModel} (${v.vehicleNumber})`}>
+                        {v.vehicleYear} {v.vehicleMake} {v.vehicleModel} - {v.vehicleNumber}
+                      </option>
+                    ))}
+                    <option value="Other">Other (Not listed)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Part Image (Optional)</label>
+                  <div className="relative">
+                    <input 
+                      type="file"
+                      accept="image/*"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
+                      onChange={(e) => setRequestForm({...requestForm, image: e.target.files[0]})}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

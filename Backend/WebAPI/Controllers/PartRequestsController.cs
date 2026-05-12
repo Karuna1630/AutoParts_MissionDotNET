@@ -1,6 +1,7 @@
 using Application.Common;
 using Application.DTOs.PartRequest;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,17 +21,20 @@ public class PartRequestsController : ControllerBase
 {
     private readonly IGenericRepository<PartRequest> _requestRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
+    private readonly IImageService _imageService;
 
     public PartRequestsController(
         IGenericRepository<PartRequest> requestRepo,
-        IGenericRepository<Customer> customerRepo)
+        IGenericRepository<Customer> customerRepo,
+        IImageService imageService)
     {
         _requestRepo = requestRepo;
         _customerRepo = customerRepo;
+        _imageService = imageService;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreatePartRequestDto dto)
+    public async Task<IActionResult> Create([FromForm] CreatePartRequestDto dto)
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdStr, out var userId)) return Unauthorized();
@@ -38,12 +42,19 @@ public class PartRequestsController : ControllerBase
         var customer = await _customerRepo.Query().FirstOrDefaultAsync(c => c.UserId == userId);
         if (customer == null) return BadRequest(new { success = false, message = "Customer profile not found." });
 
+        string? imageUrl = null;
+        if (dto.Image != null)
+        {
+            imageUrl = await _imageService.UploadImageAsync(dto.Image, "PartRequests");
+        }
+
         var request = new PartRequest
         {
             CustomerId = customer.Id,
             PartName = dto.PartName,
             Description = dto.Description,
             VehicleInfo = dto.VehicleInfo,
+            ImageUrl = imageUrl,
             Quantity = dto.Quantity,
             Urgency = dto.Urgency,
             Status = "Pending",
@@ -86,6 +97,7 @@ public class PartRequestsController : ControllerBase
                 Quantity = r.Quantity,
                 Urgency = r.Urgency,
                 Status = r.Status,
+                ImageUrl = r.ImageUrl,
                 CreatedAt = r.CreatedAt
             })
             .ToListAsync();

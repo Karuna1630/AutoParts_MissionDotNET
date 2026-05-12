@@ -8,6 +8,7 @@ public class CreatePartRequestDto
     public string PartName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? VehicleInfo { get; set; }
+    public Microsoft.AspNetCore.Http.IFormFile? Image { get; set; }
     [Required]
     public int Quantity { get; set; } = 1;
     [Required]
@@ -20,6 +21,7 @@ public class ViewPartRequestDto
     public string PartName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? VehicleInfo { get; set; }
+    public string? ImageUrl { get; set; }
     public int Quantity { get; set; }
     public string Urgency { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;

@@ -26,6 +26,8 @@ public class PartRequest
     [MaxLength(200)]
     public string? VehicleInfo { get; set; }
 
+    public string? ImageUrl { get; set; }
+
     [Required]
     public int Quantity { get; set; } = 1;
 
