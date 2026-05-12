@@ -39,7 +39,7 @@ public class PartsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public IActionResult GetById(int id)
     {
         // This could be used for a part detail page
         // For now using the generic repo isn't directly exposed in SalesService for single part

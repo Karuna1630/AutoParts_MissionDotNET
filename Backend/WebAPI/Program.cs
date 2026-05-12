@@ -67,6 +67,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
 builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
+builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]
