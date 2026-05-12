@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
 import AdminSidebar from './AdminSidebar';
+import NotificationDropdown from '../../components/NotificationDropdown';
 
 const sidebarGroups = [
   {
@@ -20,6 +21,7 @@ const sidebarGroups = [
       { id: 'users', label: 'All Users', icon: FaUsers, path: '/admin/users' },
       { id: 'staff', label: 'Staff Management', icon: FaUserTie, path: '/admin/staff' },
       { id: 'vendors', label: 'Vendor Portal', icon: FaCarSide, path: '/admin/vendors' },
+      { id: 'notifications', label: 'Notifications', icon: FiBell, path: '/admin/notifications' },
     ]
   },
 ];
@@ -100,12 +102,7 @@ const AdminLayout = () => {
 
           <div className="flex items-center gap-6">
             {/* Notifications */}
-            <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
-              <FiBell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                6
-              </span>
-            </button>
+            <NotificationDropdown />
 
             {/* Profile Dropdown */}
             <div className="relative border-l border-slate-200 pl-6" ref={dropdownRef}>

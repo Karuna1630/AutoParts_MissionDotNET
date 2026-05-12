@@ -27,3 +27,21 @@ public class ViewPartRequestDto
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
+
+public class StaffViewPartRequestDto : ViewPartRequestDto
+{
+    public CustomerInfoDto? Customer { get; set; }
+}
+
+public class CustomerInfoDto
+{
+    public int Id { get; set; }
+    public UserInfoDto? User { get; set; }
+}
+
+public class UserInfoDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+}

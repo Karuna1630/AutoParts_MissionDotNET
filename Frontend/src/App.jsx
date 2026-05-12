@@ -82,6 +82,7 @@ function App() {
             <Route path="vendors" element={<VendorManagement />} />
             <Route path="invoices" element={<PurchaseInvoices />} />
             <Route path="analytics" element={<FinancialAnalytics />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           {/* Staff Dashboard Routes */}
@@ -97,6 +98,7 @@ function App() {
             <Route path="part-requests" element={<StaffPartRequests />} />
             <Route path="bulk-orders" element={<StaffOrderRequests />} />
             <Route path="profile" element={<StaffProfile />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           {/* Catch-all redirect */}

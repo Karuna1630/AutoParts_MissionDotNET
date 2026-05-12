@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { FiUser, FiLogOut, FiSearch, FiBell } from 'react-icons/fi';
 import StaffSidebar from './StaffSidebar';
+import NotificationDropdown from '../../components/NotificationDropdown';
 
 const StaffLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
@@ -70,12 +71,7 @@ const StaffLayout = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <button className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
-              <FiBell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                3
-              </span>
-            </button>
+            <NotificationDropdown />
 
             <div className="relative border-l border-slate-200 pl-6" ref={dropdownRef}>
               <button 

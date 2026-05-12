@@ -1,5 +1,6 @@
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json.Serialization;
 using Application.Common.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
@@ -30,7 +31,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddDefaultTokenProviders();
 
 // --- 3. Core Services ---
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
 
 // Repositories

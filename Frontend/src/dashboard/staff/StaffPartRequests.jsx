@@ -34,9 +34,29 @@ const StaffPartRequests = () => {
   const handleUpdateStatus = async (status) => {
     try {
       setUpdating(true);
-      // Assuming a PATCH endpoint for status update exists or we add it
       const res = await api.patch(`/partrequests/${selectedRequest.id}/status`, { status });
       if (res.data.success) {
+        // If it's a procurement request, notify admins
+        if (status === 'Procurement Required') {
+          await api.post('/notifications/notify-admins', {
+            title: 'Procurement Needed',
+            message: `Part "${selectedRequest.partName}" is unavailable for customer ${selectedRequest.customer?.user?.fullName}. Procurement required.`,
+            type: 'Warning',
+            relatedId: selectedRequest.id.toString()
+          });
+        }
+
+        // If it's Arrived, notify the customer
+        if (status === 'Arrived' && selectedRequest.customer?.userId) {
+          await api.post('/notifications', {
+            userId: selectedRequest.customer.userId,
+            title: 'Part Arrived!',
+            message: `Your requested part "${selectedRequest.partName}" has arrived! You can now complete your order from the requests page.`,
+            type: 'Success',
+            relatedId: selectedRequest.id.toString()
+          });
+        }
+
         setSuccess(`Request status updated to ${status}!`);
         setShowModal(false);
         fetchRequests();
@@ -56,6 +76,7 @@ const StaffPartRequests = () => {
       case 'Ordered': return { label: 'Ordered', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', icon: <FiTruck /> };
       case 'Arrived': return { label: 'Arrived', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: <FiCheckCircle /> };
       case 'Notified': return { label: 'Notified', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: <FiCheckCircle /> };
+      case 'Procurement Required': return { label: 'Procurement Needed', color: 'bg-red-50 text-red-600 border-red-200', icon: <FiAlertCircle /> };
       default: return { label: status, color: 'bg-slate-50 text-slate-500 border-slate-100', icon: <FiInfo /> };
     }
   };
@@ -92,8 +113,18 @@ const StaffPartRequests = () => {
             return (
               <div key={req.id} className="bg-white rounded-[32px] border border-slate-100 p-8 hover:shadow-xl hover:shadow-slate-200/30 transition-all group">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-                  <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
-                    {React.cloneElement(status.icon, { size: 28 })}
+                  <div className={`w-16 h-16 rounded-[24px] overflow-hidden flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
+                    {req.imageUrl ? (
+                      <img 
+                        src={req.imageUrl} 
+                        alt={req.partName} 
+                        className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform" 
+                        onClick={() => window.open(req.imageUrl, '_blank')}
+                        title="Click to view full size"
+                      />
+                    ) : (
+                      React.cloneElement(status.icon, { size: 28 })
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -144,29 +175,44 @@ const StaffPartRequests = () => {
             <h2 className="text-2xl font-black text-slate-900 mb-2">Update Status</h2>
             <p className="text-slate-500 mb-8 font-medium italic">"{selectedRequest.partName}" for {selectedRequest.customer?.user?.fullName}</p>
             
-            <div className="grid grid-cols-1 gap-3">
-              {['Pending', 'Checking', 'Ordered', 'Arrived', 'Notified'].map(s => (
+            <div className="space-y-3">
+              {['Pending', 'Arrived'].map((s) => (
                 <button
                   key={s}
                   onClick={() => handleUpdateStatus(s)}
                   disabled={updating}
-                  className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-between px-6 transition-all ${
+                  className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-between px-5 transition-all ${
                     selectedRequest.status === s 
-                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20' 
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' 
+                    : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                   }`}
                 >
                   {s}
-                  {selectedRequest.status === s && <FiCheckCircle size={18} />}
+                  {selectedRequest.status === s && <FiCheckCircle size={16} />}
                 </button>
               ))}
+              
+              <div className="pt-2">
+                <button
+                  onClick={() => handleUpdateStatus('Procurement Required')}
+                  disabled={updating}
+                  className={`w-full py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                    selectedRequest.status === 'Procurement Required'
+                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/10'
+                    : 'text-red-500 hover:bg-red-50 border border-red-100 border-dashed bg-red-50/30'
+                  }`}
+                >
+                  <FiAlertCircle size={14} />
+                  Notify Admin: Unavailable
+                </button>
+              </div>
             </div>
 
             <button 
               onClick={() => setShowModal(false)}
-              className="w-full mt-6 py-4 rounded-2xl font-bold text-sm text-slate-400 hover:text-slate-600 transition-colors"
+              className="w-full mt-6 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors py-2"
             >
-              Cancel
+              Close
             </button>
           </div>
         </div>

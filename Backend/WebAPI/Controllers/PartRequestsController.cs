@@ -110,8 +110,29 @@ public class PartRequestsController : ControllerBase
     public async Task<IActionResult> GetAllRequests()
     {
         var requests = await _requestRepo.Query()
-            .Include(r => r.Customer).ThenInclude(c => c.User)
             .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new StaffViewPartRequestDto
+            {
+                Id = r.Id,
+                PartName = r.PartName,
+                Description = r.Description,
+                VehicleInfo = r.VehicleInfo,
+                ImageUrl = r.ImageUrl,
+                Quantity = r.Quantity,
+                Urgency = r.Urgency,
+                Status = r.Status,
+                CreatedAt = r.CreatedAt,
+                Customer = r.Customer != null ? new CustomerInfoDto
+                {
+                    Id = r.Customer.Id,
+                    User = r.Customer.User != null ? new UserInfoDto
+                    {
+                        FullName = r.Customer.User.FullName,
+                        Email = r.Customer.User.Email,
+                        Phone = r.Customer.User.Phone
+                    } : null
+                } : null
+            })
             .ToListAsync();
 
         return Ok(new { success = true, data = requests });

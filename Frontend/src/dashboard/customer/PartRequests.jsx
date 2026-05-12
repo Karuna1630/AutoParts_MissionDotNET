@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus, FiX, FiImage } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus, FiX, FiImage, FiShoppingBag } from 'react-icons/fi';
 import { getMyPartRequests, createPartRequest } from '../../services/partService';
 import { getMyVehicles } from '../../services/vehicleService';
 import { getApiErrorMessage } from '../../services/api';
@@ -22,6 +22,7 @@ const PartRequests = () => {
     image: null
   });
   const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     fetchRequests();
@@ -54,6 +55,7 @@ const PartRequests = () => {
       vehicleInfo: '',
       image: null
     });
+    setImagePreview(null);
     setShowModal(true);
   };
 
@@ -89,9 +91,10 @@ const PartRequests = () => {
       case 'Pending': return { label: 'Pending', color: 'bg-amber-50 text-amber-600 border-amber-200', icon: <FiClock /> };
       case 'Checking': return { label: 'Checking', color: 'bg-blue-50 text-blue-600 border-blue-200', icon: <FiInfo /> };
       case 'Ordered': return { label: 'Ordered', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', icon: <FiTruck /> };
-      case 'Arrived': return { label: 'Arrived', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: <FiCheckCircle /> };
-      case 'Notified': return { label: 'Notified', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: <FiCheckCircle /> };
-      default: return { label: status, color: 'bg-slate-50 text-slate-500 border-slate-100', icon: <FiInfo /> };
+      case 'Arrived': return { label: 'Ready for Pickup', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: <FiCheckCircle /> };
+      case 'Completed': return { label: 'Completed', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: <FiCheckCircle /> };
+      case 'Procurement Required': return { label: 'Sourcing Part', color: 'bg-red-50 text-red-600 border-red-200', icon: <FiAlertCircle /> };
+      default: return { label: 'Processing', color: 'bg-blue-50 text-blue-600 border-blue-100', icon: <FiClock /> };
     }
   };
 
@@ -159,6 +162,33 @@ const PartRequests = () => {
                       </span>
                     </div>
                     
+                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-50">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-lg border ${getStatusInfo(req.status).color}`}>
+                          {getStatusInfo(req.status).icon}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                          <p className={`text-xs font-bold ${getStatusInfo(req.status).color.split(' ')[1]}`}>
+                            {getStatusInfo(req.status).label}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {req.status === 'Arrived' && (
+                        <button 
+                          onClick={() => {
+                            // Navigate to shop
+                            navigate('/dashboard/shop');
+                          }}
+                          className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-slate-900/10 hover:shadow-blue-500/20 flex items-center gap-2"
+                        >
+                          <FiShoppingBag size={14} />
+                          Buy from Shop
+                        </button>
+                      )}
+                    </div>
+                    
                     <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 font-medium">
                       <p className="flex items-center gap-2"><FiPackage className="text-slate-400"/> Qty: <span className="font-bold text-slate-700">{req.quantity}</span></p>
                       {req.vehicleInfo && <p className="flex items-center gap-2"><FiArrowRight className="text-slate-400"/> {req.vehicleInfo}</p>}
@@ -174,15 +204,19 @@ const PartRequests = () => {
 
                   {/* Progress Indicator (Mobile hidden or simplified) */}
                   <div className="hidden xl:flex items-center gap-2 px-6 border-l border-slate-100">
-                    {['Pending', 'Checking', 'Ordered', 'Arrived', 'Notified'].map((s, idx, arr) => {
-                      const statusList = ['Pending', 'Checking', 'Ordered', 'Arrived', 'Notified'];
+                    {['Pending', 'Arrived'].map((s, idx, arr) => {
+                      const statusList = ['Pending', 'Arrived', 'Completed'];
                       const currentIdx = statusList.indexOf(req.status);
                       const isPast = idx < currentIdx;
                       const isCurrent = idx === currentIdx;
                       
                       return (
                         <React.Fragment key={s}>
-                          <div className={`w-3 h-3 rounded-full transition-all duration-500 ${isPast ? 'bg-emerald-500' : isCurrent ? 'bg-blue-500 animate-pulse' : 'bg-slate-200'}`} title={s} />
+                          <div className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                            isPast ? 'bg-emerald-500' : 
+                            isCurrent ? `bg-blue-500 ${!['Arrived', 'Completed'].includes(req.status) ? 'animate-pulse' : ''}` : 
+                            'bg-slate-200'
+                          }`} title={s} />
                           {idx < arr.length - 1 && <div className={`w-6 h-0.5 transition-all duration-500 ${isPast ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
                         </React.Fragment>
                       );
@@ -204,8 +238,8 @@ const PartRequests = () => {
       )}
       {/* Special Request Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg p-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg p-8 my-auto animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900">Special Request</h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
@@ -278,9 +312,34 @@ const PartRequests = () => {
                       type="file"
                       accept="image/*"
                       className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3 text-sm font-bold text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-wider file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all cursor-pointer"
-                      onChange={(e) => setRequestForm({...requestForm, image: e.target.files[0]})}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        setRequestForm({...requestForm, image: file});
+                        if (file) {
+                          setImagePreview(URL.createObjectURL(file));
+                        } else {
+                          setImagePreview(null);
+                        }
+                      }}
                     />
                   </div>
+                  {imagePreview && (
+                    <div className="mt-3 relative group w-fit">
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setRequestForm({...requestForm, image: null});
+                          setImagePreview(null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-white text-red-500 p-1 rounded-full shadow-lg border border-red-50 hover:bg-red-50 transition-colors"
+                      >
+                        <FiX size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
