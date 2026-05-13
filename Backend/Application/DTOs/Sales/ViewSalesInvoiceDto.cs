@@ -9,6 +9,7 @@ public class ViewSalesInvoiceDto
     public string InvoiceNumber { get; set; } = string.Empty;
     public int CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerEmail { get; set; }
     public int? VehicleId { get; set; }
     public string? VehicleInfo { get; set; }
     public int StaffId { get; set; }

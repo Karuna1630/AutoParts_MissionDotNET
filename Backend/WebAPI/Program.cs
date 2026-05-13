@@ -68,6 +68,18 @@ builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
 builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
+builder.Services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
+builder.Services.AddScoped<IPdfService, Infrastructure.Services.PdfService>();
+
+// Email Configuration
+builder.Services.Configure<Application.DTOs.Email.EmailSettings>(options => {
+    options.SmtpServer = (builder.Configuration["SMTP_SERVER"] ?? "smtp.gmail.com").Trim();
+    options.Port = int.Parse((builder.Configuration["SMTP_PORT"] ?? "587").Trim());
+    options.SenderEmail = (builder.Configuration["SENDER_EMAIL"] ?? "").Trim();
+    options.SenderName = (builder.Configuration["SENDER_NAME"] ?? "Auto Parts Mission").Trim();
+    options.Password = (builder.Configuration["SMTP_PASSWORD"] ?? "").Trim();
+    options.EnableSsl = bool.Parse((builder.Configuration["ENABLE_SSL"] ?? "true").Trim());
+});
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]

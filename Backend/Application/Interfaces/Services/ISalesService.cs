@@ -14,4 +14,5 @@ public interface ISalesService
     Task<OperationResult<bool>> UpdatePaymentStatusAsync(int id, string status, decimal amountPaid);
     Task<List<Part>> SearchPartsAsync(string query);
     Task<List<Customer>> SearchCustomersAsync(string query);
+    Task<OperationResult<string>> SendInvoiceEmailAsync(int id);
 }

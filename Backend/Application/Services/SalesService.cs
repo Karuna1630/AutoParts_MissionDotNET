@@ -17,17 +17,23 @@ public class SalesService : ISalesService
     private readonly IGenericRepository<Part> _partRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
     private readonly IGenericRepository<Vehicle> _vehicleRepo;
+    private readonly IPdfService _pdfService;
+    private readonly IEmailService _emailService;
 
     public SalesService(
         IGenericRepository<SalesInvoice> invoiceRepo,
         IGenericRepository<Part> partRepo,
         IGenericRepository<Customer> customerRepo,
-        IGenericRepository<Vehicle> vehicleRepo)
+        IGenericRepository<Vehicle> vehicleRepo,
+        IPdfService pdfService,
+        IEmailService emailService)
     {
         _invoiceRepo = invoiceRepo;
         _partRepo = partRepo;
         _customerRepo = customerRepo;
         _vehicleRepo = vehicleRepo;
+        _pdfService = pdfService;
+        _emailService = emailService;
     }
 
     public async Task<OperationResult<ViewSalesInvoiceDto>> CreateInvoiceAsync(CreateSalesInvoiceDto dto, int staffId)
@@ -182,6 +188,50 @@ public class SalesService : ISalesService
             .ToListAsync();
     }
 
+    public async Task<OperationResult<string>> SendInvoiceEmailAsync(int id)
+    {
+        var invoiceResult = await GetInvoiceByIdAsync(id);
+        if (!invoiceResult.Success) return OperationResult<string>.Fail(invoiceResult.Message);
+
+        var invoiceDto = invoiceResult.Data!;
+        var customerEmail = invoiceDto.CustomerEmail;
+
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            return OperationResult<string>.Fail("Customer does not have a registered email address.");
+
+        try
+        {
+            // 1. Generate PDF
+            var pdfBytes = _pdfService.GenerateInvoicePdf(invoiceDto);
+
+            // 2. Prepare Email Body
+            string subject = $"Your Invoice {invoiceDto.InvoiceNumber} from Auto Parts Mission";
+            string body = $@"
+                <h3>Hello {invoiceDto.CustomerName},</h3>
+                <p>Thank you for shopping with Auto Parts Mission. Your invoice <b>{invoiceDto.InvoiceNumber}</b> is ready.</p>
+                <p><b>Summary:</b></p>
+                <ul>
+                    <li>Date: {invoiceDto.InvoiceDate:MMM dd, yyyy}</li>
+                    <li>Total Amount: Rs.{invoiceDto.FinalAmount:N2}</li>
+                    <li>Payment Status: {invoiceDto.PaymentStatus}</li>
+                </ul>
+                <p>Please find the detailed invoice attached as a PDF.</p>
+                <p>Best regards,<br/>Auto Parts Mission Team</p>";
+
+            // 3. Send Email
+            bool sent = await _emailService.SendEmailAsync(customerEmail, subject, body, pdfBytes, $"{invoiceDto.InvoiceNumber}.pdf");
+
+            if (sent)
+                return OperationResult<string>.Ok("Invoice email sent successfully.");
+            else
+                return OperationResult<string>.Fail("Failed to send email. Please check SMTP configuration.");
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<string>.Fail($"Error processing email: {ex.Message}");
+        }
+    }
+
     private async Task<string> GenerateInvoiceNumberAsync()
     {
         var today = DateTime.UtcNow.ToString("yyyyMMdd");
@@ -199,6 +249,7 @@ public class SalesService : ISalesService
             InvoiceNumber = invoice.InvoiceNumber,
             CustomerId = invoice.CustomerId,
             CustomerName = invoice.Customer?.User?.FullName ?? "Unknown",
+            CustomerEmail = invoice.Customer?.User?.Email,
             VehicleId = invoice.VehicleId,
             VehicleInfo = invoice.Vehicle != null ? $"{invoice.Vehicle.VehicleMake} {invoice.Vehicle.VehicleModel} ({invoice.Vehicle.VehicleNumber})" : null,
             StaffId = invoice.StaffId,

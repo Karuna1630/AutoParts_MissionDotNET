@@ -88,6 +88,15 @@ public class PosController : ControllerBase
         var customers = await _salesService.SearchCustomersAsync(query);
         return Ok(new { success = true, data = customers });
     }
+
+    [HttpPost("invoice/{id}/send-email")]
+    public async Task<IActionResult> SendEmail(int id)
+    {
+        var result = await _salesService.SendInvoiceEmailAsync(id);
+        if (!result.Success) return BadRequest(result);
+
+        return Ok(result);
+    }
 }
 
 public class PaymentUpdateRequest

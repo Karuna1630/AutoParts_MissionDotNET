@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiFileText, FiSearch, FiDownload, FiEye, FiClock, FiUser, FiShoppingBag, FiChevronLeft, FiChevronRight, FiPrinter } from 'react-icons/fi';
+import { FiFileText, FiSearch, FiDownload, FiEye, FiClock, FiUser, FiShoppingBag, FiChevronLeft, FiChevronRight, FiPrinter, FiMail, FiCheckCircle, FiX, FiLoader } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 
 const ITEMS_PER_PAGE = 10;
@@ -11,6 +11,9 @@ const StaffSalesInvoices = () => {
   const [filterType, setFilterType] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [emailLoading, setEmailLoading] = useState(null);
+  const [emailConfirm, setEmailConfirm] = useState(null);
+  const [toast, setToast] = useState(null);
   const printRef = useRef(null);
 
   useEffect(() => {
@@ -61,6 +64,24 @@ const StaffSalesInvoices = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [search, filterType]);
+
+  const sendEmail = async (invoiceId) => {
+    try {
+      setEmailConfirm(null);
+      setEmailLoading(invoiceId);
+      const res = await apiClient.post(`/Pos/invoice/${invoiceId}/send-email`);
+      if (res.data.success) {
+        setToast({ type: 'success', message: 'Invoice sent to customer email!' });
+      } else {
+        setToast({ type: 'error', message: res.data.message || 'Failed to send email' });
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.response?.data?.message || 'Error connecting to email service' });
+    } finally {
+      setEmailLoading(null);
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
 
   const printInvoice = (invoice) => {
     const win = window.open('', '_blank');
@@ -184,6 +205,17 @@ const StaffSalesInvoices = () => {
 
   return (
     <div>
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center gap-3 border ${
+          toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'
+        }`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'} text-white`}>
+            {toast.type === 'success' ? <FiCheckCircle /> : <FiX />}
+          </div>
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Sales History</h1>
@@ -281,6 +313,16 @@ const StaffSalesInvoices = () => {
                           title="Print PDF"
                         >
                           <FiPrinter size={14} />
+                        </button>
+                        <button
+                          onClick={() => setEmailConfirm(inv)}
+                          disabled={emailLoading === inv.id}
+                          className={`p-1.5 rounded-lg transition-all ${
+                            emailLoading === inv.id ? 'text-blue-400 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                          }`}
+                          title="Send to Customer Email"
+                        >
+                          {emailLoading === inv.id ? <FiLoader className="animate-spin" size={14} /> : <FiMail size={14} />}
                         </button>
                       </div>
                     </td>
@@ -412,8 +454,47 @@ const StaffSalesInvoices = () => {
               >
                 <FiPrinter size={14} /> Print PDF
               </button>
+              <button
+                onClick={() => setEmailConfirm(selectedInvoice)}
+                disabled={emailLoading === selectedInvoice.id}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-xs hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {emailLoading === selectedInvoice.id ? <FiLoader className="animate-spin" size={14} /> : <FiMail size={14} />}
+                Send to Email
+              </button>
               <button onClick={() => setSelectedInvoice(null)} className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-semibold text-xs hover:bg-slate-800 transition-all">
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Confirmation Modal */}
+      {emailConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiMail size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Send Invoice?</h3>
+              <p className="text-sm text-slate-500 mt-2">
+                This will send <b>{emailConfirm.invoiceNumber}</b> to <b>{emailConfirm.customerName || 'the customer'}</b> at their registered email.
+              </p>
+            </div>
+            <div className="p-4 bg-slate-50 flex gap-3">
+              <button 
+                onClick={() => setEmailConfirm(null)}
+                className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-100 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => sendEmail(emailConfirm.id)}
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+              >
+                Yes, Send Now
               </button>
             </div>
           </div>
