@@ -111,7 +111,6 @@ const PointOfSale = () => {
 
     const invoiceData = {
       customerId: selectedCustomer.id,
-      vehicleId: selectedVehicle?.id,
       paymentMethod,
       paymentStatus,
       amountPaid: parseFloat(amountPaid || 0),
@@ -258,11 +257,11 @@ const PointOfSale = () => {
                       className="w-full px-3 py-2.5 text-left hover:bg-slate-50 flex items-center gap-3 transition text-xs"
                     >
                       <div className="w-7 h-7 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-[10px]">
-                        {c.fullName[0]}
+                        {(c.fullName || c.email || '?')[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-800">{c.fullName}</p>
-                        <p className="text-[9px] text-slate-400">{c.phone}</p>
+                        <p className="font-bold text-slate-800">{c.fullName || 'No Name'}</p>
+                        <p className="text-[9px] text-slate-400">{c.phone || c.email}</p>
                       </div>
                     </button>
                   ))}
@@ -280,21 +279,10 @@ const PointOfSale = () => {
                   <p className="text-[10px] text-slate-400">{selectedCustomer.phone}</p>
                 </div>
               </div>
-              <button onClick={() => {setSelectedCustomer(null); setCustomers([])}} className="text-[10px] text-red-500 font-bold hover:underline">Change</button>
-            </div>
-          )}
-          {selectedCustomer && selectedCustomer.vehicles?.length > 0 && (
-            <select 
-              onChange={(e) => setSelectedVehicle(selectedCustomer.vehicles.find(v => v.id === parseInt(e.target.value)))}
-              className="w-full bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[10px] font-bold text-slate-600 outline-none mt-2"
-            >
-              <option value="">Select Vehicle (Optional)</option>
-              {selectedCustomer.vehicles.map(v => (
-                <option key={v.id} value={v.id}>{v.make} {v.model} - {v.licensePlate}</option>
-              ))}
-            </select>
-          )}
-        </div>
+            <button onClick={() => {setSelectedCustomer(null); setCustomers([])}} className="text-[10px] text-red-500 font-bold hover:underline">Change</button>
+          </div>
+        )}
+      </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cart.length > 0 ? (

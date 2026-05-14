@@ -106,11 +106,13 @@ public class StaffCustomerService : IStaffCustomerService
         }
 
         int.TryParse(query, out int id);
+        var lowerQuery = query.ToLower();
+
         var customers = await _customerRepository.GetAllWithIncludeAsync(
-            c => c.User.Email.Contains(query) || 
-                 c.User.Phone.Contains(query) || 
-                 c.User.FullName.Contains(query) || 
-                 c.Vehicles.Any(v => v.VehicleNumber.Contains(query)) ||
+            c => (c.User.Email != null && c.User.Email.ToLower().Contains(lowerQuery)) || 
+                 (c.User.Phone != null && c.User.Phone.Contains(lowerQuery)) || 
+                 (c.User.FullName != null && c.User.FullName.ToLower().Contains(lowerQuery)) || 
+                 c.Vehicles.Any(v => v.VehicleNumber != null && v.VehicleNumber.ToLower().Contains(lowerQuery)) ||
                  c.Id == id,
             c => c.User,
             c => c.Vehicles

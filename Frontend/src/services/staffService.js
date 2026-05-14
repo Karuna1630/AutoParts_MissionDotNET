@@ -94,3 +94,8 @@ export const getCustomerHistory = async (customerId) => {
   const response = await apiClient.get(`/staff/customers/${customerId}/history`);
   return response.data;
 };
+
+export const getStaffDashboardStats = async () => {
+  const response = await apiClient.get('/staff/Dashboard/stats');
+  return response.data;
+};
