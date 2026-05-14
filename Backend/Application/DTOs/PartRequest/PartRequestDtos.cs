@@ -25,6 +25,8 @@ public class ViewPartRequestDto
     public int Quantity { get; set; }
     public string Urgency { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    public decimal? Price { get; set; }
+    public int? PartId { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

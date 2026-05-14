@@ -20,6 +20,7 @@ using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
 using dotenv.net;
+using System.Security.Claims;
 
 DotEnv.Load();
 
@@ -66,7 +67,7 @@ builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IReportService, Infrastructure.Services.ReportService>();
 builder.Services.AddScoped<IPdfReportService, Application.Services.PdfReportService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
-builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
+builder.Services.AddScoped<ICustomerHistoryService, Infrastructure.Services.CustomerHistoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
 builder.Services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
@@ -116,24 +117,15 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.FromMinutes(1)
+            ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
 builder.Services.AddAuthorization();
 
 // CORS
-var allowedOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>()
-    ??
-    [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174"
-    ];
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendClient", policy =>

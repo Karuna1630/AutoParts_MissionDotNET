@@ -67,9 +67,6 @@ function App() {
             <Route path="shop" element={<PartsShop />} />
             <Route path="requests" element={<PartRequests />} />
             <Route path="history" element={<TransactionHistory />} />
-            <Route path="predictor" element={<HealthPredictor />} />
-            <Route path="wallet" element={<PointsWallet />} />
-            <Route path="rewards" element={<Rewards />} />
             <Route path="profile" element={<ProfileSettings />} />
           </Route>
 

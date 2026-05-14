@@ -13,67 +13,94 @@ namespace WebAPI.Controllers;
 public class CustomerHistoryController : ControllerBase
 {
     private readonly ICustomerHistoryService _historyService;
+    private readonly Application.Interfaces.Repositories.IGenericRepository<Domain.Entities.Customer> _customerRepo;
 
-    public CustomerHistoryController(ICustomerHistoryService historyService)
+    public CustomerHistoryController(
+        ICustomerHistoryService historyService,
+        Application.Interfaces.Repositories.IGenericRepository<Domain.Entities.Customer> customerRepo)
     {
         _historyService = historyService;
+        _customerRepo = customerRepo;
     }
 
-    private int GetCustomerId()
+    private async Task<int?> GetCustomerIdAsync()
     {
-        // For now, assume the user's ID maps 1:1 to their customer ID, 
-        // or we mock a fixed customer ID for the logged-in user.
-        // In reality, we would query the Customer table where UserId = User.Identity.Name
-        // But since Customer table isn't fully linked to auth context here, we will just use 1.
-        return 1;
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdStr, out var userId)) return null;
+
+        var customer = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            _customerRepo.Query(), c => c.UserId == userId);
+        
+        return customer?.Id;
     }
 
     [HttpGet("purchases")]
     public async Task<IActionResult> GetPurchaseHistory([FromQuery] int? vehicleId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] string? status)
     {
-        var result = await _historyService.GetPurchaseHistoryAsync(GetCustomerId(), vehicleId, fromDate, toDate, status);
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return NotFound(new { success = false, message = "Customer profile record not found for this user." });
+
+        var result = await _historyService.GetPurchaseHistoryAsync(customerId.Value, vehicleId, fromDate, toDate, status);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("services")]
     public async Task<IActionResult> GetServiceHistory([FromQuery] int? vehicleId, [FromQuery] string? status)
     {
-        var result = await _historyService.GetServiceHistoryAsync(GetCustomerId(), vehicleId, status);
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return NotFound(new { success = false, message = "Customer profile record not found for this user." });
+
+        var result = await _historyService.GetServiceHistoryAsync(customerId.Value, vehicleId, status);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("all")]
     public async Task<IActionResult> GetCombinedHistory()
     {
-        var result = await _historyService.GetCombinedHistoryAsync(GetCustomerId());
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return NotFound(new { success = false, message = "Customer profile record not found for this user." });
+
+        var result = await _historyService.GetCombinedHistoryAsync(customerId.Value);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("purchases/{invoiceId}")]
     public async Task<IActionResult> GetSinglePurchase(int invoiceId)
     {
-        var result = await _historyService.GetSinglePurchaseAsync(GetCustomerId(), invoiceId);
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return Unauthorized("Customer profile not found.");
+
+        var result = await _historyService.GetSinglePurchaseAsync(customerId.Value, invoiceId);
         return result.Success ? Ok(result) : NotFound(result);
     }
 
     [HttpGet("services/{appointmentId}")]
     public async Task<IActionResult> GetSingleService(int appointmentId)
     {
-        var result = await _historyService.GetSingleServiceAsync(GetCustomerId(), appointmentId);
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return Unauthorized("Customer profile not found.");
+
+        var result = await _historyService.GetSingleServiceAsync(customerId.Value, appointmentId);
         return result.Success ? Ok(result) : NotFound(result);
     }
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {
-        var result = await _historyService.GetHistorySummaryAsync(GetCustomerId());
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return NotFound(new { success = false, message = "Customer profile record not found for this user." });
+
+        var result = await _historyService.GetHistorySummaryAsync(customerId.Value);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("export")]
     public async Task<IActionResult> ExportHistory([FromQuery] string format = "pdf")
     {
-        var result = await _historyService.ExportHistoryAsPdfAsync(GetCustomerId());
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return Unauthorized("Customer profile not found.");
+
+        var result = await _historyService.ExportHistoryAsPdfAsync(customerId.Value);
         if (!result.Success || result.Data == null) 
         {
             return BadRequest(result.Message ?? "Failed to generate history PDF");
@@ -84,7 +111,10 @@ public class CustomerHistoryController : ControllerBase
     [HttpGet("invoice/{invoiceId}/download")]
     public async Task<IActionResult> DownloadInvoice(int invoiceId)
     {
-        var result = await _historyService.DownloadSingleInvoicePdfAsync(GetCustomerId(), invoiceId);
+        var customerId = await GetCustomerIdAsync();
+        if (customerId == null) return Unauthorized("Customer profile not found.");
+
+        var result = await _historyService.DownloadSingleInvoicePdfAsync(customerId.Value, invoiceId);
         if (!result.Success || result.Data == null)
         {
             return NotFound(result.Message ?? "Invoice PDF not found");

@@ -20,15 +20,18 @@ namespace WebAPI.Controllers;
 public class PartRequestsController : ControllerBase
 {
     private readonly IGenericRepository<PartRequest> _requestRepo;
+    private readonly IGenericRepository<Part> _partRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
     private readonly IImageService _imageService;
 
     public PartRequestsController(
         IGenericRepository<PartRequest> requestRepo,
+        IGenericRepository<Part> partRepo,
         IGenericRepository<Customer> customerRepo,
         IImageService imageService)
     {
         _requestRepo = requestRepo;
+        _partRepo = partRepo;
         _customerRepo = customerRepo;
         _imageService = imageService;
     }
@@ -98,6 +101,8 @@ public class PartRequestsController : ControllerBase
                 Urgency = r.Urgency,
                 Status = r.Status,
                 ImageUrl = r.ImageUrl,
+                Price = r.Price,
+                PartId = r.PartId,
                 CreatedAt = r.CreatedAt
             })
             .ToListAsync();
@@ -121,6 +126,8 @@ public class PartRequestsController : ControllerBase
                 Quantity = r.Quantity,
                 Urgency = r.Urgency,
                 Status = r.Status,
+                Price = r.Price,
+                PartId = r.PartId,
                 CreatedAt = r.CreatedAt,
                 Customer = r.Customer != null ? new CustomerInfoDto
                 {
@@ -146,7 +153,39 @@ public class PartRequestsController : ControllerBase
         if (request == null) return NotFound(new { success = false, message = "Request not found." });
 
         request.Status = dto.Status;
+        if (dto.Price.HasValue) request.Price = dto.Price.Value;
         request.UpdatedAt = DateTime.UtcNow;
+
+        // If arrived, create a "Shadow Part" in the main Parts table so it can be ordered via Cart
+        if (dto.Status == "Arrived" && !request.PartId.HasValue)
+        {
+            var part = new Part
+            {
+                Name = request.PartName,
+                SKU = $"REQ-{request.Id}",
+                Price = request.Price ?? 0,
+                CostPrice = request.Price ?? 0, // Placeholder
+                StockQuantity = request.Quantity,
+                Category = "Special Request",
+                ImageUrl = request.ImageUrl,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _partRepo.AddAsync(part);
+            await _partRepo.SaveChangesAsync();
+            request.PartId = part.Id;
+        }
+        else if (dto.Status == "Arrived" && request.PartId.HasValue)
+        {
+            // Update existing part price/stock if needed
+            var part = await _partRepo.GetByIdAsync(request.PartId.Value);
+            if (part != null)
+            {
+                part.Price = request.Price ?? 0;
+                part.StockQuantity = request.Quantity;
+                _partRepo.Update(part);
+                await _partRepo.SaveChangesAsync();
+            }
+        }
 
         _requestRepo.Update(request);
         await _requestRepo.SaveChangesAsync();
@@ -158,4 +197,5 @@ public class PartRequestsController : ControllerBase
 public class UpdateStatusDto
 {
     public string Status { get; set; } = string.Empty;
+    public decimal? Price { get; set; }
 }

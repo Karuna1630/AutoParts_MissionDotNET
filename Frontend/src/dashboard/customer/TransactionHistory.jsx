@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText, FiPackage, FiTruck } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText, FiPackage, FiTruck, FiInfo } from 'react-icons/fi';
 import { customerHistoryService } from '../../services/customerHistoryService';
 
 const TransactionHistory = () => {

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus, FiX, FiImage, FiShoppingBag } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiPlus, FiX, FiImage, FiShoppingBag, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { getMyPartRequests, createPartRequest } from '../../services/partService';
 import { getMyVehicles } from '../../services/vehicleService';
 import { getApiErrorMessage } from '../../services/api';
+import { useCart } from '../../context/CartContext';
 
 const PartRequests = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -21,8 +25,13 @@ const PartRequests = () => {
     vehicleInfo: '',
     image: null
   });
-  const [submitting, setSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchRequests();
@@ -47,6 +56,8 @@ const PartRequests = () => {
   };
 
   const handleOpenRequest = () => {
+    setError(null);
+    setSuccess(null);
     setRequestForm({
       partName: '',
       quantity: 1,
@@ -61,6 +72,7 @@ const PartRequests = () => {
 
   const handleRequestSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     try {
       setSubmitting(true);
       const formData = new FormData();
@@ -89,12 +101,11 @@ const PartRequests = () => {
   const getStatusInfo = (status) => {
     switch (status) {
       case 'Pending': return { label: 'Pending', color: 'bg-amber-50 text-amber-600 border-amber-200', icon: <FiClock /> };
-      case 'Checking': return { label: 'Checking', color: 'bg-blue-50 text-blue-600 border-blue-200', icon: <FiInfo /> };
-      case 'Ordered': return { label: 'Ordered', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', icon: <FiTruck /> };
-      case 'Arrived': return { label: 'Ready for Pickup', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: <FiCheckCircle /> };
-      case 'Completed': return { label: 'Completed', color: 'bg-slate-100 text-slate-600 border-slate-200', icon: <FiCheckCircle /> };
-      case 'Procurement Required': return { label: 'Sourcing Part', color: 'bg-red-50 text-red-600 border-red-200', icon: <FiAlertCircle /> };
-      default: return { label: 'Processing', color: 'bg-blue-50 text-blue-600 border-blue-100', icon: <FiClock /> };
+      case 'Requested': return { label: 'Requested', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', icon: <FiTruck /> };
+      case 'Arrived': return { label: 'Available', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', icon: <FiCheckCircle /> };
+      case 'Rejected': return { label: 'Rejected', color: 'bg-slate-100 text-slate-500 border-slate-200', icon: <FiX /> };
+      case 'Procurement Required': return { label: 'Procurement Needed', color: 'bg-blue-50 text-blue-600 border-blue-200', icon: <FiAlertCircle /> };
+      default: return { label: status, color: 'bg-blue-50 text-blue-600 border-blue-100', icon: <FiClock /> };
     }
   };
 
@@ -122,6 +133,12 @@ const PartRequests = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 font-bold text-sm flex items-center gap-3">
+          <FiAlertCircle size={20} /> {error}
+        </div>
+      )}
+
       {success && (
         <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-700 font-bold text-sm flex items-center gap-3">
           <FiCheckCircle size={20} /> {success}
@@ -135,97 +152,143 @@ const PartRequests = () => {
           ))}
         </div>
       ) : requests.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6">
-          {requests.map(req => {
-            const status = getStatusInfo(req.status);
-            return (
-              <div key={req.id} className="bg-white rounded-[32px] border border-slate-100 p-8 hover:shadow-xl hover:shadow-slate-200/30 transition-all group">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-                  {/* Status Icon or Image */}
-                  <div className={`w-16 h-16 rounded-[24px] overflow-hidden flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
-                    {req.imageUrl ? (
-                      <img src={req.imageUrl} alt={req.partName} className="w-full h-full object-cover" />
-                    ) : (
-                      React.cloneElement(status.icon, { size: 28 })
-                    )}
-                  </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4">
+            {requests
+              .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+              .map(req => {
+                const status = getStatusInfo(req.status);
+                return (
+                  <div key={req.id} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all group">
+                    <div className="flex flex-col md:flex-row md:items-center gap-6">
+                      {/* Status Icon or Image */}
+                      <div className={`w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0 ${status.color.split(' ')[0]} ${status.color.split(' ')[1]}`}>
+                        {req.imageUrl ? (
+                          <img src={req.imageUrl} alt={req.partName} className="w-full h-full object-cover" />
+                        ) : (
+                          React.cloneElement(status.icon, { size: 24 })
+                        )}
+                      </div>
 
-                  {/* Main Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-slate-800">{req.partName}</h3>
-                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${status.color}`}>
-                        {status.label}
-                      </span>
-                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-slate-50 border border-slate-100 ${getUrgencyColor(req.urgency)}`}>
-                        {req.urgency}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-50">
-                      <div className="flex items-center gap-2">
-                        <div className={`p-2 rounded-lg border ${getStatusInfo(req.status).color}`}>
-                          {getStatusInfo(req.status).icon}
+                      {/* Main Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-3 mb-1">
+                          <h3 className="text-lg font-bold text-slate-800">{req.partName}</h3>
+                          <div className="flex gap-2">
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
+                              {status.label}
+                            </span>
+                            {!['Arrived', 'Completed'].includes(req.status) && (
+                              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-50 border border-slate-100 ${getUrgencyColor(req.urgency)}`}>
+                                {req.urgency}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                          <p className={`text-xs font-bold ${getStatusInfo(req.status).color.split(' ')[1]}`}>
-                            {getStatusInfo(req.status).label}
-                          </p>
+                        
+                        <div className="flex flex-wrap items-center gap-4 text-[13px] text-slate-500 font-medium">
+                          <p className="flex items-center gap-1.5"><FiPackage className="text-slate-400"/> Qty: <span className="font-bold text-slate-700">{req.quantity}</span></p>
+                          {req.price > 0 && (
+                            <p className="flex items-center gap-1.5">
+                              <span className="text-blue-600 font-bold">Rs. {req.price.toLocaleString()}</span>
+                            </p>
+                          )}
+                          {req.vehicleInfo && <p className="flex items-center gap-1.5"><FiArrowRight className="text-slate-400"/> {req.vehicleInfo}</p>}
+                          <p className="flex items-center gap-1.5"><FiClock className="text-slate-400"/> {new Date(req.createdAt).toLocaleDateString()}</p>
+                        </div>
+
+                        {req.description && (
+                          <div className="mt-2 p-3 bg-slate-50/50 rounded-xl text-[12px] text-slate-500 italic border border-slate-100/50">
+                            {req.description}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions & Progress */}
+                      <div className="flex items-center gap-4 md:pl-6 md:border-l md:border-slate-100">
+                        {req.status === 'Arrived' && (
+                          <button 
+                            onClick={() => {
+                              addToCart({
+                                id: req.partId || `req-${req.id}`,
+                                partName: req.partName,
+                                sku: `REQ-${req.id}`,
+                                price: req.price || 0,
+                                imageUrl: req.imageUrl,
+                                stockQuantity: 999
+                              }, req.quantity);
+                              setSuccess(`"${req.partName}" added to your cart!`);
+                              setTimeout(() => setSuccess(null), 3000);
+                            }}
+                            className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/10 flex items-center gap-2 whitespace-nowrap"
+                          >
+                            <FiShoppingBag size={14} />
+                            Add to Cart
+                          </button>
+                        )}
+                        
+                        <div className="hidden xl:flex items-center gap-1.5">
+                          {['Pending', 'Arrived'].map((s, idx, arr) => {
+                            const statusList = ['Pending', 'Arrived', 'Completed'];
+                            const currentIdx = statusList.indexOf(req.status);
+                            const isPast = idx < currentIdx;
+                            const isCurrent = idx === currentIdx;
+                            
+                            return (
+                              <React.Fragment key={s}>
+                                <div className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                                  isPast ? 'bg-emerald-500' : 
+                                  isCurrent ? `bg-blue-500 ${!['Arrived', 'Completed'].includes(req.status) ? 'animate-pulse' : ''}` : 
+                                  'bg-slate-200'
+                                }`} title={s} />
+                                {idx < arr.length - 1 && <div className={`w-4 h-0.5 transition-all duration-500 ${isPast ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
+                              </React.Fragment>
+                            );
+                          })}
                         </div>
                       </div>
-                      
-                      {req.status === 'Arrived' && (
-                        <button 
-                          onClick={() => {
-                            // Navigate to shop
-                            navigate('/dashboard/shop');
-                          }}
-                          className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-600 transition-all shadow-lg shadow-slate-900/10 hover:shadow-blue-500/20 flex items-center gap-2"
-                        >
-                          <FiShoppingBag size={14} />
-                          Buy from Shop
-                        </button>
-                      )}
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 font-medium">
-                      <p className="flex items-center gap-2"><FiPackage className="text-slate-400"/> Qty: <span className="font-bold text-slate-700">{req.quantity}</span></p>
-                      {req.vehicleInfo && <p className="flex items-center gap-2"><FiArrowRight className="text-slate-400"/> {req.vehicleInfo}</p>}
-                      <p className="flex items-center gap-2"><FiClock className="text-slate-400"/> {new Date(req.createdAt).toLocaleDateString()}</p>
-                    </div>
-
-                    {req.description && (
-                      <div className="mt-4 p-4 bg-slate-50 rounded-2xl text-xs text-slate-600 italic border border-slate-100">
-                        {req.description}
-                      </div>
-                    )}
                   </div>
+                );
+              })}
+          </div>
 
-                  {/* Progress Indicator (Mobile hidden or simplified) */}
-                  <div className="hidden xl:flex items-center gap-2 px-6 border-l border-slate-100">
-                    {['Pending', 'Arrived'].map((s, idx, arr) => {
-                      const statusList = ['Pending', 'Arrived', 'Completed'];
-                      const currentIdx = statusList.indexOf(req.status);
-                      const isPast = idx < currentIdx;
-                      const isCurrent = idx === currentIdx;
-                      
-                      return (
-                        <React.Fragment key={s}>
-                          <div className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                            isPast ? 'bg-emerald-500' : 
-                            isCurrent ? `bg-blue-500 ${!['Arrived', 'Completed'].includes(req.status) ? 'animate-pulse' : ''}` : 
-                            'bg-slate-200'
-                          }`} title={s} />
-                          {idx < arr.length - 1 && <div className={`w-6 h-0.5 transition-all duration-500 ${isPast ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                </div>
+          {/* Pagination Controls */}
+          {requests.length > itemsPerPage && (
+            <div className="flex items-center justify-center gap-2 py-4">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <FiChevronLeft size={20} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.ceil(requests.length / itemsPerPage) }).map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      currentPage === i + 1
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                      : 'text-slate-500 hover:bg-slate-50 border border-slate-100'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
               </div>
-            );
-          })}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(requests.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(requests.length / itemsPerPage)}
+                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <FiChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex flex-col items-center justify-center text-center">

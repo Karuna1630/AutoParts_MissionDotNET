@@ -14,7 +14,6 @@ const statCards = [
   { label: 'Vehicles', value: '2', icon: FaCar, accent: 'blue' },
   { label: 'Upcoming', value: '1', icon: FaClock, accent: 'emerald' },
   { label: 'Lifetime Spend', value: 'Rs.8,909', icon: FaDollarSign, accent: 'indigo' },
-  { label: 'Silver Member', value: '8,909 pts', icon: FaCrown, accent: 'blue' },
 ];
 
 const garageVehicles = [
@@ -123,10 +122,6 @@ const CustomerDashboard = () => {
               <button className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0">
                 <FaCalendarAlt className="text-blue-600" />
                 Book service
-              </button>
-              <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
-                <FaTools className="text-blue-200" />
-                Smart health check
               </button>
               <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
                 <FaShoppingBasket className="text-blue-200" />
@@ -241,29 +236,6 @@ const CustomerDashboard = () => {
 
         {/* Right Column (Rewards, Next Visit, Care Tips) */}
         <div className="space-y-6">
-          {/* Rewards Card */}
-          <div className="rounded-3xl bg-linear-to-br from-blue-500 to-blue-700 p-6 text-white shadow-lg shadow-blue-700/25 sm:p-7">
-            <div className="mb-5 flex items-center justify-between">
-              <span className="rounded-md bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] backdrop-blur">
-                Silver Member
-              </span>
-              <FaCrown className="text-blue-200" />
-            </div>
-            <div className="mb-6">
-              <h3 className="text-4xl font-bold tracking-tight">8,909</h3>
-              <p className="text-sm font-medium text-blue-100">reward points</p>
-            </div>
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-blue-50">
-              <span>Progress to next tier</span>
-              <span>84%</span>
-            </div>
-            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-black/15">
-              <div className="h-full w-[84%] bg-white transition-all duration-1000" />
-            </div>
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
-              View rewards <FaArrowRight className="text-xs" />
-            </button>
-          </div>
 
           {/* Next Visit */}
           <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">

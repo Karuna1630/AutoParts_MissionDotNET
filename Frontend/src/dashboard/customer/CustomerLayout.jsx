@@ -2,8 +2,8 @@ import React from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FaThLarge, FaCar, FaCalendarCheck, FaBell, 
-  FaShoppingBag, FaFileAlt, FaHistory, FaWaveSquare,
-  FaWallet, FaGift, FaUserCog, FaSignOutAlt, FaCarSide
+  FaShoppingBag, FaFileAlt, FaHistory,
+  FaUserCog, FaSignOutAlt, FaCarSide
 } from 'react-icons/fa';
 import { useCart } from '../../context/CartContext';
 import CartDrawer from './CartDrawer';
@@ -25,15 +25,6 @@ const sidebarGroups = [
       { id: 'shop', label: 'Parts Shop', icon: FaShoppingBag, path: '/dashboard/shop' },
       { id: 'requests', label: 'Part Requests', icon: FaFileAlt, path: '/dashboard/requests' },
       { id: 'history', label: 'Transaction History', icon: FaHistory, path: '/dashboard/history' },
-      { id: 'predictor', label: 'Health Predictor', icon: FaWaveSquare, path: '/dashboard/predictor' },
-    ]
-  },
-  {
-    title: 'ACCOUNT',
-    items: [
-      { id: 'wallet', label: 'Points Wallet', icon: FaWallet, path: '/dashboard/wallet' },
-      { id: 'rewards', label: 'Rewards', icon: FaGift, path: '/dashboard/rewards' },
-      { id: 'profile', label: 'Profile & Settings', icon: FaUserCog, path: '/dashboard/profile' },
     ]
   }
 ];
