@@ -288,16 +288,37 @@ public class OrderRequestsController : ControllerBase
 
     [HttpPatch("{id}/complete")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
-    public async Task<IActionResult> CompleteOrder(int id)
+    public async Task<IActionResult> CompleteOrder(int id, [FromQuery] bool isPaid = false)
     {
-        var order = await _orderRepo.GetByIdAsync(id);
+        var order = await _orderRepo.Query().Include(o => o.Customer).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { success = false, message = "Order not found." });
+        if (order.Status == "Completed") return BadRequest(new { success = false, message = "Order already completed." });
+
+        var invoice = await _invoiceRepo.Query()
+            .FirstOrDefaultAsync(i => i.CustomerId == order.CustomerId && i.Notes.Contains($"Order Request #{order.Id}"));
+        
+        if (invoice != null)
+        {
+            if (isPaid)
+            {
+                invoice.PaymentStatus = "Paid";
+                invoice.PaymentMethod = "Paid at Pickup";
+            }
+            else
+            {
+                order.Customer.CreditBalance += invoice.FinalAmount;
+                _customerRepo.Update(order.Customer);
+            }
+            _invoiceRepo.Update(invoice);
+            await _invoiceRepo.SaveChangesAsync();
+        }
         
         order.Status = "Completed";
         order.UpdatedAt = DateTime.UtcNow;
         _orderRepo.Update(order);
         await _orderRepo.SaveChangesAsync();
+        await _customerRepo.SaveChangesAsync();
 
-        return Ok(new { success = true, message = "Order marked as completed." });
+        return Ok(new { success = true, message = isPaid ? "Order completed and paid." : "Order completed and added to credit." });
     }
 }

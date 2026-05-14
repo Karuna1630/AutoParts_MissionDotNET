@@ -99,3 +99,8 @@ export const getStaffDashboardStats = async () => {
   const response = await apiClient.get('/staff/Dashboard/stats');
   return response.data;
 };
+
+export const settleCustomerCredit = async (customerId, paymentData) => {
+  const response = await apiClient.post(`/staff/customers/${customerId}/settle-credit`, paymentData);
+  return response.data;
+};

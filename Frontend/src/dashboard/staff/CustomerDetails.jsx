@@ -9,7 +9,7 @@ import {
 import { FaCar } from 'react-icons/fa';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { getCustomerDetails, addVehicleToCustomer, getCustomerHistory } from '../../services/staffService';
+import { getCustomerDetails, addVehicleToCustomer, getCustomerHistory, settleCustomerCredit } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
 
 const vehicleSchema = Yup.object({
@@ -20,6 +20,12 @@ const vehicleSchema = Yup.object({
   vehicleColor: Yup.string().nullable()
 });
 
+const settleSchema = Yup.object({
+  amount: Yup.number().required('Required').positive('Must be positive').max(1000000, 'Too large'),
+  paymentMethod: Yup.string().required('Required'),
+  notes: Yup.string().nullable()
+});
+
 const CustomerDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,6 +34,7 @@ const CustomerDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [isSettleCreditOpen, setIsSettleCreditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('vehicles'); // 'vehicles', 'purchases', 'orders'
 
   useEffect(() => {
@@ -58,6 +65,23 @@ const CustomerDetails = () => {
         setCustomer(response.data);
         setIsAddVehicleOpen(false);
         resetForm();
+      }
+    } catch (err) {
+      setStatus({ type: 'error', message: getApiErrorMessage(err) });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSettleCredit = async (values, { setSubmitting, resetForm, setStatus }) => {
+    try {
+      const response = await settleCustomerCredit(id, values);
+      if (response.success) {
+        setCustomer(response.data);
+        setIsSettleCreditOpen(false);
+        resetForm();
+        // Refresh history to show the payment if we had a payment tab, 
+        // or just show a success notification if implemented
       }
     } catch (err) {
       setStatus({ type: 'error', message: getApiErrorMessage(err) });
@@ -100,7 +124,28 @@ const CustomerDetails = () => {
             <div className="space-y-4 pt-4">
               <DetailItem icon={FiMail} label="Email Address" value={customer.email} />
               <DetailItem icon={FiPhone} label="Phone Number" value={customer.phone} />
-              <DetailItem icon={FiCreditCard} label="Credit Balance" value={`Rs.${customer.creditBalance.toFixed(2)}`} />
+              
+              <div className="pt-2">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl transition-colors">
+                    <FiCreditCard size={18} />
+                  </div>
+                  <div className="flex-1 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Credit Balance</p>
+                      <p className="text-sm font-black text-slate-800 mt-1.5">Rs. {customer.creditBalance.toFixed(2)}</p>
+                    </div>
+                    {customer.creditBalance > 0 && (
+                      <button 
+                        onClick={() => setIsSettleCreditOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl text-[10px] font-black shadow-lg shadow-blue-100 transition-all uppercase tracking-widest"
+                      >
+                        Settle Credit
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -328,6 +373,58 @@ const CustomerDetails = () => {
                     <button type="button" onClick={() => setIsAddVehicleOpen(false)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition">Cancel</button>
                     <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition disabled:opacity-50 uppercase tracking-widest text-xs">
                       {isSubmitting ? 'Saving...' : 'Add Vehicle'}
+                    </button>
+                  </div>
+                </Form>
+              )}
+            </Formik>
+          </div>
+        </div>
+      )}
+      {/* Settle Credit Modal */}
+      {isSettleCreditOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Settle Credit</h3>
+              <button onClick={() => setIsSettleCreditOpen(false)} className="p-2 hover:bg-white rounded-full transition"><FiX size={20} /></button>
+            </div>
+            <Formik
+              initialValues={{ amount: customer.creditBalance > 0 ? customer.creditBalance : 0, paymentMethod: 'Cash', notes: '' }}
+              validationSchema={settleSchema}
+              onSubmit={handleSettleCredit}
+            >
+              {({ isSubmitting, status }) => (
+                <Form className="p-8 space-y-6">
+                  <div className="space-y-4">
+                    <ModalFormItem label="PAYMENT AMOUNT" name="amount" icon={FiCreditCard} type="number" />
+                    
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">PAYMENT METHOD</label>
+                      <div className="relative">
+                        <FiTruck className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                        <Field 
+                          as="select"
+                          name="paymentMethod"
+                          className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100 transition appearance-none"
+                        >
+                          <option value="Cash">Cash</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                          <option value="Card">Card</option>
+                          <option value="E-Sewa / Khalti">E-Sewa / Khalti</option>
+                        </Field>
+                      </div>
+                    </div>
+
+                    <ModalFormItem label="NOTES (OPTIONAL)" name="notes" icon={FiFileText} placeholder="e.g. Paid at counter" />
+                  </div>
+
+                  {status?.message && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl">{status.message}</div>}
+
+                  <div className="flex gap-3 pt-4">
+                    <button type="button" onClick={() => setIsSettleCreditOpen(false)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition">Cancel</button>
+                    <button type="submit" disabled={isSubmitting} className="flex-1 py-3 bg-emerald-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition disabled:opacity-50 uppercase tracking-widest text-xs">
+                      {isSubmitting ? 'Processing...' : 'Confirm Payment'}
                     </button>
                   </div>
                 </Form>

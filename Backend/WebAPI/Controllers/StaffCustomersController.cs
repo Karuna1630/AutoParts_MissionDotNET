@@ -109,6 +109,27 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    [HttpPost("{customerId}/settle-credit")]
+    public async Task<IActionResult> SettleCredit(int customerId, [FromBody] SettleCreditDto dto)
+    {
+        var result = await _staffCustomerService.SettleCreditAsync(customerId, dto);
+        if (!result.Success)
+        {
+            return BadRequest(new ApiResponse<CustomerResponseDto>
+            {
+                Success = false,
+                Message = result.Message
+            });
+        }
+
+        return Ok(new ApiResponse<CustomerResponseDto>
+        {
+            Success = true,
+            Message = result.Message,
+            Data = result.Data
+        });
+    }
+
     [HttpGet("{customerId}/history")]
     public async Task<IActionResult> GetCustomerHistory(int customerId)
     {

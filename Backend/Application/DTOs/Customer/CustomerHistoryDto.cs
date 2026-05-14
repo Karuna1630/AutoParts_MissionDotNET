@@ -47,4 +47,5 @@ public class HistorySummaryDto
     public decimal TotalSpent { get; set; }
     public int TotalAppointments { get; set; }
     public int CompletedAppointments { get; set; }
+    public decimal CreditBalance { get; set; }
 }

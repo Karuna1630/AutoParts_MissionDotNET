@@ -9,6 +9,9 @@ import {
   FaShoppingBasket,
   FaTools,
 } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { getUserProfile } from '../../services/userService';
+import { getApiErrorMessage } from '../../services/api';
 
 const statCards = [
   { label: 'Vehicles', value: '2', icon: FaCar, accent: 'blue' },
@@ -67,6 +70,7 @@ const statAccentClasses = {
   blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
   emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
   indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
+  rose: { bg: 'bg-rose-50', text: 'text-rose-600' },
 };
 
 const vehicleStateClasses = {
@@ -91,10 +95,40 @@ const vehicleStateClasses = {
 };
 
 const CustomerDashboard = () => {
-  const user = JSON.parse(localStorage.getItem('authUser') || '{"fullName": "James Carter"}');
-  const firstName = user.fullName.split(' ')[0];
-  const fleetHealth = 50;
-  const vehicleCount = garageVehicles.length;
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await getUserProfile();
+      if (response.success) {
+        setProfile(response.data);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const user = JSON.parse(localStorage.getItem('authUser') || '{"fullName": "Customer"}');
+  const displayName = profile?.fullName || user.fullName;
+  const firstName = displayName.split(' ')[0];
+  const fleetHealth = 85; // This could also be dynamic if we had an endpoint
+  
+  const statCards = [
+    { label: 'My Vehicles', value: profile?.vehiclesCount || '0', icon: FaCar, accent: 'blue' },
+    { label: 'Appointments', value: profile?.upcomingAppointments || '0', icon: FaClock, accent: 'emerald' },
+    { label: 'Payable Credit', value: `Rs. ${profile?.creditBalance?.toLocaleString() || '0'}`, icon: FaDollarSign, accent: 'rose' },
+  ];
+
+  if (loading) return <div className="flex justify-center p-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
   const gaugeRadius = 80;
   const gaugeCircumference = 2 * Math.PI * gaugeRadius;
@@ -162,7 +196,7 @@ const CustomerDashboard = () => {
               </div>
             </div>
             <p className="mt-4 text-center text-sm font-medium text-blue-100/90">
-              {vehicleCount} vehicles - Watch
+              {profile?.vehiclesCount || 0} vehicles - Watch
             </p>
           </div>
         </div>

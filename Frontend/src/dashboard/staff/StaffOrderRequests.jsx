@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag } from 'react-icons/fi';
+import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 
 const StaffOrderRequests = () => {
@@ -45,13 +45,14 @@ const StaffOrderRequests = () => {
     }
   };
 
-  const handleCompleteOrder = async (orderId) => {
-    if (!window.confirm('Mark this order as Completed (Picked Up)?')) return;
+  const handleCompleteOrder = async (orderId, isPaid = false) => {
+    const action = isPaid ? 'Mark as Paid' : 'Add to Credit';
+    if (!window.confirm(`${action} and complete this order?`)) return;
     try {
       setProcessingId(orderId);
-      const res = await apiClient.patch(`/OrderRequests/${orderId}/complete`);
+      const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
       if (res.data.success) {
-        setSuccessMsg('Order completed!');
+        setSuccessMsg(isPaid ? 'Order completed and paid!' : 'Order completed and added to credit.');
         fetchOrders();
         setTimeout(() => setSuccessMsg(null), 5000);
       }
@@ -174,14 +175,24 @@ const StaffOrderRequests = () => {
                   )}
 
                   {activeTab === 'reserved' && (
-                    <button
-                      onClick={() => handleCompleteOrder(order.id)}
-                      disabled={processingId === order.id}
-                      className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      <FiCheckCircle size={13} />
-                      {processingId === order.id ? 'Processing...' : 'Mark as Completed'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleCompleteOrder(order.id, true)}
+                        disabled={processingId === order.id}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        <FiCheckCircle size={13} />
+                        {processingId === order.id ? '...' : 'Mark as Paid'}
+                      </button>
+                      <button
+                        onClick={() => handleCompleteOrder(order.id, false)}
+                        disabled={processingId === order.id}
+                        className="bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-amber-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        <FiCreditCard size={13} />
+                        {processingId === order.id ? '...' : 'Add to Credit'}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

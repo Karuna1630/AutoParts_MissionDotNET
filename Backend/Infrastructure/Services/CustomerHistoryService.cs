@@ -155,12 +155,14 @@ public class CustomerHistoryService : ICustomerHistoryService
     {
         try
         {
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customerId);
             var summary = new HistorySummaryDto
             {
                 TotalInvoices = await _context.SalesInvoices.CountAsync(i => i.CustomerId == customerId),
                 TotalSpent = await _context.SalesInvoices.Where(i => i.CustomerId == customerId).SumAsync(i => i.FinalAmount),
                 TotalAppointments = await _context.ServiceAppointments.CountAsync(a => a.CustomerId == customerId),
-                CompletedAppointments = await _context.ServiceAppointments.CountAsync(a => a.CustomerId == customerId && a.Status == "Completed")
+                CompletedAppointments = await _context.ServiceAppointments.CountAsync(a => a.CustomerId == customerId && a.Status == "Completed"),
+                CreditBalance = customer?.CreditBalance ?? 0
             };
 
             return OperationResult<HistorySummaryDto>.Ok(summary);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText, FiPackage, FiTruck, FiInfo } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiShoppingBag, FiTool, FiCheckCircle, FiClock, FiFileText, FiPackage, FiTruck, FiInfo, FiCreditCard } from 'react-icons/fi';
 import { customerHistoryService } from '../../services/customerHistoryService';
 
 const TransactionHistory = () => {
@@ -96,8 +96,14 @@ const TransactionHistory = () => {
         <SummaryCard icon={<FiShoppingBag />} label="Total Invoices" value={summary.totalInvoices} color="blue" />
         <SummaryCard icon={<FiFileText />} label="Total Spent" value={`Rs.${summary.totalSpent.toLocaleString(undefined, {minimumFractionDigits: 2})}`} color="emerald" />
         <SummaryCard icon={<FiTool />} label="Total Appointments" value={summary.totalAppointments} color="purple" />
-        <SummaryCard icon={<FiPackage />} label="Active Orders" value={orderRequests.filter(o => o.status !== 'Completed' && o.status !== 'Cancelled').length} color="amber" />
+        <SummaryCard 
+          icon={<FiCreditCard />} 
+          label="Credit Balance" 
+          value={`Rs.${(summary.creditBalance || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`} 
+          color={(summary.creditBalance || 0) > 0 ? "amber" : "emerald"} 
+        />
       </div>
+
 
       {/* Tabs */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

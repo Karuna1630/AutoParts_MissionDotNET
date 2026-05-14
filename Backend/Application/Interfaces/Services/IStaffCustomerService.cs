@@ -12,4 +12,5 @@ public interface IStaffCustomerService
     Task<OperationResult<CustomerResponseDto>> GetCustomerByIdAsync(int customerId);
     Task<OperationResult<List<CustomerResponseDto>>> GetAllCustomersAsync(int pageNumber, int pageSize);
     Task<OperationResult<CustomerResponseDto>> AddVehicleAsync(int customerId, AddVehicleToCustomerDto dto);
+    Task<OperationResult<CustomerResponseDto>> SettleCreditAsync(int customerId, SettleCreditDto dto);
 }

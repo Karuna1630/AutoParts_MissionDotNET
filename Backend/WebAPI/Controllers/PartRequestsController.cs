@@ -115,6 +115,9 @@ public class PartRequestsController : ControllerBase
     public async Task<IActionResult> GetAllRequests()
     {
         var requests = await _requestRepo.Query()
+            .AsNoTracking()
+            .Include(r => r.Customer)
+                .ThenInclude(c => c.User)
             .OrderByDescending(r => r.CreatedAt)
             .Select(r => new StaffViewPartRequestDto
             {
