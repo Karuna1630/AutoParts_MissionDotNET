@@ -97,7 +97,7 @@ public class PdfService : IPdfService
 
                             static IContainer ItemCellStyle(IContainer container)
                             {
-                                return container.PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).FontSize(9);
+                                return container.DefaultTextStyle(x => x.FontSize(9)).PaddingVertical(5).BorderBottom(1).BorderColor(Colors.Grey.Lighten2);
                             }
                         }
                     });
@@ -116,18 +116,12 @@ public class PdfService : IPdfService
 
                         if (invoice.DiscountAmount > 0)
                         {
-                            c.Item().PaddingTop(3).Row(row =>
-                            {
-                                row.RelativeItem().Text("Discount:");
-                                row.ConstantItem(90).AlignRight().Text($"-Rs.{invoice.DiscountAmount:N2}");
-                            });
+                            table.Cell().AlignRight().Text("Discount:");
+                            table.Cell().AlignRight().Text($"-Rs.{invoice.DiscountAmount:N2}");
                         }
 
-                        c.Item().PaddingTop(6).BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(6).Row(row =>
-                        {
-                            row.RelativeItem().Text("Final Amount:").SemiBold();
-                            row.ConstantItem(90).AlignRight().Text($"Rs.{invoice.FinalAmount:N2}").SemiBold();
-                        });
+                        table.Cell().BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(6).AlignRight().Text("Final Amount:").SemiBold();
+                        table.Cell().BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(6).AlignRight().Text($"Rs.{invoice.FinalAmount:N2}").SemiBold();
                     });
                 });
 

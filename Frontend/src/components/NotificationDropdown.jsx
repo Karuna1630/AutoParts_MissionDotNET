@@ -49,6 +49,7 @@ const NotificationDropdown = () => {
   const getIcon = (type) => {
     switch (type) {
       case 'Success': return <FiCheckCircle className="text-emerald-500" />;
+      case 'LowStock': return <FiAlertCircle className="text-amber-500" />;
       case 'Warning': return <FiAlertCircle className="text-amber-500" />;
       case 'Error': return <FiX className="text-red-500" />;
       default: return <FiInfo className="text-blue-500" />;
@@ -57,10 +58,20 @@ const NotificationDropdown = () => {
 
   const getNotificationsLink = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('authUser'));
-      if (user?.role === 'Admin') return '/admin/notifications';
-      if (user?.role === 'Staff') return '/staff/notifications';
-    } catch (e) {}
+      const authUserStr = localStorage.getItem('authUser');
+      if (!authUserStr) return '/dashboard/notifications';
+      
+      const user = JSON.parse(authUserStr);
+      // Check both casings and ensure we handle missing values
+      const rawRole = user?.role || user?.Role || '';
+      const role = rawRole.toString().toLowerCase();
+
+      if (role === 'admin') return '/admin/notifications';
+      if (role === 'staff') return '/staff/notifications';
+      if (role === 'customer') return '/dashboard/notifications';
+    } catch (e) {
+      console.error('Error in getNotificationsLink:', e);
+    }
     return '/dashboard/notifications';
   };
 

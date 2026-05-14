@@ -41,6 +41,7 @@ const Notifications = () => {
   const getIcon = (type) => {
     switch (type) {
       case 'Success': return <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><FiCheckCircle size={18} /></div>;
+      case 'LowStock': return <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><FiAlertCircle size={18} /></div>;
       case 'Warning': return <div className="p-2 bg-amber-100 text-amber-600 rounded-lg"><FiAlertCircle size={18} /></div>;
       case 'Error': return <div className="p-2 bg-red-100 text-red-600 rounded-lg"><FiTrash2 size={18} /></div>;
       default: return <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><FiInfo size={18} /></div>;
@@ -116,7 +117,7 @@ const Notifications = () => {
                     </span>
                   </div>
 
-                  {n.type === 'Warning' && n.relatedId && !n.isRead && (
+                  {n.title === 'Procurement Needed' && n.type === 'Warning' && n.relatedId && !n.isRead && (
                     <button 
                       onClick={async (e) => {
                         e.stopPropagation();

@@ -1,5 +1,6 @@
 using Application.DTOs.Notification;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -114,5 +115,21 @@ public class NotificationsController : ControllerBase
         await _notificationRepo.SaveChangesAsync();
 
         return Ok(new { success = true });
+    }
+
+    [HttpPost("check-low-stock")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> TriggerLowStockCheck([FromServices] INotificationService notificationService)
+    {
+        await notificationService.CheckAndNotifyLowStockAsync();
+        return Ok(new { success = true, message = "Low stock check completed and notifications sent." });
+    }
+
+    [HttpPost("check-overdue-credits")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> TriggerOverdueCreditsCheck([FromServices] INotificationService notificationService)
+    {
+        await notificationService.CheckAndSendCreditRemindersAsync();
+        return Ok(new { success = true, message = "Overdue credits check completed and reminders sent." });
     }
 }

@@ -8,4 +8,5 @@ public class EmailSettings
     public string SenderName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public bool EnableSsl { get; set; }
+    public string AdminNotificationEmail { get; set; } = string.Empty;
 }

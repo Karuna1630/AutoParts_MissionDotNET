@@ -70,6 +70,8 @@ builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
 builder.Services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
 builder.Services.AddScoped<IPdfService, Infrastructure.Services.PdfService>();
+builder.Services.AddScoped<INotificationService, Infrastructure.Services.NotificationService>();
+builder.Services.AddHostedService<Infrastructure.Services.NotificationBackgroundService>();
 
 // Email Configuration
 builder.Services.Configure<Application.DTOs.Email.EmailSettings>(options => {
@@ -79,6 +81,7 @@ builder.Services.Configure<Application.DTOs.Email.EmailSettings>(options => {
     options.SenderName = (builder.Configuration["SENDER_NAME"] ?? "Auto Parts Mission").Trim();
     options.Password = (builder.Configuration["SMTP_PASSWORD"] ?? "").Trim();
     options.EnableSsl = bool.Parse((builder.Configuration["ENABLE_SSL"] ?? "true").Trim());
+    options.AdminNotificationEmail = (builder.Configuration["ADMIN_NOTIFICATION_EMAIL"] ?? builder.Configuration["SENDER_EMAIL"] ?? "").Trim();
 });
 
 // --- 4. Authentication & Security ---

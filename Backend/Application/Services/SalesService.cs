@@ -19,6 +19,7 @@ public class SalesService : ISalesService
     private readonly IGenericRepository<Vehicle> _vehicleRepo;
     private readonly IPdfService _pdfService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
 
     public SalesService(
         IGenericRepository<SalesInvoice> invoiceRepo,
@@ -26,7 +27,8 @@ public class SalesService : ISalesService
         IGenericRepository<Customer> customerRepo,
         IGenericRepository<Vehicle> vehicleRepo,
         IPdfService pdfService,
-        IEmailService emailService)
+        IEmailService emailService,
+        INotificationService notificationService)
     {
         _invoiceRepo = invoiceRepo;
         _partRepo = partRepo;
@@ -34,6 +36,7 @@ public class SalesService : ISalesService
         _vehicleRepo = vehicleRepo;
         _pdfService = pdfService;
         _emailService = emailService;
+        _notificationService = notificationService;
     }
 
     public async Task<OperationResult<ViewSalesInvoiceDto>> CreateInvoiceAsync(CreateSalesInvoiceDto dto, int staffId)
@@ -103,6 +106,12 @@ public class SalesService : ISalesService
 
         await _invoiceRepo.AddAsync(invoice);
         await _invoiceRepo.SaveChangesAsync();
+
+        // Check for low stock for each part in the invoice
+        foreach (var item in invoice.Items)
+        {
+            await _notificationService.CheckAndNotifyLowStockAsync(item.PartId);
+        }
 
         return OperationResult<ViewSalesInvoiceDto>.Ok(MapToViewDto(invoice), "Invoice created successfully.");
     }

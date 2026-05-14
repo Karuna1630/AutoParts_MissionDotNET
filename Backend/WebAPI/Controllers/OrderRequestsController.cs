@@ -1,5 +1,6 @@
 using Application.DTOs.OrderRequest;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -18,17 +19,20 @@ public class OrderRequestsController : ControllerBase
     private readonly IGenericRepository<Part> _partRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
     private readonly IGenericRepository<SalesInvoice> _invoiceRepo;
+    private readonly INotificationService _notificationService;
 
     public OrderRequestsController(
         IGenericRepository<OrderRequest> orderRepo,
         IGenericRepository<Part> partRepo,
         IGenericRepository<Customer> customerRepo,
-        IGenericRepository<SalesInvoice> invoiceRepo)
+        IGenericRepository<SalesInvoice> invoiceRepo,
+        INotificationService notificationService)
     {
         _orderRepo = orderRepo;
         _partRepo = partRepo;
         _customerRepo = customerRepo;
         _invoiceRepo = invoiceRepo;
+        _notificationService = notificationService;
     }
 
     [HttpPost]
@@ -269,6 +273,11 @@ public class OrderRequestsController : ControllerBase
         await _invoiceRepo.AddAsync(invoice);
         await _orderRepo.SaveChangesAsync();
         await _invoiceRepo.SaveChangesAsync();
+
+        foreach (var item in order.Items)
+        {
+            await _notificationService.CheckAndNotifyLowStockAsync(item.PartId);
+        }
 
         return Ok(new { 
             success = true, 
