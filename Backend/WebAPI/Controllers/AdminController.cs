@@ -108,6 +108,7 @@ public class AdminController : ControllerBase
         // 1. User Stats
         var totalUsers = await _userRepository.CountAllAsync(default);
         var totalCustomers = await _userRepository.CountByRoleAsync(UserRoles.Customer, default);
+        var totalStaff = await _userRepository.CountByRoleAsync(UserRoles.Staff, default);
         
         // 2. Financial Stats (Total)
         var totalRevenue = await _context.SalesInvoices.SumAsync(i => i.FinalAmount);
@@ -116,10 +117,18 @@ public class AdminController : ControllerBase
         // 3. Inventory Stats
         var totalParts = await _context.Parts.CountAsync();
         var totalStock = await _context.Parts.SumAsync(p => p.StockQuantity);
-        var lowStockCount = await _context.Parts.CountAsync(p => p.StockQuantity < 10);
+        var lowStockCount = await _context.Parts.CountAsync(p => p.StockQuantity > 0 && p.StockQuantity < 10);
+        var outOfStockCount = await _context.Parts.CountAsync(p => p.StockQuantity == 0);
+        var totalInventoryValue = await _context.Parts.SumAsync(p => p.StockQuantity * (p.CostPrice > 0 ? p.CostPrice : p.Price));
 
         // 4. Alerts (Low stock + Unpaid Credit)
         var unpaidInvoices = await _context.SalesInvoices.CountAsync(i => i.PaymentStatus == "Credit");
+        var totalVendors = await _context.Vendors.CountAsync();
+        var pendingAppointments = await _context.ServiceAppointments.CountAsync(a => a.Status == "Pending");
+        var pendingPartRequests = await _context.PartRequests.CountAsync(r => r.Status == "Pending" || r.Status == "Checking");
+        var pendingOrderRequests = await _context.OrderRequests.CountAsync(r => r.Status == "Pending");
+        var purchaseInvoiceCount = await _context.PurchaseInvoices.CountAsync();
+        var totalPurchaseAmount = await _context.PurchaseInvoices.SumAsync(i => i.TotalAmount);
 
         // 5. Recent Sales
         var recentSales = await _context.SalesInvoices
@@ -127,11 +136,23 @@ public class AdminController : ControllerBase
             .OrderByDescending(i => i.InvoiceDate)
             .Take(5)
             .Select(s => new {
-                Name = s.Customer.User.FullName,
-                Date = s.InvoiceDate.ToString("MM/dd/yyyy"),
-                Amount = $"Rs.{s.FinalAmount:N0}",
-                Status = s.PaymentStatus,
-                StatusColor = s.PaymentStatus == "Paid" ? "bg-slate-100 text-slate-600" : "bg-orange-100 text-orange-700"
+                name = s.Customer.User.FullName,
+                date = s.InvoiceDate.ToString("MM/dd/yyyy"),
+                amount = $"Rs.{s.FinalAmount:N0}",
+                status = s.PaymentStatus
+            })
+            .ToListAsync();
+
+        var recentPurchases = await _context.PurchaseInvoices
+            .Include(i => i.Vendor)
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(5)
+            .Select(i => new
+            {
+                invoiceNumber = i.InvoiceNumber,
+                vendorName = i.Vendor != null ? i.Vendor.CompanyName : "Unknown Vendor",
+                date = i.InvoiceDate.ToString("MM/dd/yyyy"),
+                amount = $"Rs.{i.TotalAmount:N0}"
             })
             .ToListAsync();
 
@@ -142,13 +163,23 @@ public class AdminController : ControllerBase
             {
                 totalUsers,
                 totalCustomers,
+                totalStaff,
                 totalRevenue,
                 invoiceCount,
                 totalParts,
                 totalStock,
                 lowStockCount,
+                outOfStockCount,
+                totalInventoryValue,
                 unpaidInvoices,
-                recentSales
+                totalVendors,
+                pendingAppointments,
+                pendingPartRequests,
+                pendingOrderRequests,
+                purchaseInvoiceCount,
+                totalPurchaseAmount,
+                recentSales,
+                recentPurchases
             }
         });
     }
