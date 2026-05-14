@@ -15,9 +15,6 @@ public class FinancialReportDto
     public CreditMetrics Credit { get; set; } = new();
     public InventoryMetrics Inventory { get; set; } = new();
     public TopPerformers TopPerformers { get; set; } = new();
-
-    // For charts
-    public List<ChartDataPoint> ChartData { get; set; } = new();
 }
 
 public class RevenueMetrics
@@ -76,12 +73,6 @@ public class TopCustomer
 {
     public string CustomerName { get; set; } = string.Empty;
     public decimal TotalSpent { get; set; }
+    public int OrderCount { get; set; }
 }
 
-public class ChartDataPoint
-{
-    public string Label { get; set; } = string.Empty; // e.g., "08:00", "Mon", "Jan"
-    public decimal Revenue { get; set; }
-    public decimal Expenses { get; set; }
-    public decimal Profit { get; set; }
-}

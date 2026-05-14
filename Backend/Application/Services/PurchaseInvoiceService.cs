@@ -76,8 +76,9 @@ public class PurchaseInvoiceService : IPurchaseInvoiceService
 
                 invoice.Items.Add(invoiceItem);
 
-                // 4. Update Stock Quantity
+                // 4. Update Stock Quantity and latest purchase cost
                 part.StockQuantity += itemDto.Quantity;
+                part.CostPrice = itemDto.UnitPrice;
                 _partRepository.Update(part);
             }
 
