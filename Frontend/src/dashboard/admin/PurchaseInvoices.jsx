@@ -1,29 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEye, FiDownload, FiX, FiLoader, FiCalendar, FiDollarSign, FiTruck } from 'react-icons/fi';
-import { getInvoices, addInvoice, deleteInvoice } from '../../services/invoiceService';
+import { 
+  FiPlus, FiEye, FiX, FiLoader, 
+  FiCalendar, FiDollarSign, FiTruck, FiHash, 
+  FiShoppingBag, FiTrash2, FiCheckCircle 
+} from 'react-icons/fi';
+import { getInvoices, addInvoice } from '../../services/invoiceService';
 import { getVendors } from '../../services/vendorService';
+import { getAllParts } from '../../services/partService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const PurchaseInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vendors, setVendors] = useState([]);
+  const [parts, setParts] = useState([]);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [formData, setFormData] = useState({
-    invoiceNo: '',
-    vendorName: '',
-    date: new Date().toISOString().split('T')[0],
-    dueDate: '',
-    totalAmount: '',
-    status: 'Pending'
+  
+  const [newInvoice, setNewInvoice] = useState({
+    vendorId: '',
+    notes: '',
+    items: []
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(invoices.length / itemsPerPage);
+  const paginatedInvoices = invoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     fetchInvoices();
     fetchVendors();
+    fetchParts();
   }, []);
 
   const fetchInvoices = async () => {
@@ -35,7 +47,6 @@ const PurchaseInvoices = () => {
         setInvoices(response.data);
       }
     } catch (error) {
-      console.error('Failed to fetch invoices:', error);
       setError(getApiErrorMessage(error, 'Failed to fetch invoices.'));
     } finally {
       setLoading(false);
@@ -44,163 +55,151 @@ const PurchaseInvoices = () => {
 
   const fetchVendors = async () => {
     try {
-      const response = await getVendors(1, 1000);
-      const responseData = response?.data || response?.Data || {};
-      const items = responseData.items || responseData.Items || [];
-      const normalizedVendors = items
-        .map((vendor) => ({
-          id: vendor.id || vendor.Id,
-          companyName: vendor.companyName || vendor.CompanyName
-        }))
-        .filter((vendor) => vendor.id && vendor.companyName);
-      setVendors(normalizedVendors);
+      const response = await getVendors(1, 100);
+      const data = response?.data || response?.Data || [];
+      const vendorList = Array.isArray(data) ? data : (data.items || []);
+      setVendors(vendorList);
     } catch (error) {
       console.error('Failed to fetch vendors:', error);
-      setVendors([]);
     }
+  };
+
+  const fetchParts = async () => {
+    try {
+      const response = await getAllParts();
+      if (response.success) {
+        setParts(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch parts:', error);
+    }
+  };
+
+  const handleAddItem = () => {
+    setNewInvoice({
+      ...newInvoice,
+      items: [...newInvoice.items, { partId: '', quantity: 1, unitPrice: 0 }]
+    });
+  };
+
+  const handleRemoveItem = (index) => {
+    const updatedItems = [...newInvoice.items];
+    updatedItems.splice(index, 1);
+    setNewInvoice({ ...newInvoice, items: updatedItems });
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...newInvoice.items];
+    updatedItems[index][field] = field === 'partId' ? parseInt(value) : parseFloat(value);
+    setNewInvoice({ ...newInvoice, items: updatedItems });
+  };
+
+  const calculateTotal = () => {
+    return newInvoice.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (newInvoice.items.length === 0) {
+      setError("Please add at least one part.");
+      return;
+    }
+
     try {
-      setError(null);
-      const response = await addInvoice({
-        ...formData,
-        totalAmount: parseFloat(formData.totalAmount)
-      });
+      setLoading(true);
+      const response = await addInvoice(newInvoice);
       if (response.success) {
-        setInvoices([...invoices, response.data]);
+        setInvoices([response.data, ...invoices]);
         setIsModalOpen(false);
-        setFormData({
-          invoiceNo: '',
-          vendorName: '',
-          date: new Date().toISOString().split('T')[0],
-          dueDate: '',
-          totalAmount: '',
-          status: 'Pending'
-        });
+        setNewInvoice({ vendorId: '', notes: '', items: [] });
       }
     } catch (error) {
-      console.error('Failed to add invoice:', error);
       setError(getApiErrorMessage(error, 'Failed to create invoice.'));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this invoice?')) {
-      try {
-        const response = await deleteInvoice(id);
-        if (response.success) {
-          setInvoices(invoices.filter(inv => inv.id !== id));
-        }
-      } catch (error) {
-        console.error('Failed to delete invoice:', error);
-      }
-    }
-  };
-
-  const stats = [
-    { label: 'Total Invoices', value: invoices.length },
-    { label: 'Total Amount', value: `Rs.${invoices.reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
-    { label: 'Paid', value: `Rs.${invoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
-    { label: 'Pending', value: `Rs.${invoices.filter(i => i.status === 'Pending').reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}` },
-  ];
-
-  if (loading) {
+  if (loading && invoices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <FiLoader className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-500 font-medium tracking-wide">Loading Invoices...</p>
+        <FiLoader className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-slate-500 font-medium">Syncing Data...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Purchase Invoices</h1>
-          <p className="text-slate-500 mt-1">Track and manage all purchase invoices</p>
+          <h1 className="text-3xl font-bold text-slate-900">Stock Purchase</h1>
+          <p className="text-slate-500 mt-1">Manage vendor invoices and inventory updates.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-[#3B82F6] text-white rounded-2xl font-bold hover:bg-blue-600 transition shadow-lg shadow-blue-200"
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition active:scale-95 shadow-sm"
         >
-          <FiPlus size={24} /> New Invoice
+          <FiPlus size={20} /> New Purchase
         </button>
       </div>
 
-      {/* Stats */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-          {error}
+        <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 font-semibold text-sm flex items-center gap-3">
+          <FiX className="shrink-0" /> {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-2">{stat.value}</h3>
-          </div>
-        ))}
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard label="Total Spent" value={`Rs.${invoices.reduce((a, b) => a + b.totalAmount, 0).toLocaleString()}`} icon={FiDollarSign} color="blue" />
+        <StatCard label="Invoices" value={invoices.length} icon={FiHash} color="slate" />
+        <StatCard label="Active Vendors" value={vendors.length} icon={FiTruck} color="emerald" />
       </div>
 
-      {/* Invoices Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Invoice No</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Vendor</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Due Date</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-600">Status</th>
-                <th className="px-6 py-4 text-right text-sm font-bold text-slate-600">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Invoice No</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Vendor</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Items</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {invoices.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 font-medium">
-                    No invoices found. Create your first invoice!
+                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400">
+                    No purchase records found.
                   </td>
                 </tr>
               ) : (
-                invoices.map((invoice) => (
-                  <tr key={invoice.id} className="group hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">{invoice.invoiceNo}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{invoice.vendorName}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(invoice.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(invoice.dueDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900">Rs.{invoice.totalAmount.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                        invoice.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
-                        'bg-rose-100 text-rose-700'
-                      }`}>
-                        {invoice.status}
-                      </span>
+                paginatedInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-slate-900">{invoice.invoiceNumber}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-right">
-                      <div className="flex justify-end gap-2">
-                        <button 
-                          onClick={() => { setSelectedInvoice(invoice); setIsViewModalOpen(true); }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                        >
-                          <FiEye size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(invoice.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                        >
-                          <FiDownload size={16} />
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">{invoice.vendorName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">{invoice.items?.length || 0} Items</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900">
+                      Rs.{invoice.totalAmount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => { setSelectedInvoice(invoice); setIsViewModalOpen(true); }}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      >
+                        <FiEye size={18} />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -210,184 +209,177 @@ const PurchaseInvoices = () => {
         </div>
       </div>
 
+      {invoices.length > 0 && (
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+        />
+      )}
+
       {/* New Invoice Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between p-8 border-b border-slate-100">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">New Purchase Invoice</h2>
-                <p className="text-slate-500 text-sm mt-1">Enter invoice details to record a new purchase</p>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition">
-                <FiX size={24} className="text-slate-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-800">New Purchase Record</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition text-slate-400">
+                <FiX size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FiDollarSign className="text-blue-500" /> Invoice Number
-                  </label>
-                  <input
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">Vendor</label>
+                  <select
                     required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
+                    value={newInvoice.vendorId}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, vendorId: parseInt(e.target.value) })}
+                  >
+                    <option value="">Select Vendor</option>
+                    {vendors.map((v) => <option key={v.id} value={v.id}>{v.companyName}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">Notes</label>
+                  <input
                     type="text"
-                    placeholder="INV-2026-001"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-                    value={formData.invoiceNo}
-                    onChange={(e) => setFormData({ ...formData, invoiceNo: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
+                    value={newInvoice.notes}
+                    onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FiTruck className="text-blue-500" /> Vendor Name
-                  </label>
-                  <select
-                    required
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-                    value={formData.vendorName}
-                    onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-sm font-bold text-slate-700 uppercase">Items</h3>
+                  <button 
+                    type="button"
+                    onClick={handleAddItem}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
                   >
-                    <option value="">Select vendor</option>
-                    {vendors.map((vendor) => (
-                      <option key={vendor.id} value={vendor.companyName}>
-                        {vendor.companyName}
-                      </option>
-                    ))}
-                  </select>
+                    <FiPlus /> Add Item
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {newInvoice.items.map((item, idx) => (
+                    <div key={idx} className="flex flex-wrap md:flex-nowrap gap-3 items-end bg-slate-50 p-4 rounded-xl relative">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Part</label>
+                        <select
+                          required
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium"
+                          value={item.partId}
+                          onChange={(e) => handleItemChange(idx, 'partId', e.target.value)}
+                        >
+                          <option value="">Select Part</option>
+                          {parts.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.stockQuantity})</option>)}
+                        </select>
+                      </div>
+                      <div className="w-24">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Qty</label>
+                        <input
+                          required
+                          type="number"
+                          min="1"
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
+                        />
+                      </div>
+                      <div className="w-32">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Cost (Rs.)</label>
+                        <input
+                          required
+                          type="number"
+                          step="0.01"
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                        />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </form>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FiCalendar className="text-blue-500" /> Invoice Date
-                  </label>
-                  <input
-                    required
-                    type="date"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FiCalendar className="text-rose-500" /> Due Date
-                  </label>
-                  <input
-                    required
-                    type="date"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-rose-100 focus:border-rose-500 outline-none transition"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  />
-                </div>
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Grand Total</p>
+                <p className="text-xl font-bold text-slate-900">Rs.{calculateTotal().toLocaleString()}</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                    <FiDollarSign className="text-emerald-500" /> Total Amount
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 outline-none transition font-bold"
-                    value={formData.totalAmount}
-                    onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700">Status</label>
-                  <select
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Overdue">Overdue</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-4 text-slate-600 font-bold hover:bg-slate-50 rounded-2xl transition"
+                  className="px-6 py-2.5 text-slate-500 font-bold hover:bg-white rounded-xl transition text-sm"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 px-6 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition shadow-xl shadow-blue-200"
+                  onClick={handleSubmit}
+                  disabled={loading || newInvoice.items.length === 0}
+                  className="px-8 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
-                  Create Invoice
+                  {loading ? <FiLoader className="animate-spin" /> : <FiCheckCircle />} Save Invoice
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
-      {/* View Invoice Modal */}
+      {/* View Modal */}
       {isViewModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between p-8 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Invoice Details</h2>
-                <p className="text-slate-500 text-sm mt-1">{selectedInvoice.invoiceNo}</p>
+                <h2 className="text-xl font-bold text-slate-800">{selectedInvoice.invoiceNumber}</h2>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{selectedInvoice.vendorName}</p>
               </div>
-              <button onClick={() => setIsViewModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition">
-                <FiX size={24} className="text-slate-400" />
+              <button onClick={() => setIsViewModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition text-slate-400">
+                <FiX size={20} />
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm font-bold text-slate-500">Vendor Name</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-1">{selectedInvoice.vendorName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-500">Status</p>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
-                    selectedInvoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                    selectedInvoice.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
-                    'bg-rose-100 text-rose-700'
-                  }`}>
-                    {selectedInvoice.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-500">Invoice Date</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-1">{new Date(selectedInvoice.date).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-500">Due Date</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-1">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</p>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                <InfoItem label="Date" value={new Date(selectedInvoice.invoiceDate).toLocaleDateString()} icon={FiCalendar} />
+                <InfoItem label="Vendor" value={selectedInvoice.vendorName} icon={FiTruck} />
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Procured Parts</p>
+                <div className="space-y-2">
+                  {selectedInvoice.items?.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-sm border border-slate-100">
+                      <div>
+                        <p className="font-bold text-slate-800">{item.partName}</p>
+                        <p className="text-[10px] text-slate-500">{item.quantity} x Rs.{item.unitPrice.toLocaleString()}</p>
+                      </div>
+                      <p className="font-bold text-slate-900">Rs.{item.subtotal.toLocaleString()}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
               
-              <div className="pt-6 border-t border-slate-100 flex justify-between items-center">
-                <span className="text-lg font-bold text-slate-700">Total Amount</span>
-                <span className="text-3xl font-bold text-emerald-600">Rs.{selectedInvoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <div className="pt-4 flex justify-between items-center">
+                <span className="text-sm font-bold text-slate-500 uppercase">Total Procurement</span>
+                <span className="text-2xl font-bold text-blue-600">Rs.{selectedInvoice.totalAmount.toLocaleString()}</span>
               </div>
-            </div>
-            
-            <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setIsViewModalOpen(false)}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition shadow-sm"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
@@ -395,5 +387,36 @@ const PurchaseInvoices = () => {
     </div>
   );
 };
+
+const StatCard = ({ label, value, icon: Icon, color }) => {
+  const colors = {
+    blue: "text-blue-600 bg-blue-50",
+    slate: "text-slate-600 bg-slate-50",
+    emerald: "text-emerald-600 bg-emerald-50"
+  };
+  return (
+    <div className="bg-white p-5 rounded-xl border border-slate-200 flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${colors[color]}`}>
+        <Icon size={24} />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+        <h3 className="text-xl font-bold text-slate-900">{value}</h3>
+      </div>
+    </div>
+  );
+};
+
+const InfoItem = ({ label, value, icon: Icon }) => (
+  <div className="flex gap-3">
+    <div className="p-2 bg-slate-50 rounded-lg text-slate-400 h-fit">
+      <Icon size={18} />
+    </div>
+    <div>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+      <p className="text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  </div>
+);
 
 export default PurchaseInvoices;

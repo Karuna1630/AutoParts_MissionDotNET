@@ -2,12 +2,12 @@ import { apiClient } from './api';
 
 export const customerHistoryService = {
   getSummary: async () => {
-    const res = await apiClient.get('/CustomerHistory/summary');
+    const res = await apiClient.get('/customers/history/summary');
     return res.data;
   },
 
   getCombinedHistory: async () => {
-    const res = await apiClient.get('/CustomerHistory/combined');
+    const res = await apiClient.get('/customers/history/all');
     return res.data;
   },
 
@@ -17,14 +17,14 @@ export const customerHistoryService = {
   },
 
   downloadInvoicePdf: async (invoiceId) => {
-    const res = await apiClient.get(`/CustomerHistory/invoice/${invoiceId}/pdf`, {
+    const res = await apiClient.get(`/customers/history/invoice/${invoiceId}/download`, {
       responseType: 'blob'
     });
     return res.data;
   },
 
   exportHistoryPdf: async () => {
-    const res = await apiClient.get('/CustomerHistory/export/pdf', {
+    const res = await apiClient.get('/customers/history/export', {
       responseType: 'blob'
     });
     return res.data;

@@ -1,5 +1,6 @@
 using System.Security.Principal;
 using System.Text;
+using System.Text.Json.Serialization;
 using Application.Common.Interfaces;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Security;
@@ -19,6 +20,7 @@ using Microsoft.OpenApi.Models;
 using WebAPI.Middlewares;
 using WebAPI.Services;
 using dotenv.net;
+using System.Security.Claims;
 
 DotEnv.Load();
 
@@ -30,7 +32,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddDefaultTokenProviders();
 
 // --- 3. Core Services ---
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
 builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
 
 // Repositories
@@ -57,10 +64,27 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
-builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IReportService, Infrastructure.Services.ReportService>();
+builder.Services.AddScoped<IPdfReportService, Application.Services.PdfReportService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
-builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
+builder.Services.AddScoped<ICustomerHistoryService, Infrastructure.Services.CustomerHistoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
+builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
+builder.Services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
+builder.Services.AddScoped<IPdfService, Infrastructure.Services.PdfService>();
+builder.Services.AddScoped<INotificationService, Infrastructure.Services.NotificationService>();
+builder.Services.AddHostedService<Infrastructure.Services.NotificationBackgroundService>();
+
+// Email Configuration
+builder.Services.Configure<Application.DTOs.Email.EmailSettings>(options => {
+    options.SmtpServer = (builder.Configuration["SMTP_SERVER"] ?? "smtp.gmail.com").Trim();
+    options.Port = int.Parse((builder.Configuration["SMTP_PORT"] ?? "587").Trim());
+    options.SenderEmail = (builder.Configuration["SENDER_EMAIL"] ?? "").Trim();
+    options.SenderName = (builder.Configuration["SENDER_NAME"] ?? "Auto Parts Mission").Trim();
+    options.Password = (builder.Configuration["SMTP_PASSWORD"] ?? "").Trim();
+    options.EnableSsl = bool.Parse((builder.Configuration["ENABLE_SSL"] ?? "true").Trim());
+    options.AdminNotificationEmail = (builder.Configuration["ADMIN_NOTIFICATION_EMAIL"] ?? builder.Configuration["SENDER_EMAIL"] ?? "").Trim();
+});
 
 // --- 4. Authentication & Security ---
 var jwtKey = builder.Configuration["JWT_KEY"]
@@ -93,24 +117,15 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ClockSkew = TimeSpan.FromMinutes(1)
+            ClockSkew = TimeSpan.FromMinutes(1),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
 builder.Services.AddAuthorization();
 
 // CORS
-var allowedOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>()
-    ??
-    [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174"
-    ];
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendClient", policy =>

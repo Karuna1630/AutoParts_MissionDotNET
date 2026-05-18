@@ -67,9 +67,6 @@ function App() {
             <Route path="shop" element={<PartsShop />} />
             <Route path="requests" element={<PartRequests />} />
             <Route path="history" element={<TransactionHistory />} />
-            <Route path="predictor" element={<HealthPredictor />} />
-            <Route path="wallet" element={<PointsWallet />} />
-            <Route path="rewards" element={<Rewards />} />
             <Route path="profile" element={<ProfileSettings />} />
           </Route>
 
@@ -82,6 +79,7 @@ function App() {
             <Route path="vendors" element={<VendorManagement />} />
             <Route path="invoices" element={<PurchaseInvoices />} />
             <Route path="analytics" element={<FinancialAnalytics />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           {/* Staff Dashboard Routes */}
@@ -91,12 +89,11 @@ function App() {
             <Route path="customers/:id" element={<CustomerDetails />} />
             <Route path="pos" element={<PointOfSale />} />
             <Route path="sales" element={<StaffSalesInvoices />} />
-            <Route path="search" element={<GlobalSearch />} />
-            <Route path="reports" element={<Reports />} />
             <Route path="appointments" element={<StaffAppointments />} />
             <Route path="part-requests" element={<StaffPartRequests />} />
             <Route path="bulk-orders" element={<StaffOrderRequests />} />
             <Route path="profile" element={<StaffProfile />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
 
           {/* Catch-all redirect */}

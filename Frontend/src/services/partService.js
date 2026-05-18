@@ -5,8 +5,10 @@ export const getAllParts = async () => {
   return response.data;
 };
 
-export const createPartRequest = async (requestData) => {
-  const response = await api.post('/partrequests', requestData);
+export const createPartRequest = async (formData) => {
+  const response = await api.post('/partrequests', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return response.data;
 };
 

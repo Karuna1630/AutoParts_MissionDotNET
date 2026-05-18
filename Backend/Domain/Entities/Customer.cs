@@ -18,6 +18,7 @@ public class Customer
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal CreditBalance { get; set; } = 0;
+    public DateTime? LastCreditReminderDate { get; set; }
 
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     public virtual ICollection<SalesInvoice> SalesInvoices { get; set; } = new List<SalesInvoice>();

@@ -31,8 +31,16 @@ export const createStaff = async (payload) => {
   return response.data;
 };
 
-export const getFinancialReport = async (type) => {
+export const getFinancialReport = async (type, params = {}) => {
   const endpoint = type.toLowerCase();
-  const response = await apiClient.get(`/admin/reports/${endpoint}`);
+  const response = await apiClient.get(`/admin/reports/${endpoint}`, { params });
+  return response.data;
+};
+
+export const downloadFinancialReportPdf = async (type, params = {}) => {
+  const response = await apiClient.get('/admin/reports/export-pdf', {
+    params: { ...params, type },
+    responseType: 'blob'
+  });
   return response.data;
 };

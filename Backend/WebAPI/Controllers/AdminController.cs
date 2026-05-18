@@ -1,7 +1,11 @@
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
+using Application.DTOs.Report;
+using Application.Common;
 using Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers;
 
@@ -11,19 +15,146 @@ namespace WebAPI.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
+    private readonly Infrastructure.Data.AppDbContext _context;
+    private readonly IReportService _reportService;
+    private readonly IPdfReportService _pdfReportService;
 
-    public AdminController(IUserRepository userRepository)
+    public AdminController(
+        IUserRepository userRepository, 
+        Infrastructure.Data.AppDbContext context,
+        IReportService reportService,
+        IPdfReportService pdfReportService)
     {
         _userRepository = userRepository;
+        _context = context;
+        _reportService = reportService;
+        _pdfReportService = pdfReportService;
+    }
+
+    [HttpGet("reports/daily")]
+    public async Task<IActionResult> GetDailyReport([FromQuery] DateTime? date)
+    {
+        var targetDate = date ?? DateTime.UtcNow.Date;
+        var result = await _reportService.GenerateDailyReportAsync(targetDate);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("reports/monthly")]
+    public async Task<IActionResult> GetMonthlyReport([FromQuery] int? year, [FromQuery] int? month)
+    {
+        var targetYear = year ?? DateTime.UtcNow.Year;
+        var targetMonth = month ?? DateTime.UtcNow.Month;
+        var result = await _reportService.GenerateMonthlyReportAsync(targetYear, targetMonth);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("reports/yearly")]
+    public async Task<IActionResult> GetYearlyReport([FromQuery] int? year)
+    {
+        var targetYear = year ?? DateTime.UtcNow.Year;
+        var result = await _reportService.GenerateYearlyReportAsync(targetYear);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("reports/range")]
+    public async Task<IActionResult> GetRangeReport([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+    {
+        if (fromDate > toDate) return BadRequest(new { success = false, message = "From date cannot be after To date." });
+        
+        var result = await _reportService.GenerateRangeReportAsync(fromDate, toDate);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("reports/export-pdf")]
+    public async Task<IActionResult> GetPdfReport([FromQuery] string type, [FromQuery] DateTime? date, [FromQuery] int? year, [FromQuery] int? month)
+    {
+        OperationResult<FinancialReportDto> result;
+        string title = $"{type} Financial Report";
+
+        if (type == "Daily" && date.HasValue)
+        {
+            result = await _reportService.GenerateDailyReportAsync(date.Value);
+            title += $" - {date.Value:yyyy-MM-dd}";
+        }
+        else if (type == "Monthly" && year.HasValue && month.HasValue)
+        {
+            result = await _reportService.GenerateMonthlyReportAsync(year.Value, month.Value);
+            title += $" - {year.Value}-{month.Value:D2}";
+        }
+        else if (type == "Yearly" && year.HasValue)
+        {
+            result = await _reportService.GenerateYearlyReportAsync(year.Value);
+            title += $" - {year.Value}";
+        }
+        else
+        {
+            return BadRequest(new { success = false, message = "Invalid report parameters." });
+        }
+
+        if (!result.Success || result.Data == null)
+        {
+            return BadRequest(new { success = false, message = result.Message });
+        }
+
+        var pdfBytes = _pdfReportService.GenerateFinancialReportPdf(result.Data, title);
+        string fileName = $"FinancialReport_{type}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+        
+        return File(pdfBytes, "application/pdf", fileName);
     }
 
     [HttpGet("stats")]
-    public async Task<IActionResult> GetDashboardStats(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetDashboardStats()
     {
-        var totalUsers = await _userRepository.CountAllAsync(cancellationToken);
-        var totalCustomers = await _userRepository.CountByRoleAsync(UserRoles.Customer, cancellationToken);
-        var totalStaff = await _userRepository.CountByRoleAsync(UserRoles.Staff, cancellationToken);
-        var totalAdmins = await _userRepository.CountByRoleAsync(UserRoles.Admin, cancellationToken);
+        // 1. User Stats
+        var totalUsers = await _userRepository.CountAllAsync(default);
+        var totalCustomers = await _userRepository.CountByRoleAsync(UserRoles.Customer, default);
+        var totalStaff = await _userRepository.CountByRoleAsync(UserRoles.Staff, default);
+        
+        // 2. Financial Stats (Total)
+        var totalRevenue = await _context.SalesInvoices.SumAsync(i => i.FinalAmount);
+        var invoiceCount = await _context.SalesInvoices.CountAsync();
+
+        // 3. Inventory Stats
+        var totalParts = await _context.Parts.CountAsync();
+        var totalStock = await _context.Parts.SumAsync(p => p.StockQuantity);
+        var lowStockCount = await _context.Parts.CountAsync(p => p.StockQuantity > 0 && p.StockQuantity < 10);
+        var outOfStockCount = await _context.Parts.CountAsync(p => p.StockQuantity == 0);
+        var totalInventoryValue = await _context.Parts.SumAsync(p => p.StockQuantity * (p.CostPrice > 0 ? p.CostPrice : p.Price));
+
+        // 4. Alerts (Low stock + Unpaid Credit)
+        var unpaidInvoices = await _context.SalesInvoices.CountAsync(i => i.PaymentStatus == "Credit");
+        var totalVendors = await _context.Vendors.CountAsync();
+        var pendingAppointments = await _context.ServiceAppointments.CountAsync(a => a.Status == "Pending");
+        var pendingPartRequests = await _context.PartRequests.CountAsync(r => r.Status == "Pending" || r.Status == "Checking");
+        var pendingOrderRequests = await _context.OrderRequests.CountAsync(r => r.Status == "Pending");
+        var purchaseInvoiceCount = await _context.PurchaseInvoices.CountAsync();
+        var totalPurchaseAmount = await _context.PurchaseInvoices.SumAsync(i => i.TotalAmount);
+
+        // 5. Recent Sales
+        var recentSales = await _context.SalesInvoices
+            .Include(i => i.Customer).ThenInclude(c => c.User)
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(5)
+            .Select(s => new {
+                name = s.Customer.User.FullName,
+                date = s.InvoiceDate.ToString("MM/dd/yyyy"),
+                amount = $"Rs.{s.FinalAmount:N0}",
+                status = s.PaymentStatus
+            })
+            .ToListAsync();
+
+        var recentPurchases = await _context.PurchaseInvoices
+            .Include(i => i.Vendor)
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(5)
+            .Select(i => new
+            {
+                invoiceNumber = i.InvoiceNumber,
+                vendorName = i.Vendor != null ? i.Vendor.CompanyName : "Unknown Vendor",
+                date = i.InvoiceDate.ToString("MM/dd/yyyy"),
+                amount = $"Rs.{i.TotalAmount:N0}"
+            })
+            .ToListAsync();
 
         return Ok(new
         {
@@ -33,7 +164,22 @@ public class AdminController : ControllerBase
                 totalUsers,
                 totalCustomers,
                 totalStaff,
-                totalAdmins
+                totalRevenue,
+                invoiceCount,
+                totalParts,
+                totalStock,
+                lowStockCount,
+                outOfStockCount,
+                totalInventoryValue,
+                unpaidInvoices,
+                totalVendors,
+                pendingAppointments,
+                pendingPartRequests,
+                pendingOrderRequests,
+                purchaseInvoiceCount,
+                totalPurchaseAmount,
+                recentSales,
+                recentPurchases
             }
         });
     }

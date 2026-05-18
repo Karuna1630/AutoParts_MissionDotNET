@@ -143,8 +143,8 @@ public class AppointmentsController : ControllerBase
             {
                 Id = a.Id,
                 VehicleId = a.VehicleId,
-                VehicleName = $"{a.Vehicle!.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})",
-                VehicleImageUrl = a.Vehicle.ImageUrl,
+                VehicleName = a.Vehicle != null ? $"{a.Vehicle.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})" : "Unknown Vehicle",
+                VehicleImageUrl = a.Vehicle != null ? a.Vehicle.ImageUrl : null,
                 ServiceType = a.ServiceType,
                 PreferredDate = a.PreferredDate,
                 PreferredTime = a.PreferredTime,
@@ -153,7 +153,7 @@ public class AppointmentsController : ControllerBase
                 Notes = a.Notes,
                 CancellationReason = a.CancellationReason,
                 CreatedAt = a.CreatedAt,
-                CustomerAvatarUrl = a.Customer!.User!.AvatarUrl,
+                CustomerAvatarUrl = (a.Customer != null && a.Customer.User != null) ? a.Customer.User.AvatarUrl : null,
                 AssignedStaffId = a.AssignedStaffId,
                 AssignedStaffName = a.AssignedStaff != null ? a.AssignedStaff.FullName : null,
                 Review = a.Review != null ? new ViewReviewDto
@@ -256,8 +256,8 @@ public class AppointmentsController : ControllerBase
             {
                 Id = a.Id,
                 VehicleId = a.VehicleId,
-                VehicleName = $"{a.Vehicle!.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})",
-                VehicleImageUrl = a.Vehicle.ImageUrl,
+                VehicleName = a.Vehicle != null ? $"{a.Vehicle.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})" : "Unknown Vehicle",
+                VehicleImageUrl = a.Vehicle != null ? a.Vehicle.ImageUrl : null,
                 ServiceType = a.ServiceType,
                 PreferredDate = a.PreferredDate,
                 PreferredTime = a.PreferredTime,
@@ -266,9 +266,9 @@ public class AppointmentsController : ControllerBase
                 Notes = a.Notes,
                 CancellationReason = a.CancellationReason,
                 CreatedAt = a.CreatedAt,
-                CustomerName = a.Customer!.User!.FullName,
-                CustomerEmail = a.Customer!.User!.Email,
-                CustomerAvatarUrl = a.Customer!.User!.AvatarUrl,
+                CustomerName = (a.Customer != null && a.Customer.User != null) ? a.Customer.User.FullName : "Unknown Customer",
+                CustomerEmail = (a.Customer != null && a.Customer.User != null) ? a.Customer.User.Email : "No Email",
+                CustomerAvatarUrl = (a.Customer != null && a.Customer.User != null) ? a.Customer.User.AvatarUrl : null,
                 AssignedStaffId = a.AssignedStaffId,
                 AssignedStaffName = a.AssignedStaff != null ? a.AssignedStaff.FullName : null,
                 Review = a.Review != null ? new ViewReviewDto

@@ -30,10 +30,8 @@ const StaffSidebar = () => {
         { name: 'Bulk Orders', icon: <FiPackage />, path: '/staff/bulk-orders' },
         { name: 'Point of Sale', icon: <FiShoppingCart />, path: '/staff/pos' },
         { name: 'Sales History', icon: <FiList />, path: '/staff/sales' },
-        { name: 'Global Search', icon: <FiSearch />, path: '/staff/search' },
         { name: 'Appointments', icon: <FiCalendar />, path: '/staff/appointments' },
         { name: 'Part Requests', icon: <FiFileText />, path: '/staff/part-requests' },
-        { name: 'Reports', icon: <FiBarChart2 />, path: '/staff/reports' },
       ]
     }
   ];

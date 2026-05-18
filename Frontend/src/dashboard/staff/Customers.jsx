@@ -11,6 +11,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { getAllCustomers, searchCustomers, registerCustomer } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const registrationSchema = Yup.object({
   fullName: Yup.string().required('Full name is required'),
@@ -35,6 +36,10 @@ const Customers = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -46,6 +51,7 @@ const Customers = () => {
       const response = await getAllCustomers();
       if (response.success) {
         setCustomers(response.data);
+        setCurrentPage(1);
       }
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -57,8 +63,9 @@ const Customers = () => {
   const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    setCurrentPage(1);
     
-    if (query.length > 2) {
+    if (query.length > 0) {
       try {
         const response = await searchCustomers(query);
         if (response.success) {
@@ -67,7 +74,7 @@ const Customers = () => {
       } catch (err) {
         console.error('Search error:', err);
       }
-    } else if (query.length === 0) {
+    } else {
       fetchCustomers();
     }
   };
@@ -76,6 +83,10 @@ const Customers = () => {
     setIsModalOpen(false);
     fetchCustomers();
   };
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const paginatedCustomers = customers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 relative">
@@ -99,16 +110,13 @@ const Customers = () => {
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text"
-            placeholder="Search by name, email, phone or vehicle number..."
+            placeholder="Search by ID, name, phone or vehicle number..."
             value={searchQuery}
             onChange={handleSearch}
             className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-sm font-semibold focus:ring-4 focus:ring-blue-100 transition-all outline-none"
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button className="flex items-center gap-2 px-6 py-4 bg-slate-50 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-100 transition">
-            <FiFilter /> Filters
-          </button>
           <button 
             onClick={fetchCustomers}
             className="p-4 bg-slate-50 text-slate-600 rounded-2xl hover:bg-slate-100 transition"
@@ -140,10 +148,17 @@ const Customers = () => {
           <p className="text-slate-500 mt-2">Try adjusting your search or register a new customer.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {customers.map((customer) => (
-            <CustomerCard key={customer.id} customer={customer} onClick={() => navigate(`/staff/customers/${customer.id}`)} />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedCustomers.map((customer) => (
+              <CustomerCard key={customer.id} customer={customer} onClick={() => navigate(`/staff/customers/${customer.id}`)} />
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       )}
 
@@ -343,7 +358,7 @@ const CustomerCard = ({ customer, onClick }) => {
           )}
           <div>
             <h3 className="font-black text-slate-800 uppercase tracking-tight group-hover:text-blue-600 transition-colors">{customer.fullName}</h3>
-            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">Customer ID: #{customer.id}</span>
+            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase tracking-wider">Customer ID: {customer.id}</span>
           </div>
         </div>
 

@@ -37,7 +37,8 @@ public class StaffCustomerService : IStaffCustomerService
     public async Task<OperationResult<CustomerResponseDto>> RegisterCustomerAsync(RegisterCustomerWithVehicleDto dto)
     {
         // 1. Check if user already exists by email
-        if (await _userRepository.ExistsByEmailAsync(dto.Email))
+        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+        if (await _userRepository.ExistsByEmailAsync(normalizedEmail))
         {
             return OperationResult<CustomerResponseDto>.Fail("A user with this email already exists.");
         }
@@ -45,9 +46,9 @@ public class StaffCustomerService : IStaffCustomerService
         // 2. Create User account
         var user = new User
         {
-            Email = dto.Email,
-            FullName = dto.FullName,
-            Phone = dto.Phone,
+            Email = dto.Email.Trim().ToLowerInvariant(),
+            FullName = dto.FullName.Trim(),
+            Phone = dto.Phone.Trim(),
             PasswordHash = _passwordHasher.Hash(dto.Password),
             Role = UserRoles.Customer,
             CreatedAt = DateTime.UtcNow,
@@ -105,8 +106,15 @@ public class StaffCustomerService : IStaffCustomerService
             return OperationResult<List<CustomerResponseDto>>.Ok(new List<CustomerResponseDto>());
         }
 
+        int.TryParse(query, out int id);
+        var lowerQuery = query.ToLower();
+
         var customers = await _customerRepository.GetAllWithIncludeAsync(
-            c => c.User.Email.Contains(query) || c.User.Phone.Contains(query) || c.User.FullName.Contains(query) || c.Vehicles.Any(v => v.VehicleNumber.Contains(query)),
+            c => (c.User.Email != null && c.User.Email.ToLower().Contains(lowerQuery)) || 
+                 (c.User.Phone != null && c.User.Phone.Contains(lowerQuery)) || 
+                 (c.User.FullName != null && c.User.FullName.ToLower().Contains(lowerQuery)) || 
+                 c.Vehicles.Any(v => v.VehicleNumber != null && v.VehicleNumber.ToLower().Contains(lowerQuery)) ||
+                 c.Id == id,
             c => c.User,
             c => c.Vehicles
         );
@@ -183,6 +191,31 @@ public class StaffCustomerService : IStaffCustomerService
         await _vehicleRepository.SaveChangesAsync();
 
         return await GetCustomerByIdAsync(customerId);
+    }
+
+    public async Task<OperationResult<CustomerResponseDto>> SettleCreditAsync(int customerId, SettleCreditDto dto)
+    {
+        var customer = await _customerRepository.GetByIdWithIncludeAsync(customerId, c => c.User, c => c.Vehicles);
+        if (customer == null)
+        {
+            return OperationResult<CustomerResponseDto>.Fail("Customer not found.");
+        }
+
+        if (customer.CreditBalance < dto.Amount)
+        {
+            // Optional: allow overpayment or limit to current balance
+            // For now, let's just subtract it.
+        }
+
+        customer.CreditBalance -= dto.Amount;
+        
+        // Ensure balance doesn't go below 0 (unless you want to allow advance payments/credits)
+        if (customer.CreditBalance < 0) customer.CreditBalance = 0;
+
+        _customerRepository.Update(customer);
+        await _customerRepository.SaveChangesAsync();
+
+        return OperationResult<CustomerResponseDto>.Ok(MapToResponse(customer), $"Payment of Rs. {dto.Amount:N2} processed. New balance: Rs. {customer.CreditBalance:N2}");
     }
 
     private CustomerResponseDto MapToResponse(Customer customer)

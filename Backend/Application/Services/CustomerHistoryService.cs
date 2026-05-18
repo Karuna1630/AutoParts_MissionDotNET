@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,171 +6,176 @@ using System.Threading.Tasks;
 using Application.Common;
 using Application.DTOs.Customer;
 using Application.Interfaces.Services;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
 public class CustomerHistoryService : ICustomerHistoryService
 {
-    // Generate some mock data for purchases
-    private List<PurchaseHistoryDto> GenerateMockPurchases(int customerId)
+    private readonly AppDbContext _context;
+
+    public CustomerHistoryService(AppDbContext context)
     {
-        var random = new Random(customerId);
-        var purchases = new List<PurchaseHistoryDto>();
-        
-        for (int i = 1; i <= random.Next(3, 8); i++)
+        _context = context;
+    }
+
+    public async Task<OperationResult<List<PurchaseHistoryDto>>> GetPurchaseHistoryAsync(int customerId, int? vehicleId, DateTime? fromDate, DateTime? toDate, string? status)
+    {
+        try
         {
-            var items = new List<PurchaseItemDto>();
-            int numItems = random.Next(1, 5);
-            decimal total = 0;
-            
-            for (int j = 0; j < numItems; j++)
+            var query = _context.SalesInvoices
+                .Include(i => i.Items)
+                .ThenInclude(item => item.Part)
+                .Where(i => i.CustomerId == customerId);
+
+            if (vehicleId.HasValue)
+                query = query.Where(i => i.VehicleId == vehicleId.Value);
+
+            if (fromDate.HasValue)
+                query = query.Where(i => i.InvoiceDate >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(i => i.InvoiceDate <= toDate.Value);
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(i => i.PaymentStatus == status);
+
+            var invoices = await query.OrderByDescending(i => i.InvoiceDate).ToListAsync();
+
+            var result = invoices.Select(i => new PurchaseHistoryDto
             {
-                decimal price = random.Next(20, 200);
-                int qty = random.Next(1, 4);
-                total += price * qty;
-                
-                items.Add(new PurchaseItemDto
+                InvoiceId = i.Id,
+                InvoiceDate = i.InvoiceDate,
+                TotalAmount = i.Subtotal,
+                DiscountAmount = i.DiscountAmount,
+                FinalAmount = i.FinalAmount,
+                PaymentStatus = i.PaymentStatus,
+                VehicleId = i.VehicleId,
+                Items = i.Items.Select(item => new PurchaseItemDto
                 {
-                    PartName = $"Mock Part {random.Next(100, 999)}",
-                    UnitPrice = price,
-                    Quantity = qty
-                });
-            }
+                    PartName = item.Part.PartName,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice
+                }).ToList()
+            }).ToList();
 
-            purchases.Add(new PurchaseHistoryDto
-            {
-                InvoiceId = customerId * 1000 + i,
-                InvoiceDate = DateTime.UtcNow.AddDays(-random.Next(5, 300)),
-                TotalAmount = total,
-                DiscountAmount = Math.Round(total * 0.1m, 2),
-                FinalAmount = Math.Round(total * 0.9m, 2),
-                PaymentStatus = random.Next(0, 5) == 0 ? "Credit" : "Paid",
-                VehicleId = random.Next(0, 2) == 0 ? null : random.Next(1, 3),
-                Items = items
-            });
+            return OperationResult<List<PurchaseHistoryDto>>.Ok(result);
         }
-        
-        return purchases.OrderByDescending(p => p.InvoiceDate).ToList();
-    }
-
-    // Generate mock data for services
-    private List<ServiceHistoryDto> GenerateMockServices(int customerId)
-    {
-        var random = new Random(customerId + 100);
-        var services = new List<ServiceHistoryDto>();
-        var types = new[] { "Oil Change", "Brake Inspection", "Full Service", "Tire Rotation" };
-        var statuses = new[] { "Completed", "Completed", "Pending", "Cancelled" };
-        
-        for (int i = 1; i <= random.Next(2, 6); i++)
+        catch (Exception ex)
         {
-            services.Add(new ServiceHistoryDto
-            {
-                AppointmentId = customerId * 1000 + i,
-                AppointmentDate = DateTime.UtcNow.AddDays(-random.Next(-10, 200)),
-                ServiceType = types[random.Next(types.Length)],
-                Status = statuses[random.Next(statuses.Length)],
-                Notes = "Standard maintenance procedure.",
-                Rating = random.Next(0, 3) == 0 ? null : random.Next(4, 6),
-                VehicleId = random.Next(1, 3)
-            });
+            return OperationResult<List<PurchaseHistoryDto>>.Fail($"Error fetching purchase history: {ex.Message}");
         }
-        
-        return services.OrderByDescending(s => s.AppointmentDate).ToList();
     }
 
-    public Task<OperationResult<List<PurchaseHistoryDto>>> GetPurchaseHistoryAsync(int customerId, int? vehicleId, DateTime? fromDate, DateTime? toDate, string? status)
+    public async Task<OperationResult<List<ServiceHistoryDto>>> GetServiceHistoryAsync(int customerId, int? vehicleId, string? status)
     {
-        var purchases = GenerateMockPurchases(customerId);
-        
-        if (vehicleId.HasValue)
-            purchases = purchases.Where(p => p.VehicleId == vehicleId).ToList();
-            
-        if (fromDate.HasValue)
-            purchases = purchases.Where(p => p.InvoiceDate >= fromDate.Value).ToList();
-            
-        if (toDate.HasValue)
-            purchases = purchases.Where(p => p.InvoiceDate <= toDate.Value).ToList();
-            
-        if (!string.IsNullOrEmpty(status))
-            purchases = purchases.Where(p => p.PaymentStatus.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+        try
+        {
+            var query = _context.ServiceAppointments
+                .Include(a => a.Review)
+                .Where(a => a.CustomerId == customerId);
 
-        return Task.FromResult(OperationResult<List<PurchaseHistoryDto>>.Ok(purchases));
+            if (vehicleId.HasValue)
+                query = query.Where(a => a.VehicleId == vehicleId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(a => a.Status == status);
+
+            var appointments = await query.OrderByDescending(a => a.PreferredDate).ToListAsync();
+
+            var result = appointments.Select(a => new ServiceHistoryDto
+            {
+                AppointmentId = a.Id,
+                AppointmentDate = a.PreferredDate,
+                ServiceType = a.ServiceType,
+                Status = a.Status,
+                Notes = a.Notes ?? string.Empty,
+                Rating = a.Review?.Rating,
+                VehicleId = a.VehicleId
+            }).ToList();
+
+            return OperationResult<List<ServiceHistoryDto>>.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<List<ServiceHistoryDto>>.Fail($"Error fetching service history: {ex.Message}");
+        }
     }
 
-    public Task<OperationResult<List<ServiceHistoryDto>>> GetServiceHistoryAsync(int customerId, int? vehicleId, string? status)
+    public async Task<OperationResult<CombinedHistoryDto>> GetCombinedHistoryAsync(int customerId)
     {
-        var services = GenerateMockServices(customerId);
-        
-        if (vehicleId.HasValue)
-            services = services.Where(s => s.VehicleId == vehicleId).ToList();
-            
-        if (!string.IsNullOrEmpty(status))
-            services = services.Where(s => s.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+        var purchasesResult = await GetPurchaseHistoryAsync(customerId, null, null, null, null);
+        var servicesResult = await GetServiceHistoryAsync(customerId, null, null);
 
-        return Task.FromResult(OperationResult<List<ServiceHistoryDto>>.Ok(services));
-    }
-
-    public Task<OperationResult<CombinedHistoryDto>> GetCombinedHistoryAsync(int customerId)
-    {
-        var purchases = GenerateMockPurchases(customerId);
-        var services = GenerateMockServices(customerId);
+        if (!purchasesResult.Success || !servicesResult.Success)
+            return OperationResult<CombinedHistoryDto>.Fail("Error fetching combined history.");
 
         var result = new CombinedHistoryDto
         {
-            Purchases = purchases,
-            Services = services,
-            TotalPurchases = purchases.Count,
-            TotalServices = services.Count
+            Purchases = purchasesResult.data,
+            Services = servicesResult.data,
+            TotalPurchases = purchasesResult.data.Count,
+            TotalServices = servicesResult.data.Count
         };
 
-        return Task.FromResult(OperationResult<CombinedHistoryDto>.Ok(result));
+        return OperationResult<CombinedHistoryDto>.Ok(result);
     }
 
-    public Task<OperationResult<PurchaseHistoryDto>> GetSinglePurchaseAsync(int customerId, int invoiceId)
+    public async Task<OperationResult<PurchaseHistoryDto>> GetSinglePurchaseAsync(int customerId, int invoiceId)
     {
-        var purchase = GenerateMockPurchases(customerId).FirstOrDefault(p => p.InvoiceId == invoiceId);
-        if (purchase == null)
-            return Task.FromResult(OperationResult<PurchaseHistoryDto>.Fail("Invoice not found."));
-            
-        return Task.FromResult(OperationResult<PurchaseHistoryDto>.Ok(purchase));
+        var result = await GetPurchaseHistoryAsync(customerId, null, null, null, null);
+        if (!result.Success) return OperationResult<PurchaseHistoryDto>.Fail(result.Message);
+
+        var purchase = result.data.FirstOrDefault(p => p.InvoiceId == invoiceId);
+        if (purchase == null) return OperationResult<PurchaseHistoryDto>.Fail("Invoice not found.");
+
+        return OperationResult<PurchaseHistoryDto>.Ok(purchase);
     }
 
-    public Task<OperationResult<ServiceHistoryDto>> GetSingleServiceAsync(int customerId, int appointmentId)
+    public async Task<OperationResult<ServiceHistoryDto>> GetSingleServiceAsync(int customerId, int appointmentId)
     {
-        var service = GenerateMockServices(customerId).FirstOrDefault(s => s.AppointmentId == appointmentId);
-        if (service == null)
-            return Task.FromResult(OperationResult<ServiceHistoryDto>.Fail("Appointment not found."));
-            
-        return Task.FromResult(OperationResult<ServiceHistoryDto>.Ok(service));
+        var result = await GetServiceHistoryAsync(customerId, null, null);
+        if (!result.Success) return OperationResult<ServiceHistoryDto>.Fail(result.Message);
+
+        var service = result.data.FirstOrDefault(s => s.AppointmentId == appointmentId);
+        if (service == null) return OperationResult<ServiceHistoryDto>.Fail("Appointment not found.");
+
+        return OperationResult<ServiceHistoryDto>.Ok(service);
     }
 
-    public Task<OperationResult<HistorySummaryDto>> GetHistorySummaryAsync(int customerId)
+    public async Task<OperationResult<HistorySummaryDto>> GetHistorySummaryAsync(int customerId)
     {
-        var purchases = GenerateMockPurchases(customerId);
-        var services = GenerateMockServices(customerId);
-
-        var summary = new HistorySummaryDto
+        try
         {
-            TotalInvoices = purchases.Count,
-            TotalSpent = purchases.Sum(p => p.FinalAmount),
-            TotalAppointments = services.Count,
-            CompletedAppointments = services.Count(s => s.Status == "Completed")
-        };
+            var summary = new HistorySummaryDto
+            {
+                TotalInvoices = await _context.SalesInvoices.CountAsync(i => i.CustomerId == customerId),
+                TotalSpent = await _context.SalesInvoices.Where(i => i.CustomerId == customerId).SumAsync(i => i.FinalAmount),
+                TotalAppointments = await _context.ServiceAppointments.CountAsync(a => a.CustomerId == customerId),
+                CompletedAppointments = await _context.ServiceAppointments.CountAsync(a => a.CustomerId == customerId && a.Status == "Completed")
+            };
 
-        return Task.FromResult(OperationResult<HistorySummaryDto>.Ok(summary));
+            return OperationResult<HistorySummaryDto>.Ok(summary);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<HistorySummaryDto>.Fail($"Error generating history summary: {ex.Message}");
+        }
     }
 
-    public Task<OperationResult<byte[]>> ExportHistoryAsPdfAsync(int customerId)
+    public async Task<OperationResult<byte[]>> ExportHistoryAsPdfAsync(int customerId)
     {
-        // Mock PDF bytes
-        var fakePdfBytes = System.Text.Encoding.UTF8.GetBytes("Fake PDF Content for Customer History");
-        return Task.FromResult(OperationResult<byte[]>.Ok(fakePdfBytes));
+        // Placeholder for real PDF export logic
+        var fakePdfBytes = System.Text.Encoding.UTF8.GetBytes("Real PDF Content logic will go here");
+        return OperationResult<byte[]>.Ok(fakePdfBytes);
     }
 
-    public Task<OperationResult<byte[]>> DownloadSingleInvoicePdfAsync(int customerId, int invoiceId)
+    public async Task<OperationResult<byte[]>> DownloadSingleInvoicePdfAsync(int customerId, int invoiceId)
     {
-        // Mock PDF bytes
-        var fakePdfBytes = System.Text.Encoding.UTF8.GetBytes($"Fake PDF Content for Invoice {invoiceId}");
-        return Task.FromResult(OperationResult<byte[]>.Ok(fakePdfBytes));
+        // Placeholder for real Invoice PDF logic
+        var fakePdfBytes = System.Text.Encoding.UTF8.GetBytes($"Invoice PDF for #{invoiceId}");
+        return OperationResult<byte[]>.Ok(fakePdfBytes);
     }
 }
+*/

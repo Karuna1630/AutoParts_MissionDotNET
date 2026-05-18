@@ -26,6 +26,8 @@ public class PartRequest
     [MaxLength(200)]
     public string? VehicleInfo { get; set; }
 
+    public string? ImageUrl { get; set; }
+
     [Required]
     public int Quantity { get; set; } = 1;
 
@@ -37,6 +39,8 @@ public class PartRequest
     [MaxLength(20)]
     public string Status { get; set; } = "Pending"; // Pending, Checking, Ordered, Arrived, Notified
 
+    public decimal? Price { get; set; }
+    public int? PartId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }

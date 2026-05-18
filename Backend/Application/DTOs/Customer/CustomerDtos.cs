@@ -82,3 +82,14 @@ public class AddVehicleToCustomerDto
 
     public Microsoft.AspNetCore.Http.IFormFile? VehicleImage { get; set; }
 }
+public class SettleCreditDto
+{
+    [Required]
+    [Range(0.01, 1000000)]
+    public decimal Amount { get; set; }
+
+    [Required]
+    public string PaymentMethod { get; set; } = "Cash"; // Cash, Bank Transfer, Card
+
+    public string? Notes { get; set; }
+}

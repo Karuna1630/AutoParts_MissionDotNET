@@ -1,5 +1,6 @@
 using Application.DTOs.OrderRequest;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -18,17 +19,20 @@ public class OrderRequestsController : ControllerBase
     private readonly IGenericRepository<Part> _partRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
     private readonly IGenericRepository<SalesInvoice> _invoiceRepo;
+    private readonly INotificationService _notificationService;
 
     public OrderRequestsController(
         IGenericRepository<OrderRequest> orderRepo,
         IGenericRepository<Part> partRepo,
         IGenericRepository<Customer> customerRepo,
-        IGenericRepository<SalesInvoice> invoiceRepo)
+        IGenericRepository<SalesInvoice> invoiceRepo,
+        INotificationService notificationService)
     {
         _orderRepo = orderRepo;
         _partRepo = partRepo;
         _customerRepo = customerRepo;
         _invoiceRepo = invoiceRepo;
+        _notificationService = notificationService;
     }
 
     [HttpPost]
@@ -270,6 +274,11 @@ public class OrderRequestsController : ControllerBase
         await _orderRepo.SaveChangesAsync();
         await _invoiceRepo.SaveChangesAsync();
 
+        foreach (var item in order.Items)
+        {
+            await _notificationService.CheckAndNotifyLowStockAsync(item.PartId);
+        }
+
         return Ok(new { 
             success = true, 
             message = "Invoice created and parts reserved successfully.",
@@ -279,16 +288,37 @@ public class OrderRequestsController : ControllerBase
 
     [HttpPatch("{id}/complete")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
-    public async Task<IActionResult> CompleteOrder(int id)
+    public async Task<IActionResult> CompleteOrder(int id, [FromQuery] bool isPaid = false)
     {
-        var order = await _orderRepo.GetByIdAsync(id);
+        var order = await _orderRepo.Query().Include(o => o.Customer).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound(new { success = false, message = "Order not found." });
+        if (order.Status == "Completed") return BadRequest(new { success = false, message = "Order already completed." });
+
+        var invoice = await _invoiceRepo.Query()
+            .FirstOrDefaultAsync(i => i.CustomerId == order.CustomerId && i.Notes.Contains($"Order Request #{order.Id}"));
+        
+        if (invoice != null)
+        {
+            if (isPaid)
+            {
+                invoice.PaymentStatus = "Paid";
+                invoice.PaymentMethod = "Paid at Pickup";
+            }
+            else
+            {
+                order.Customer.CreditBalance += invoice.FinalAmount;
+                _customerRepo.Update(order.Customer);
+            }
+            _invoiceRepo.Update(invoice);
+            await _invoiceRepo.SaveChangesAsync();
+        }
         
         order.Status = "Completed";
         order.UpdatedAt = DateTime.UtcNow;
         _orderRepo.Update(order);
         await _orderRepo.SaveChangesAsync();
+        await _customerRepo.SaveChangesAsync();
 
-        return Ok(new { success = true, message = "Order marked as completed." });
+        return Ok(new { success = true, message = isPaid ? "Order completed and paid." : "Order completed and added to credit." });
     }
 }

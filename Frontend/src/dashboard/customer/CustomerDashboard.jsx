@@ -9,45 +9,13 @@ import {
   FaShoppingBasket,
   FaTools,
 } from 'react-icons/fa';
-
-const statCards = [
-  { label: 'Vehicles', value: '2', icon: FaCar, accent: 'blue' },
-  { label: 'Upcoming', value: '1', icon: FaClock, accent: 'emerald' },
-  { label: 'Lifetime Spend', value: 'Rs.8,909', icon: FaDollarSign, accent: 'indigo' },
-  { label: 'Silver Member', value: '8,909 pts', icon: FaCrown, accent: 'blue' },
-];
-
-const garageVehicles = [
-  {
-    name: '2019 Toyota Corolla',
-    tag: 'AB-1234',
-    detail: '78,500 km - Attention',
-    health: 39,
-    state: 'alert',
-  },
-  {
-    name: '2021 Honda Civic',
-    tag: 'AB-5678',
-    detail: '31,200 km - Good',
-    health: 60,
-    state: 'good',
-  },
-];
-
-const recentActivities = [
-  {
-    title: 'Brake Pad Set (Front) + 1 more',
-    date: 'April 23, 2026',
-    amount: 'Rs.2,690',
-    status: 'Paid',
-  },
-  {
-    title: 'Timing Belt Kit + 1 more',
-    date: 'February 24, 2026',
-    amount: 'Rs.6,219',
-    status: 'Paid',
-  },
-];
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getUserProfile } from '../../services/userService';
+import { getApiErrorMessage } from '../../services/api';
+import { getMyVehicles } from '../../services/vehicleService';
+import { getMyAppointments } from '../../services/appointmentService';
+import { customerHistoryService } from '../../services/customerHistoryService';
 
 const careTips = [
   {
@@ -68,6 +36,7 @@ const statAccentClasses = {
   blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
   emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
   indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
+  rose: { bg: 'bg-rose-50', text: 'text-rose-600' },
 };
 
 const vehicleStateClasses = {
@@ -92,14 +61,85 @@ const vehicleStateClasses = {
 };
 
 const CustomerDashboard = () => {
-  const user = JSON.parse(localStorage.getItem('authUser') || '{"fullName": "James Carter"}');
-  const firstName = user.fullName.split(' ')[0];
-  const fleetHealth = 50;
-  const vehicleCount = garageVehicles.length;
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [vehicles, setVehicles] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [nextAppointment, setNextAppointment] = useState(null);
+  const navigate = useNavigate();
 
-  const gaugeRadius = 80;
-  const gaugeCircumference = 2 * Math.PI * gaugeRadius;
-  const gaugeOffset = gaugeCircumference * (1 - fleetHealth / 100);
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [profileRes, vehicleRes, historyRes, appointmentRes] = await Promise.all([
+        getUserProfile(),
+        getMyVehicles(),
+        customerHistoryService.getCombinedHistory(),
+        getMyAppointments()
+      ]);
+
+      if (profileRes.success) setProfile(profileRes.data);
+      if (vehicleRes.success) setVehicles(vehicleRes.data);
+      
+      if (historyRes.success) {
+        const combined = historyRes.data;
+        const activities = [
+          ...combined.purchases.map(p => {
+            let titleStr = `Purchase #${p.invoiceId}`;
+            if (p.items && p.items.length > 0) {
+              titleStr = p.items[0].partName;
+              if (p.items.length > 1) {
+                titleStr += ` + ${p.items.length - 1} more`;
+              }
+            }
+            return {
+              title: titleStr,
+              date: new Date(p.invoiceDate).toLocaleDateString(),
+              amount: `Rs. ${p.finalAmount.toLocaleString()}`,
+              status: p.paymentStatus,
+              type: 'purchase'
+            };
+          }),
+          ...combined.services.map(s => ({
+            title: s.serviceType,
+            date: new Date(s.appointmentDate).toLocaleDateString(),
+            amount: s.status,
+            status: s.status,
+            type: 'service'
+          }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+        setRecentActivities(activities);
+      }
+
+      if (appointmentRes.success) {
+        const upcoming = appointmentRes.data
+          .filter(a => a.status === 'Pending' || a.status === 'Confirmed')
+          .sort((a, b) => new Date(a.preferredDate) - new Date(b.preferredDate))[0];
+        setNextAppointment(upcoming);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const user = JSON.parse(localStorage.getItem('authUser') || '{"fullName": "Customer"}');
+  const displayName = profile?.fullName || user.fullName;
+
+  
+  const statCards = [
+    { label: 'My Vehicles', value: vehicles.length, icon: FaCar, accent: 'blue' },
+    { label: 'Appointments', value: profile?.upcomingAppointments || '0', icon: FaClock, accent: 'emerald' },
+    { label: 'Payable Credit', value: `Rs. ${(profile?.creditBalance || 0).toLocaleString()}`, icon: FaDollarSign, accent: 'rose' },
+  ];
+
+  if (loading) return <div className="flex justify-center p-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
   return (
     <div className="space-y-6 md:space-y-8 animate-[fade-in_0.45s_ease-out]">
@@ -109,66 +149,44 @@ const CustomerDashboard = () => {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.08)_1px,transparent_0)] bg-size-[14px_14px]" />
 
         <div className="relative z-10 flex flex-col gap-10 xl:flex-row xl:items-center xl:justify-between">
-          <div className="max-w-2xl">
+          <div className="flex-1">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold backdrop-blur">
               Good afternoon
             </div>
             <h1 className="mb-3 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Hi {firstName}
+              Hi {displayName}
             </h1>
             <p className="mb-8 max-w-xl text-base text-blue-100/85 sm:text-lg">
-              Your fleet is in watch condition. Next visit: Mon, Apr 27.
+              {nextAppointment 
+                ? `Next visit: ${nextAppointment.serviceType} on ${new Date(nextAppointment.preferredDate).toLocaleDateString()}`
+                : "No upcoming service scheduled. Keep your car in top shape!"}
             </p>
             <div className="flex flex-wrap gap-3">
-              <button className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0">
+              <button 
+                onClick={() => navigate('/dashboard/appointments')}
+                className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50 active:translate-y-0 cursor-pointer"
+              >
                 <FaCalendarAlt className="text-blue-600" />
                 Book service
               </button>
-              <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
-                <FaTools className="text-blue-200" />
-                Smart health check
-              </button>
-              <button className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20">
+              <button 
+                onClick={() => navigate('/dashboard/shop')}
+                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:bg-white/20 cursor-pointer"
+              >
                 <FaShoppingBasket className="text-blue-200" />
                 Browse parts
               </button>
             </div>
           </div>
 
-          {/* Health Gauge */}
-          <div className="w-full max-w-70 rounded-3xl border border-white/15 bg-white/10 p-6 backdrop-blur-xl">
-            <div className="relative mx-auto flex h-44 w-44 items-center justify-center">
-              <svg className="h-full w-full -rotate-90">
-                <circle
-                  cx="88"
-                  cy="88"
-                  r={gaugeRadius}
-                  stroke="currentColor"
-                  strokeWidth="11"
-                  fill="transparent"
-                  className="text-white/15"
-                />
-                <circle
-                  cx="88"
-                  cy="88"
-                  r={gaugeRadius}
-                  stroke="currentColor"
-                  strokeWidth="11"
-                  fill="transparent"
-                  strokeDasharray={gaugeCircumference}
-                  strokeDashoffset={gaugeOffset}
-                  strokeLinecap="round"
-                  className="text-amber-400 transition-all duration-700"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-4xl font-bold">{fleetHealth}</span>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200/70">Fleet Health</span>
-              </div>
-            </div>
-            <p className="mt-4 text-center text-sm font-medium text-blue-100/90">
-              {vehicleCount} vehicles - Watch
-            </p>
+          {/* Profile Image - Smooth Square */}
+          <div className="relative shrink-0">
+            <div className="absolute -inset-1 rounded-4xl bg-linear-to-r from-blue-400 to-indigo-400 opacity-20 blur" />
+            <img 
+              src={profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0D8ABC&color=fff&size=512`} 
+              alt="Profile"
+              className="relative h-48 w-48 rounded-3xl border-4 border-white/10 object-cover shadow-2xl"
+            />
           </div>
         </div>
       </section>
@@ -194,23 +212,28 @@ const CustomerDashboard = () => {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-slate-800">My garage</h2>
-                <p className="text-sm text-slate-400">Live health snapshot for each vehicle</p>
+                <p className="text-sm text-slate-400">Manage and track your registered vehicles</p>
               </div>
-              <button className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <button 
+                onClick={() => navigate('/dashboard/vehicles')}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+              >
                 View all <FaArrowRight className="text-xs" />
               </button>
             </div>
             <div className="space-y-3">
-              {garageVehicles.map((vehicle) => (
+              {vehicles.length > 0 ? vehicles.map((vehicle) => (
                 <VehicleRow
-                  key={vehicle.tag}
-                  name={vehicle.name}
-                  tag={vehicle.tag}
-                  detail={vehicle.detail}
-                  health={vehicle.health}
-                  state={vehicle.state}
+                  key={vehicle.id}
+                  name={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`}
+                  tag={vehicle.vehicleNumber}
+                  detail={`${vehicle.vehicleYear} • ${vehicle.isPrimary ? 'Primary' : 'Secondary'}`}
                 />
-              ))}
+              )) : (
+                <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                  <p className="text-slate-400 text-sm">No vehicles in your garage yet.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -221,12 +244,15 @@ const CustomerDashboard = () => {
                 <h2 className="text-xl font-semibold text-slate-800">Recent activity</h2>
                 <p className="text-sm text-slate-400">Your latest purchases & services</p>
               </div>
-              <button className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <button 
+                onClick={() => navigate('/dashboard/history')}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+              >
                 All history <FaArrowRight className="text-xs" />
               </button>
             </div>
             <div className="space-y-6">
-              {recentActivities.map((activity) => (
+              {recentActivities.length > 0 ? recentActivities.map((activity) => (
                 <ActivityRow
                   key={`${activity.title}-${activity.date}`}
                   title={activity.title}
@@ -234,55 +260,49 @@ const CustomerDashboard = () => {
                   amount={activity.amount}
                   status={activity.status}
                 />
-              ))}
+              )) : (
+                <div className="py-10 text-center">
+                  <p className="text-slate-400 text-sm">No recent activity found.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right Column (Rewards, Next Visit, Care Tips) */}
         <div className="space-y-6">
-          {/* Rewards Card */}
-          <div className="rounded-3xl bg-linear-to-br from-blue-500 to-blue-700 p-6 text-white shadow-lg shadow-blue-700/25 sm:p-7">
-            <div className="mb-5 flex items-center justify-between">
-              <span className="rounded-md bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] backdrop-blur">
-                Silver Member
-              </span>
-              <FaCrown className="text-blue-200" />
-            </div>
-            <div className="mb-6">
-              <h3 className="text-4xl font-bold tracking-tight">8,909</h3>
-              <p className="text-sm font-medium text-blue-100">reward points</p>
-            </div>
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-blue-50">
-              <span>Progress to next tier</span>
-              <span>84%</span>
-            </div>
-            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-black/15">
-              <div className="h-full w-[84%] bg-white transition-all duration-1000" />
-            </div>
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
-              View rewards <FaArrowRight className="text-xs" />
-            </button>
-          </div>
 
           {/* Next Visit */}
           <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
             <h3 className="mb-5 flex items-center gap-2 font-semibold text-slate-800">
               <FaCalendarAlt className="text-blue-500" /> Next visit
             </h3>
-            <div className="mb-5 flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
-              <div className="flex flex-col items-center rounded-xl bg-white px-3 py-2 shadow-sm">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">Apr</span>
-                <span className="text-xl font-bold text-slate-800">27</span>
+            {nextAppointment ? (
+              <div className="mb-5 flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
+                <div className="flex flex-col items-center rounded-xl bg-white px-3 py-2 shadow-sm min-w-14">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+                    {new Date(nextAppointment.preferredDate).toLocaleString('default', { month: 'short' })}
+                  </span>
+                  <span className="text-xl font-bold text-slate-800">
+                    {new Date(nextAppointment.preferredDate).getDate()}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">{nextAppointment.serviceType}</p>
+                  <p className="text-xs text-slate-500">
+                    {nextAppointment.preferredTime} - <span className={`font-semibold ${nextAppointment.status === 'Confirmed' ? 'text-emerald-500' : 'text-amber-500'}`}>{nextAppointment.status}</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-slate-800">Brake Inspection</p>
-                <p className="text-xs text-slate-500">
-                  11:35 AM - <span className="font-semibold text-amber-500">Pending</span>
-                </p>
+            ) : (
+              <div className="mb-5 p-4 bg-slate-50 rounded-2xl text-center">
+                <p className="text-sm text-slate-500">No appointments booked.</p>
               </div>
-            </div>
-            <button className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+            )}
+            <button 
+              onClick={() => navigate('/dashboard/appointments')}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
+            >
               Manage appointments
             </button>
           </div>
@@ -320,15 +340,12 @@ const StatCard = ({ label, value, icon: Icon, accent }) => {
   );
 };
 
-const VehicleRow = ({ name, tag, detail, health, state }) => {
-  const stateClasses = vehicleStateClasses[state] || vehicleStateClasses.good;
-  const clampedHealth = Math.max(0, Math.min(health, 100));
-
+const VehicleRow = ({ name, tag, detail }) => {
   return (
     <div className="group rounded-2xl border border-slate-100 p-4 transition hover:bg-slate-50 sm:p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stateClasses.tone} text-blue-600`}>
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <FaCar className="text-lg" />
           </div>
           <div>
@@ -339,16 +356,6 @@ const VehicleRow = ({ name, tag, detail, health, state }) => {
               </span>
             </div>
             <p className="text-xs text-slate-400">{detail}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 md:min-w-50 md:justify-end">
-          <div className="text-right">
-            <span className={`text-2xl font-bold ${stateClasses.text}`}>{clampedHealth}</span>
-            <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${stateClasses.badge}`}>Health</p>
-          </div>
-          <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-100">
-            <div className={`h-full ${stateClasses.bar}`} style={{ width: `${clampedHealth}%` }} />
           </div>
         </div>
       </div>
