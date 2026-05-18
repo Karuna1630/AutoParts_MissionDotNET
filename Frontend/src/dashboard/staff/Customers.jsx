@@ -11,6 +11,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { getAllCustomers, searchCustomers, registerCustomer } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const registrationSchema = Yup.object({
   fullName: Yup.string().required('Full name is required'),
@@ -35,6 +36,10 @@ const Customers = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   useEffect(() => {
     fetchCustomers();
   }, []);
@@ -46,6 +51,7 @@ const Customers = () => {
       const response = await getAllCustomers();
       if (response.success) {
         setCustomers(response.data);
+        setCurrentPage(1);
       }
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -57,6 +63,7 @@ const Customers = () => {
   const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    setCurrentPage(1);
     
     if (query.length > 0) {
       try {
@@ -76,6 +83,10 @@ const Customers = () => {
     setIsModalOpen(false);
     fetchCustomers();
   };
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const paginatedCustomers = customers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 relative">
@@ -137,10 +148,17 @@ const Customers = () => {
           <p className="text-slate-500 mt-2">Try adjusting your search or register a new customer.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {customers.map((customer) => (
-            <CustomerCard key={customer.id} customer={customer} onClick={() => navigate(`/staff/customers/${customer.id}`)} />
-          ))}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedCustomers.map((customer) => (
+              <CustomerCard key={customer.id} customer={customer} onClick={() => navigate(`/staff/customers/${customer.id}`)} />
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       )}
 

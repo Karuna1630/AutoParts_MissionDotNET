@@ -89,13 +89,22 @@ const CustomerDashboard = () => {
       if (historyRes.success) {
         const combined = historyRes.data;
         const activities = [
-          ...combined.purchases.map(p => ({
-            title: `Purchase #${p.invoiceId}`,
-            date: new Date(p.invoiceDate).toLocaleDateString(),
-            amount: `Rs. ${p.finalAmount.toLocaleString()}`,
-            status: p.paymentStatus,
-            type: 'purchase'
-          })),
+          ...combined.purchases.map(p => {
+            let titleStr = `Purchase #${p.invoiceId}`;
+            if (p.items && p.items.length > 0) {
+              titleStr = p.items[0].partName;
+              if (p.items.length > 1) {
+                titleStr += ` + ${p.items.length - 1} more`;
+              }
+            }
+            return {
+              title: titleStr,
+              date: new Date(p.invoiceDate).toLocaleDateString(),
+              amount: `Rs. ${p.finalAmount.toLocaleString()}`,
+              status: p.paymentStatus,
+              type: 'purchase'
+            };
+          }),
           ...combined.services.map(s => ({
             title: s.serviceType,
             date: new Date(s.appointmentDate).toLocaleDateString(),

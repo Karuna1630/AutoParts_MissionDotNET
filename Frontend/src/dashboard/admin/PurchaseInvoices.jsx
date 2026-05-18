@@ -8,6 +8,7 @@ import { getInvoices, addInvoice } from '../../services/invoiceService';
 import { getVendors } from '../../services/vendorService';
 import { getAllParts } from '../../services/partService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const PurchaseInvoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -24,6 +25,12 @@ const PurchaseInvoices = () => {
     notes: '',
     items: []
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(invoices.length / itemsPerPage);
+  const paginatedInvoices = invoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   useEffect(() => {
     fetchInvoices();
@@ -173,7 +180,7 @@ const PurchaseInvoices = () => {
                   </td>
                 </tr>
               ) : (
-                invoices.map((invoice) => (
+                paginatedInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <span className="font-semibold text-slate-900">{invoice.invoiceNumber}</span>
@@ -201,6 +208,14 @@ const PurchaseInvoices = () => {
           </table>
         </div>
       </div>
+
+      {invoices.length > 0 && (
+        <Pagination 
+          currentPage={currentPage} 
+          totalPages={totalPages} 
+          onPageChange={setCurrentPage} 
+        />
+      )}
 
       {/* New Invoice Modal */}
       {isModalOpen && (

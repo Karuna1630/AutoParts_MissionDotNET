@@ -4,6 +4,7 @@ import { FiSearch, FiPackage, FiTruck, FiInfo, FiPlus, FiAlertCircle, FiCheckCir
 import { getAllParts, createPartRequest } from '../../services/partService';
 import { getApiErrorMessage } from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import Pagination from '../../components/Pagination';
 
 const PartsShop = () => {
   const navigate = useNavigate();
@@ -13,6 +14,10 @@ const PartsShop = () => {
   const [search, setSearch] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   
   // Modal States
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +33,10 @@ const PartsShop = () => {
   useEffect(() => {
     fetchParts();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const fetchParts = async () => {
     try {
@@ -47,6 +56,9 @@ const PartsShop = () => {
     return (p.partName || '').toLowerCase().includes(search.toLowerCase()) || 
            (p.sku || '').toLowerCase().includes(search.toLowerCase());
   });
+
+  const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
+  const paginatedParts = filteredParts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenAction = (part) => {
     if (!part) return;
@@ -134,61 +146,70 @@ const PartsShop = () => {
             </div>
           ))}
         </div>
-      ) : filteredParts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredParts.map(part => {
-            const stock = getStockStatus(part.stockQuantity);
-            const isAvailable = part.stockQuantity > 0;
-            return (
-              <div key={part.id} className="bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 group flex flex-col h-full">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
-                      {part.sku}
-                    </span>
-                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${stock.color}`}>
-                      {stock.label}
-                    </span>
-                  </div>
-                  
-                  <div className="w-full h-40 bg-slate-50 rounded-2xl mb-4 overflow-hidden border border-slate-100 flex items-center justify-center p-4">
-                    {part.imageUrl ? (
-                      <img src={part.imageUrl} alt={part.partName} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <FiShoppingCart size={40} className="text-slate-200" />
-                    )}
-                  </div>
-
-                  <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
-                    {part.partName}
-                  </h3>
-                  <p className="text-xs font-bold text-slate-400 mb-4">{part.category}</p>
-                  
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
-                    <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider leading-none mb-1">Price</p>
-                      <p className="text-xl font-black text-slate-900">Rs. {part.price.toLocaleString()}</p>
+      ) : paginatedParts.length > 0 ? (
+        <div className="space-y-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {paginatedParts.map(part => {
+              const stock = getStockStatus(part.stockQuantity);
+              const isAvailable = part.stockQuantity > 0;
+              return (
+                <div key={part.id} className="bg-white rounded-[32px] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 group flex flex-col h-full">
+                  <div className="p-6 flex flex-col h-full">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded-md">
+                        {part.sku}
+                      </span>
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${stock.color}`}>
+                        {stock.label}
+                      </span>
                     </div>
+                    
+                    <div className="w-full h-40 bg-slate-50 rounded-2xl mb-4 overflow-hidden border border-slate-100 flex items-center justify-center p-4">
+                      {part.imageUrl ? (
+                        <img src={part.imageUrl} alt={part.partName} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                      ) : (
+                        <FiShoppingCart size={40} className="text-slate-200" />
+                      )}
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
+                      {part.partName}
+                    </h3>
+                    <p className="text-xs font-bold text-slate-400 mb-4">{part.category}</p>
+                    
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider leading-none mb-1">Price</p>
+                        <p className="text-xl font-black text-slate-900">Rs. {part.price.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => isAvailable ? handleOpenAction(part) : navigate('/dashboard/requests')}
+                      className={`w-full mt-6 py-3.5 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 ${
+                        isAvailable 
+                        ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:bg-blue-700' 
+                        : 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-100'
+                      }`}
+                    >
+                      {isAvailable ? (
+                        <><FiShoppingCart size={14} /> Order</>
+                      ) : (
+                        <><FiTruck size={14} /> Special Request</>
+                      )}
+                    </button>
                   </div>
-                  
-                  <button 
-                    onClick={() => isAvailable ? handleOpenAction(part) : navigate('/dashboard/requests')}
-                    className={`w-full mt-6 py-3.5 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 ${
-                      isAvailable 
-                      ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:bg-blue-700' 
-                      : 'bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white border border-amber-100'
-                    }`}
-                  >
-                    {isAvailable ? (
-                      <><FiShoppingCart size={14} /> Order</>
-                    ) : (
-                      <><FiTruck size={14} /> Special Request</>
-                    )}
-                  </button>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       ) : (
         <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex flex-col items-center justify-center text-center">

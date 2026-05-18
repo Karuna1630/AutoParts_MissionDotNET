@@ -10,6 +10,7 @@ import {
 } from '../../services/inventoryService';
 import { getVendors } from '../../services/vendorService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const inventoryValidationSchema = Yup.object().shape({
   sku: Yup.string().required('SKU is required'),
@@ -292,29 +293,15 @@ const Inventory = () => {
 
       {/* Pagination Container */}
       {!loading && filteredItems.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between mt-6 gap-3">
-          <p className="text-sm text-slate-500 font-medium">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredItems.length)} of {filteredItems.length} entries
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredItems.length)} of {filteredItems.length}
           </p>
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-slate-500 font-medium">Page {page} of {totalPages}</p>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(p => p - 1)}
-                className="px-4 py-1.5 text-sm font-bold border border-slate-200 rounded-lg text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-              >
-                Previous
-              </button>
-              <button
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => p + 1)}
-                className="px-4 py-1.5 text-sm font-bold border border-slate-200 rounded-lg text-slate-600 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <Pagination 
+            currentPage={page} 
+            totalPages={totalPages} 
+            onPageChange={setPage} 
+          />
         </div>
       )}
 

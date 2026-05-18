@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiFileText, FiSearch, FiDownload, FiEye, FiClock, FiUser, FiShoppingBag, FiChevronLeft, FiChevronRight, FiPrinter, FiMail, FiCheckCircle, FiX, FiLoader } from 'react-icons/fi';
+import { FiFileText, FiSearch, FiDownload, FiEye, FiClock, FiUser, FiShoppingBag, FiPrinter, FiMail, FiCheckCircle, FiX, FiLoader } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -341,38 +342,16 @@ const StaffSalesInvoices = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 px-1">
-              <p className="text-xs text-slate-400 font-medium">
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 px-1 gap-4">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredInvoices.length)} of {filteredInvoices.length}
               </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                >
-                  <FiChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                      currentPage === page
-                        ? 'bg-slate-900 text-white'
-                        : 'text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                >
-                  <FiChevronRight size={16} />
-                </button>
+              <div className="mt-[-32px]"> {/* Negate internal mt-8 of reusable pagination */}
+                <Pagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  onPageChange={setCurrentPage} 
+                />
               </div>
             </div>
           )}

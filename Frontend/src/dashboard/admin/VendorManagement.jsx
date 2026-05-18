@@ -4,6 +4,7 @@ import { FaEdit, FaPlus, FaTrashAlt } from 'react-icons/fa';
 import * as Yup from 'yup';
 import { createVendor, deleteVendor, getVendors, updateVendor } from '../../services/vendorService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const vendorValidationSchema = Yup.object().shape({
   companyName: Yup.string().required('Company name is required'),
@@ -279,31 +280,15 @@ const VendorManagement = () => {
       </div>
 
       {!loading && totalPages > 0 && (
-        <div className="flex flex-wrap items-center justify-between mt-6 gap-3">
-          <p className="text-sm text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
             Showing {totalCount === 0 ? 0 : (page - 1) * pageSize + 1}-{totalCount === 0 ? 0 : Math.min(page * pageSize, totalCount)} of {totalCount}
           </p>
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-slate-500">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-              >
-                Previous
-              </button>
-              <button
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <Pagination 
+            currentPage={page} 
+            totalPages={totalPages} 
+            onPageChange={setPage} 
+          />
         </div>
       )}
 

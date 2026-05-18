@@ -37,7 +37,7 @@ public class DashboardController : ControllerBase
         var totalCustomers = await _context.Customers.CountAsync();
 
         // 3. Low Stock Items
-        var lowStockCount = await _context.Parts.CountAsync(p => p.StockQuantity < 10);
+        var lowStockCount = await _context.Parts.CountAsync(p => p.StockQuantity > 0 && p.StockQuantity < 10);
 
         // 4. Today's Service Appointments
         var appointmentsToday = await _context.ServiceAppointments

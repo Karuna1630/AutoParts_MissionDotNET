@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiEdit, FiUser, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiEdit, FiUser, FiX } from 'react-icons/fi';
 import { apiClient as api, getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const StaffPartRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -144,14 +145,9 @@ const StaffPartRequests = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-3 mb-1">
                           <h3 className="text-lg font-bold text-slate-800">{req.partName}</h3>
-                          <div className="flex gap-2">
-                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
-                              {status.label}
-                            </span>
-                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-50 border border-slate-100 text-slate-500">
-                              {req.urgency}
-                            </span>
-                          </div>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${status.color}`}>
+                            {status.label}
+                          </span>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-4 text-[13px] text-slate-500 font-medium">
@@ -180,41 +176,11 @@ const StaffPartRequests = () => {
           </div>
 
           {/* Pagination Controls */}
-          {requests.length > itemsPerPage && (
-            <div className="flex items-center justify-center gap-2 py-4">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <FiChevronLeft size={20} />
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.ceil(requests.length / itemsPerPage) }).map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                      currentPage === i + 1
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                      : 'text-slate-500 hover:bg-slate-50 border border-slate-100'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(requests.length / itemsPerPage)))}
-                disabled={currentPage === Math.ceil(requests.length / itemsPerPage)}
-                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                <FiChevronRight size={20} />
-              </button>
-            </div>
-          )}
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={Math.ceil(requests.length / itemsPerPage)} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       ) : (
         <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex flex-col items-center justify-center text-center">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const StaffOrderRequests = () => {
   const [activeTab, setActiveTab] = useState('pending');
@@ -9,8 +10,16 @@ const StaffOrderRequests = () => {
   const [processingId, setProcessingId] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   useEffect(() => {
     fetchOrders();
+  }, [activeTab]);
+
+  useEffect(() => {
+    setCurrentPage(1);
   }, [activeTab]);
 
   const fetchOrders = async () => {
@@ -89,6 +98,10 @@ const StaffOrderRequests = () => {
     Cancelled: 'bg-red-100 text-red-700'
   };
 
+  // Pagination Calculations
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div>
       {/* Header */}
@@ -128,88 +141,95 @@ const StaffOrderRequests = () => {
           ))}
         </div>
       ) : orders.length > 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
-          {orders.map(order => (
-            <div key={order.id} className="p-5 hover:bg-slate-50/50 transition-colors">
-              {/* Top Row */}
-              <div className="flex items-center justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                    <FiUser size={16} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">{order.customerName}</h3>
-                    <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <FiClock size={10} /> {new Date(order.requestDate).toLocaleString()}
-                      <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${statusColor[order.status] || 'bg-slate-100 text-slate-600'}`}>
-                        {order.status}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase">Total</p>
-                    <p className="text-base font-bold text-slate-900">Rs. {order.totalAmount.toLocaleString()}</p>
-                  </div>
-
-                  {activeTab === 'pending' && (
-                    <>
-                      <button
-                        onClick={() => handleCreateInvoice(order.id)}
-                        disabled={processingId === order.id}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-1.5"
-                      >
-                        <FiFileText size={13} />
-                        {processingId === order.id ? 'Processing...' : 'Create Invoice'}
-                      </button>
-                      <button
-                        onClick={() => handleCancelOrder(order.id)}
-                        disabled={processingId === order.id}
-                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                      >
-                        <FiXCircle size={16} />
-                      </button>
-                    </>
-                  )}
-
-                  {activeTab === 'reserved' && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleCompleteOrder(order.id, true)}
-                        disabled={processingId === order.id}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-1.5"
-                      >
-                        <FiCheckCircle size={13} />
-                        {processingId === order.id ? '...' : 'Mark as Paid'}
-                      </button>
-                      <button
-                        onClick={() => handleCompleteOrder(order.id, false)}
-                        disabled={processingId === order.id}
-                        className="bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-amber-700 transition disabled:opacity-50 flex items-center gap-1.5"
-                      >
-                        <FiCreditCard size={13} />
-                        {processingId === order.id ? '...' : 'Add to Credit'}
-                      </button>
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden divide-y divide-slate-100">
+            {paginatedOrders.map(order => (
+              <div key={order.id} className="p-5 hover:bg-slate-50/50 transition-colors">
+                {/* Top Row */}
+                <div className="flex items-center justify-between gap-4 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                      <FiUser size={16} />
                     </div>
-                  )}
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">{order.customerName}</h3>
+                      <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <FiClock size={10} /> {new Date(order.requestDate).toLocaleString()}
+                        <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${statusColor[order.status] || 'bg-slate-100 text-slate-600'}`}>
+                          {order.status}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase">Total</p>
+                      <p className="text-base font-bold text-slate-900">Rs. {order.totalAmount.toLocaleString()}</p>
+                    </div>
+
+                    {activeTab === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleCreateInvoice(order.id)}
+                          disabled={processingId === order.id}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          <FiFileText size={13} />
+                          {processingId === order.id ? 'Processing...' : 'Create Invoice'}
+                        </button>
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={processingId === order.id}
+                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <FiXCircle size={16} />
+                        </button>
+                      </>
+                    )}
+
+                    {activeTab === 'reserved' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCompleteOrder(order.id, true)}
+                          disabled={processingId === order.id}
+                          className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          <FiCheckCircle size={13} />
+                          {processingId === order.id ? '...' : 'Mark as Paid'}
+                        </button>
+                        <button
+                          onClick={() => handleCompleteOrder(order.id, false)}
+                          disabled={processingId === order.id}
+                          className="bg-amber-600 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-amber-700 transition disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          <FiCreditCard size={13} />
+                          {processingId === order.id ? '...' : 'Add to Credit'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Items Row */}
+                <div className="flex flex-wrap gap-2 ml-12">
+                  {order.items.map(item => (
+                    <div key={item.id} className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs">
+                      <FiPackage size={12} className="text-slate-400" />
+                      <span className="font-semibold text-slate-700">{item.partName}</span>
+                      <span className="text-slate-400">×{item.quantity}</span>
+                      <span className="text-slate-400">Rs.{item.unitPriceAtRequest.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Items Row */}
-              <div className="flex flex-wrap gap-2 ml-12">
-                {order.items.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 text-xs">
-                    <FiPackage size={12} className="text-slate-400" />
-                    <span className="font-semibold text-slate-700">{item.partName}</span>
-                    <span className="text-slate-400">×{item.quantity}</span>
-                    <span className="text-slate-400">Rs.{item.unitPriceAtRequest.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 p-16 flex flex-col items-center justify-center text-center">

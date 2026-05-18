@@ -7,12 +7,17 @@ import { FaCar } from 'react-icons/fa';
 import { searchParts, createSalesInvoice } from '../../services/salesService';
 import { getAllCustomers, searchCustomers } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const PointOfSale = () => {
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   
   const [customerSearch, setCustomerSearch] = useState('');
   const [customers, setCustomers] = useState([]);
@@ -48,10 +53,15 @@ const PointOfSale = () => {
 
     const delayDebounceFn = setTimeout(() => {
       fetchParts();
+      setCurrentPage(1);
     }, searchQuery ? 300 : 0);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(parts.length / itemsPerPage);
+  const paginatedParts = parts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Search Customers
   useEffect(() => {
@@ -142,17 +152,14 @@ const PointOfSale = () => {
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
           <FiCheckCircle size={48} />
         </div>
-        <h2 className="text-3xl font-bold text-slate-900">Payment Successful!</h2>
-        <p className="text-slate-500 mt-2 max-w-sm">Invoice #{orderSuccess.invoiceNumber} has been created and inventory levels updated.</p>
-        <div className="mt-8 flex gap-4">
+        <h2 className="text-3xl font-bold text-slate-900">Selling Completed!</h2>
+        <p className="text-slate-500 mt-2 max-w-sm">The transaction has been successfully processed.</p>
+        <div className="mt-8">
           <button 
             onClick={() => setOrderSuccess(null)}
-            className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition"
+            className="px-10 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition"
           >
-            New Transaction
-          </button>
-          <button className="px-8 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition">
-            Print Receipt
+            Done
           </button>
         </div>
       </div>
@@ -184,40 +191,50 @@ const PointOfSale = () => {
                 <FiLoader className="animate-spin text-blue-600" size={32} />
               </div>
             ) : parts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {parts.map(part => (
-                  <button 
-                    key={part.id} 
-                    onClick={() => addToCart(part)}
-                    disabled={part.stockQuantity <= 0}
-                    className={`p-4 text-left border rounded-2xl transition group flex flex-col gap-2 ${
-                      part.stockQuantity > 0 
-                        ? 'border-slate-100 hover:border-blue-500 hover:bg-blue-50/30' 
-                        : 'opacity-50 grayscale cursor-not-allowed border-slate-100'
-                    }`}
-                  >
-                    <div className="w-full h-32 bg-slate-50 rounded-xl mb-3 overflow-hidden border border-slate-100 flex items-center justify-center p-2">
-                      {part.imageUrl ? (
-                        <img src={part.imageUrl} alt={part.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
-                      ) : (
-                        <FiShoppingCart size={32} className="text-slate-200" />
-                      )}
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded">{part.sku}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${part.stockQuantity > 5 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                        Qty: {part.stockQuantity}
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold text-slate-800 line-clamp-1">{part.name}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-sm font-black text-slate-900">Rs.{part.price.toFixed(2)}</span>
-                      <div className="p-2 bg-slate-100 text-slate-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <FiPlus size={16} />
+              <div className="flex flex-col h-full justify-between gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginatedParts.map(part => (
+                    <button 
+                      key={part.id} 
+                      onClick={() => addToCart(part)}
+                      disabled={part.stockQuantity <= 0}
+                      className={`p-4 text-left border rounded-2xl transition group flex flex-col gap-2 ${
+                        part.stockQuantity > 0 
+                          ? 'border-slate-100 hover:border-blue-500 hover:bg-blue-50/30' 
+                          : 'opacity-50 grayscale cursor-not-allowed border-slate-100'
+                      }`}
+                    >
+                      <div className="w-full h-32 bg-slate-50 rounded-xl mb-3 overflow-hidden border border-slate-100 flex items-center justify-center p-2">
+                        {part.imageUrl ? (
+                          <img src={part.imageUrl} alt={part.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                        ) : (
+                          <FiShoppingCart size={32} className="text-slate-200" />
+                        )}
                       </div>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded">{part.sku}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${part.stockQuantity > 5 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                          Qty: {part.stockQuantity}
+                        </span>
+                      </div>
+                      <p className="text-sm font-bold text-slate-800 line-clamp-1">{part.name}</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm font-black text-slate-900">Rs.{part.price.toFixed(2)}</span>
+                        <div className="p-2 bg-slate-100 text-slate-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          <FiPlus size={16} />
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-auto border-t border-slate-50 pt-4">
+                  <Pagination 
+                    currentPage={currentPage} 
+                    totalPages={totalPages} 
+                    onPageChange={setCurrentPage} 
+                  />
+                </div>
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-300">

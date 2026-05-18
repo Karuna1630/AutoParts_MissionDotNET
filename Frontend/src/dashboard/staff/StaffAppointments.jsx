@@ -9,6 +9,7 @@ import {
   completeAppointment, staffCancelAppointment 
 } from '../../services/appointmentService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const StaffAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -20,6 +21,10 @@ const StaffAppointments = () => {
   const [modal, setModal] = useState(null); // 'detail' | 'cancel'
   const [cancelReason, setCancelReason] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchAppointments = async () => {
     try {
@@ -38,6 +43,10 @@ const StaffAppointments = () => {
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   const handleClaim = async (id) => {
     try {
@@ -104,6 +113,9 @@ const StaffAppointments = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Pending': return 'bg-amber-50 text-amber-600 border-amber-200';
@@ -161,83 +173,90 @@ const StaffAppointments = () => {
           ))}
         </div>
       ) : filteredAppointments.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredAppointments.map(a => (
-            <div key={a.id} className="bg-white rounded-3xl border border-slate-100 p-6 hover:shadow-xl hover:shadow-slate-200/30 transition-all duration-300">
-              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${getStatusStyle(a.status).split(' ')[0]} ${getStatusStyle(a.status).split(' ')[1]}`}>
-                  <FiCalendar size={24} />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold text-slate-800">{a.serviceType}</h3>
-                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${getStatusStyle(a.status)}`}>
-                      {a.status}
-                    </span>
-                    {a.priority !== 'Normal' && (
-                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${getPriorityStyle(a.priority)}`}>
-                        {a.priority}
-                      </span>
-                    )}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 gap-4">
+            {paginatedAppointments.map(a => (
+              <div key={a.id} className="bg-white rounded-3xl border border-slate-100 p-6 hover:shadow-xl hover:shadow-slate-200/30 transition-all duration-300">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${getStatusStyle(a.status).split(' ')[0]} ${getStatusStyle(a.status).split(' ')[1]}`}>
+                    <FiCalendar size={24} />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 text-xs text-slate-500 font-medium">
-                    <span className="flex items-center gap-2"><FaUserAlt className="text-slate-400" /> {a.customerName || 'Unknown Customer'}</span>
-                    <span className="flex items-center gap-2"><FaCar className="text-slate-400" /> {a.vehicleName}</span>
-                    <span className="flex items-center gap-2"><FiClock className="text-slate-400" /> {new Date(a.preferredDate).toLocaleDateString()} at {a.preferredTime}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <h3 className="text-lg font-bold text-slate-800">{a.serviceType}</h3>
+                      <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${getStatusStyle(a.status)}`}>
+                        {a.status}
+                      </span>
+                      {a.priority !== 'Normal' && (
+                        <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${getPriorityStyle(a.priority)}`}>
+                          {a.priority}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-6 text-xs text-slate-500 font-medium">
+                      <span className="flex items-center gap-2"><FaUserAlt className="text-slate-400" /> {a.customerName || 'Unknown Customer'}</span>
+                      <span className="flex items-center gap-2"><FaCar className="text-slate-400" /> {a.vehicleName}</span>
+                      <span className="flex items-center gap-2"><FiClock className="text-slate-400" /> {new Date(a.preferredDate).toLocaleDateString()} at {a.preferredTime}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-slate-100 lg:pl-6">
+                    <button 
+                      onClick={() => { setSelectedAppt(a); setModal('detail'); }}
+                      className="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
+                      title="View Details"
+                    >
+                      <FiEye size={18} />
+                    </button>
+
+                    {a.status === 'Pending' && (
+                      <button 
+                        onClick={() => handleClaim(a.id)}
+                        disabled={actionLoading === a.id}
+                        className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                      >
+                        {actionLoading === a.id ? 'Claiming...' : 'Claim'}
+                      </button>
+                    )}
+
+                    {a.status === 'Confirmed' && (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleComplete(a.id)}
+                          disabled={actionLoading === a.id}
+                          className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+                        >
+                          Complete
+                        </button>
+                        <button 
+                          onClick={() => { setSelectedAppt(a); setModal('cancel'); }}
+                          className="bg-white border border-red-200 text-red-600 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-50 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+
+                    {a.assignedStaffName && (
+                      <div className="flex items-center gap-2 ml-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-600">
+                          {a.assignedStaffName[0]}
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500">{a.assignedStaffName}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-slate-100 lg:pl-6">
-                  <button 
-                    onClick={() => { setSelectedAppt(a); setModal('detail'); }}
-                    className="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all"
-                    title="View Details"
-                  >
-                    <FiEye size={18} />
-                  </button>
-
-                  {a.status === 'Pending' && (
-                    <button 
-                      onClick={() => handleClaim(a.id)}
-                      disabled={actionLoading === a.id}
-                      className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
-                    >
-                      {actionLoading === a.id ? 'Claiming...' : 'Claim'}
-                    </button>
-                  )}
-
-                  {a.status === 'Confirmed' && (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleComplete(a.id)}
-                        disabled={actionLoading === a.id}
-                        className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
-                      >
-                        Complete
-                      </button>
-                      <button 
-                        onClick={() => { setSelectedAppt(a); setModal('cancel'); }}
-                        className="bg-white border border-red-200 text-red-600 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-red-50 transition-all"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-
-                  {a.assignedStaffName && (
-                    <div className="flex items-center gap-2 ml-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                      <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-600">
-                        {a.assignedStaffName[0]}
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-500">{a.assignedStaffName}</span>
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         </div>
       ) : (
         <div className="bg-white rounded-[40px] border border-slate-100 p-20 flex flex-col items-center justify-center text-center">

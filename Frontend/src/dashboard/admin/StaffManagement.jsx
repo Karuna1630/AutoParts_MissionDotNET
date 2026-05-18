@@ -5,6 +5,7 @@ import * as Yup from 'yup';
 import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage } from '../../services/staffAuthService';
 import { createStaff } from '../../services/adminService';
 import { getApiErrorMessage } from '../../services/api';
+import Pagination from '../../components/Pagination';
 
 const staffCreateValidationSchema = Yup.object().shape({
   firstName: Yup.string().required('First name is required'),
@@ -388,26 +389,12 @@ const StaffManagement = () => {
 
       {/* Pagination Controls */}
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <p className="text-sm text-slate-500">
-            Page {page} of {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-            >
-              Previous
-            </button>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              className="px-3 py-1.5 text-sm border border-slate-200 rounded text-slate-600 disabled:opacity-50 hover:bg-slate-50"
-            >
-              Next
-            </button>
-          </div>
+        <div className="mt-6">
+          <Pagination 
+            currentPage={page} 
+            totalPages={totalPages} 
+            onPageChange={setPage} 
+          />
         </div>
       )}
 
