@@ -53,6 +53,12 @@ const PartsShop = () => {
   };
 
   const filteredParts = parts.filter(p => {
+    // If it's a special request part and is out of stock, do not display it
+    const isSpecialRequest = p.category === 'Special Request' || (p.sku || '').startsWith('REQ-');
+    if (isSpecialRequest && p.stockQuantity <= 0) {
+      return false;
+    }
+
     return (p.partName || '').toLowerCase().includes(search.toLowerCase()) || 
            (p.sku || '').toLowerCase().includes(search.toLowerCase());
   });
