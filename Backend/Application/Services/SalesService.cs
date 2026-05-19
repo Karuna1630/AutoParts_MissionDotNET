@@ -130,6 +130,79 @@ public class SalesService : ISalesService
         return OperationResult<ViewSalesInvoiceDto>.Ok(MapToViewDto(invoice));
     }
 
+    public async Task<List<CustomerReportDto>> GetRegularCustomersAsync()
+{
+    return await _invoiceRepo.Query()
+        .Include(i => i.Customer)
+            .ThenInclude(c => c.User)
+        .GroupBy(i => new
+        {
+            i.CustomerId,
+            i.Customer.User.FullName,
+            i.Customer.User.Email
+        })
+        .Where(g => g.Count() >= 3)
+        .Select(g => new CustomerReportDto
+        {
+            CustomerId = g.Key.CustomerId,
+            CustomerName = g.Key.FullName,
+            CustomerEmail = g.Key.Email,
+            TotalInvoices = g.Count(),
+            TotalSpent = g.Sum(x => x.FinalAmount),
+            PendingCredit = g.Sum(x => x.CreditAmount)
+        })
+        .OrderByDescending(x => x.TotalInvoices)
+        .ToListAsync();
+}
+
+public async Task<List<CustomerReportDto>> GetHighSpendersAsync()
+{
+    return await _invoiceRepo.Query()
+        .Include(i => i.Customer)
+            .ThenInclude(c => c.User)
+        .GroupBy(i => new
+        {
+            i.CustomerId,
+            i.Customer.User.FullName,
+            i.Customer.User.Email
+        })
+        .Select(g => new CustomerReportDto
+        {
+            CustomerId = g.Key.CustomerId,
+            CustomerName = g.Key.FullName,
+            CustomerEmail = g.Key.Email,
+            TotalInvoices = g.Count(),
+            TotalSpent = g.Sum(x => x.FinalAmount),
+            PendingCredit = g.Sum(x => x.CreditAmount)
+        })
+        .Where(x => x.TotalSpent >= 5000)
+        .OrderByDescending(x => x.TotalSpent)
+        .ToListAsync();
+}
+public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
+{
+    return await _invoiceRepo.Query()
+        .Include(i => i.Customer)
+            .ThenInclude(c => c.User)
+        .Where(i => i.CreditAmount > 0)
+        .GroupBy(i => new
+        {
+            i.CustomerId,
+            i.Customer.User.FullName,
+            i.Customer.User.Email
+        })
+        .Select(g => new CustomerReportDto
+        {
+            CustomerId = g.Key.CustomerId,
+            CustomerName = g.Key.FullName,
+            CustomerEmail = g.Key.Email,
+            TotalInvoices = g.Count(),
+            TotalSpent = g.Sum(x => x.FinalAmount),
+            PendingCredit = g.Sum(x => x.CreditAmount)
+        })
+        .OrderByDescending(x => x.PendingCredit)
+        .ToListAsync();
+}
     public async Task<OperationResult<List<ViewSalesInvoiceDto>>> GetAllInvoicesAsync()
     {
         var invoices = await _invoiceRepo.Query()

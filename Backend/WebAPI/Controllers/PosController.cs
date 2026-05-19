@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Domain.Entities;
+using Application.DTOs.Common;
 
 namespace WebAPI.Controllers;
 
@@ -97,6 +98,31 @@ public class PosController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("reports/regulars")]
+public async Task<IActionResult> GetRegularCustomers()
+{
+    var result = await _salesService.GetRegularCustomersAsync();
+
+    return Ok(ApiResponse<List<CustomerReportDto>>
+        .SuccessResponse(result));
+}
+[HttpGet("reports/high-spenders")]
+public async Task<IActionResult> GetHighSpenders()
+{
+    var result = await _salesService.GetHighSpendersAsync();
+
+    return Ok(ApiResponse<List<CustomerReportDto>>
+        .SuccessResponse(result));
+}
+[HttpGet("reports/pending-credits")]
+public async Task<IActionResult> GetPendingCredits()
+{
+    var result = await _salesService.GetPendingCreditsAsync();
+
+    return Ok(ApiResponse<List<CustomerReportDto>>
+        .SuccessResponse(result));
+}
 }
 
 public class PaymentUpdateRequest

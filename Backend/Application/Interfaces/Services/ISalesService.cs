@@ -15,4 +15,7 @@ public interface ISalesService
     Task<List<Part>> SearchPartsAsync(string query);
     Task<List<Customer>> SearchCustomersAsync(string query);
     Task<OperationResult<string>> SendInvoiceEmailAsync(int id);
+    Task<List<CustomerReportDto>> GetRegularCustomersAsync();
+    Task<List<CustomerReportDto>> GetHighSpendersAsync();
+    Task<List<CustomerReportDto>> GetPendingCreditsAsync();
 }
