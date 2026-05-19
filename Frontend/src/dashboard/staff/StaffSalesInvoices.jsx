@@ -17,42 +17,49 @@ const StaffSalesInvoices = () => {
   const [toast, setToast] = useState(null);
   const printRef = useRef(null);
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
+useEffect(() => {
+  fetchInvoices(filterType);
+}, [filterType]);
 
-  const fetchInvoices = async () => {
-    try {
-      setLoading(true);
-      const res = await apiClient.get('/Pos/invoices');
-      if (res.data.success) {
-        setInvoices(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to load invoices');
-    } finally {
-      setLoading(false);
+const fetchInvoices = async (type = 'all') => {
+  try {
+    setLoading(true);
+
+    let endpoint = '/Pos/invoices';
+
+    switch (type) {
+      case 'high_spenders':
+        endpoint = '/Pos/reports/high-spenders';
+        break;
+
+      case 'regulars':
+        endpoint = '/Pos/reports/regular-customers';
+        break;
+
+      case 'pending_credits':
+        endpoint = '/Pos/reports/pending-credits';
+        break;
+
+      default:
+        endpoint = '/Pos/invoices';
     }
-  };
 
-  const customerCounts = invoices.reduce((acc, inv) => {
-    if (inv.customerName && inv.customerName !== 'Walk-in') {
-      acc[inv.customerName] = (acc[inv.customerName] || 0) + 1;
+    const res = await apiClient.get(endpoint);
+
+    if (res.data.success) {
+      setInvoices(res.data.data);
     }
-    return acc;
-  }, {});
+  } catch (err) {
+    console.error('Failed to load invoices');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const filteredInvoices = invoices.filter(inv => {
-    const matchesSearch = inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
-                          inv.customerName?.toLowerCase().includes(search.toLowerCase());
-    
-    let matchesFilter = true;
-    if (filterType === 'high_spenders') matchesFilter = inv.finalAmount >= 5000;
-    if (filterType === 'pending_credits') matchesFilter = inv.paymentStatus === 'Credit';
-    if (filterType === 'regulars') matchesFilter = inv.customerName && customerCounts[inv.customerName] >= 2;
-
-    return matchesSearch && matchesFilter;
-  });
+  const filteredInvoices = invoices.filter(inv =>
+  inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+  inv.customerName?.toLowerCase().includes(search.toLowerCase())
+);
 
   // Pagination
   const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
