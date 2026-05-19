@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-icons/fa';
+import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaArrowLeft } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { registerValidationSchema } from '../utils/RegisterValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -116,9 +116,9 @@ const Register = () => {
         <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-500/25 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
-            <FaCarSide className="text-xl text-white" />
-          </div>
+           <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
+                <img className="rounded-2xl" src='/logo.png' />
+              </div>
           <div>
             <h2>AutoParts</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">Vehicle MIS</p>

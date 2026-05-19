@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiFileText, FiSearch, FiDownload, FiEye, FiClock, FiUser, FiShoppingBag, FiPrinter, FiMail, FiCheckCircle, FiX, FiLoader } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -14,8 +15,8 @@ const StaffSalesInvoices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [emailLoading, setEmailLoading] = useState(null);
   const [emailConfirm, setEmailConfirm] = useState(null);
-  const [toast, setToast] = useState(null);
   const printRef = useRef(null);
+  const { showToast } = useToast();
 
 useEffect(() => {
   fetchInvoices(filterType);
@@ -79,15 +80,14 @@ const fetchInvoices = async (type = 'all') => {
       setEmailLoading(invoiceId);
       const res = await apiClient.post(`/Pos/invoice/${invoiceId}/send-email`);
       if (res.data.success) {
-        setToast({ type: 'success', message: 'Invoice sent to customer email!' });
+        showToast('Invoice sent to customer email!', { type: 'success' });
       } else {
-        setToast({ type: 'error', message: res.data.message || 'Failed to send email' });
+        showToast(res.data.message || 'Failed to send email', { type: 'error' });
       }
     } catch (err) {
-      setToast({ type: 'error', message: err.response?.data?.message || 'Error connecting to email service' });
+      showToast(err.response?.data?.message || 'Error connecting to email service', { type: 'error' });
     } finally {
       setEmailLoading(null);
-      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -213,17 +213,6 @@ const fetchInvoices = async (type = 'all') => {
 
   return (
     <div>
-      {toast && (
-        <div className={`fixed top-6 right-6 z-[100] px-6 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-right duration-300 flex items-center gap-3 border ${
-          toast.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'
-        }`}>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'} text-white`}>
-            {toast.type === 'success' ? <FiCheckCircle /> : <FiX />}
-          </div>
-          <span className="font-bold text-sm">{toast.message}</span>
-        </div>
-      )}
-
       <div className="mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Sales History</h1>
@@ -353,7 +342,7 @@ const fetchInvoices = async (type = 'all') => {
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                 Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredInvoices.length)} of {filteredInvoices.length}
               </p>
-              <div className="mt-[-32px]"> {/* Negate internal mt-8 of reusable pagination */}
+              <div className="-mt-8"> {/* Negate internal mt-8 of reusable pagination */}
                 <Pagination 
                   currentPage={currentPage} 
                   totalPages={totalPages} 
@@ -458,7 +447,7 @@ const fetchInvoices = async (type = 'all') => {
 
       {/* Email Confirmation Modal */}
       {emailConfirm && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-200">
             <div className="p-6 text-center">
               <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">

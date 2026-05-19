@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles sales invoices and sales reporting.
+/// </summary>
 public class SalesService : ISalesService
 {
     private readonly IGenericRepository<SalesInvoice> _invoiceRepo;
@@ -39,6 +42,9 @@ public class SalesService : ISalesService
         _notificationService = notificationService;
     }
 
+    /// <summary>
+    /// Creates a new sales invoice.
+    /// </summary>
     public async Task<OperationResult<ViewSalesInvoiceDto>> CreateInvoiceAsync(CreateSalesInvoiceDto dto, int staffId)
     {
         var customer = await _customerRepo.GetByIdAsync(dto.CustomerId);
@@ -116,6 +122,9 @@ public class SalesService : ISalesService
         return OperationResult<ViewSalesInvoiceDto>.Ok(MapToViewDto(invoice), "Invoice created successfully.");
     }
 
+    /// <summary>
+    /// Returns a single invoice.
+    /// </summary>
     public async Task<OperationResult<ViewSalesInvoiceDto>> GetInvoiceByIdAsync(int id)
     {
         var invoice = await _invoiceRepo.Query()
@@ -130,6 +139,9 @@ public class SalesService : ISalesService
         return OperationResult<ViewSalesInvoiceDto>.Ok(MapToViewDto(invoice));
     }
 
+    /// <summary>
+    /// Returns regular customers.
+    /// </summary>
     public async Task<List<CustomerReportDto>> GetRegularCustomersAsync()
 {
     return await _invoiceRepo.Query()
@@ -155,6 +167,9 @@ public class SalesService : ISalesService
         .ToListAsync();
 }
 
+    /// <summary>
+    /// Returns high-spending customers.
+    /// </summary>
 public async Task<List<CustomerReportDto>> GetHighSpendersAsync()
 {
     return await _invoiceRepo.Query()
@@ -179,6 +194,9 @@ public async Task<List<CustomerReportDto>> GetHighSpendersAsync()
         .OrderByDescending(x => x.TotalSpent)
         .ToListAsync();
 }
+    /// <summary>
+    /// Returns customers with pending credits.
+    /// </summary>
 public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
 {
     return await _invoiceRepo.Query()
@@ -203,6 +221,9 @@ public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
         .OrderByDescending(x => x.PendingCredit)
         .ToListAsync();
 }
+    /// <summary>
+    /// Returns all sales invoices.
+    /// </summary>
     public async Task<OperationResult<List<ViewSalesInvoiceDto>>> GetAllInvoicesAsync()
     {
         var invoices = await _invoiceRepo.Query()
@@ -215,6 +236,9 @@ public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
         return OperationResult<List<ViewSalesInvoiceDto>>.Ok(invoices.Select(MapToViewDto).ToList());
     }
 
+    /// <summary>
+    /// Updates invoice payment status.
+    /// </summary>
     public async Task<OperationResult<bool>> UpdatePaymentStatusAsync(int id, string status, decimal amountPaid)
     {
         var invoice = await _invoiceRepo.GetByIdAsync(id);
@@ -241,6 +265,9 @@ public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
         return OperationResult<bool>.Ok(true, "Payment status updated.");
     }
 
+    /// <summary>
+    /// Searches parts for POS and sales flows.
+    /// </summary>
     public async Task<List<Part>> SearchPartsAsync(string query)
     {
         var queryable = _partRepo.Query();
@@ -257,6 +284,9 @@ public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Searches customers for POS and sales flows.
+    /// </summary>
     public async Task<List<Customer>> SearchCustomersAsync(string query)
     {
         var lowerQuery = query.ToLower();
@@ -270,6 +300,9 @@ public async Task<List<CustomerReportDto>> GetPendingCreditsAsync()
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Emails an invoice PDF to the customer.
+    /// </summary>
     public async Task<OperationResult<string>> SendInvoiceEmailAsync(int id)
     {
         var invoiceResult = await GetInvoiceByIdAsync(id);

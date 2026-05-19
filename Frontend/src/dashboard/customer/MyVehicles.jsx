@@ -11,6 +11,7 @@ import {
   deleteVehicle, setPrimaryVehicle 
 } from '../../services/vehicleService';
 import { getApiErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 const vehicleValidationSchema = Yup.object({
   vehicleMake: Yup.string().trim().required('Make is required'),
@@ -33,6 +34,7 @@ const MyVehicles = () => {
   const [feedback, setFeedback] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
+  const { confirm } = useToast();
 
   useEffect(() => {
     fetchVehicles();
@@ -115,7 +117,15 @@ const MyVehicles = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this vehicle?')) return;
+    const confirmed = await confirm({
+      title: 'Remove vehicle?',
+      message: 'Are you sure you want to remove this vehicle?',
+      confirmText: 'Remove vehicle',
+      cancelText: 'Keep vehicle',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) return;
 
     try {
       setActionLoading(id);

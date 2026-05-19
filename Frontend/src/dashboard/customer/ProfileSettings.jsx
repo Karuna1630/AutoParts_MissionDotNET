@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,8 @@ import {
 } from 'react-icons/fa';
 import { getUserProfile, updateProfile } from '../../services/userService';
 import { getApiErrorMessage } from '../../services/api';
+import { getMyVehicles } from '../../services/vehicleService';
+import { getMyAppointments } from '../../services/appointmentService';
 
 const profileValidationSchema = Yup.object({
   fullName: Yup.string().trim().min(3).required('Full name is required'),
@@ -21,6 +23,8 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
   
   // Preview states
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -31,13 +35,7 @@ const ProfileSettings = () => {
   const coverFileRef = useRef(null);
   const didFetchRef = useRef(false);
 
-  useEffect(() => {
-    if (didFetchRef.current) return;
-    didFetchRef.current = true;
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     const token = localStorage.getItem('authToken');
     if (!token) {
       setLoading(false);
@@ -47,11 +45,25 @@ const ProfileSettings = () => {
 
     try {
       setLoading(true);
-      const response = await getUserProfile();
-      if (response.success) {
-        setProfile(response.data);
-        setAvatarPreview(response.data.avatarUrl);
-        setCoverPreview(response.data.coverUrl);
+      const [profileResponse, vehiclesResponse, appointmentsResponse] = await Promise.all([
+        getUserProfile(),
+        getMyVehicles(),
+        getMyAppointments(),
+      ]);
+
+      if (profileResponse.success) {
+        setProfile(profileResponse.data);
+        setAvatarPreview(profileResponse.data.avatarUrl);
+        setCoverPreview(profileResponse.data.coverUrl);
+      }
+
+      if (vehiclesResponse.success) {
+        setVehicleCount(Array.isArray(vehiclesResponse.data) ? vehiclesResponse.data.length : 0);
+      }
+
+      if (appointmentsResponse.success) {
+        const appointments = Array.isArray(appointmentsResponse.data) ? appointmentsResponse.data : [];
+        setVisitCount(appointments.filter((appointment) => appointment.status === 'Completed').length || appointments.length);
       }
     } catch (err) {
       if (err?.response?.status === 401) {
@@ -64,7 +76,13 @@ const ProfileSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (didFetchRef.current) return;
+    didFetchRef.current = true;
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];
@@ -193,8 +211,8 @@ const ProfileSettings = () => {
 
               {/* Stats Row */}
               <div className="flex gap-4">
-                <StatBox icon={FaCar} label="VEHICLES" value="2" />
-                <StatBox icon={FaCalendarCheck} label="VISITS" value="1" />
+                <StatBox icon={FaCar} label="VEHICLES" value={String(vehicleCount)} />
+                <StatBox icon={FaCalendarCheck} label="VISITS" value={String(visitCount)} />
               </div>
             </div>
           </div>

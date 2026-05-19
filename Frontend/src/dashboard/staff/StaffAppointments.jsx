@@ -10,6 +10,7 @@ import {
 } from '../../services/appointmentService';
 import { getApiErrorMessage } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const StaffAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -21,6 +22,7 @@ const StaffAppointments = () => {
   const [modal, setModal] = useState(null); // 'detail' | 'cancel'
   const [cancelReason, setCancelReason] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const { showToast } = useToast();
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,7 +86,7 @@ const StaffAppointments = () => {
 
   const handleStaffCancel = async () => {
     if (!cancelReason.trim()) {
-      alert('Please provide a reason for cancellation.');
+      showToast('Please provide a reason for cancellation.', { type: 'error' });
       return;
     }
     try {

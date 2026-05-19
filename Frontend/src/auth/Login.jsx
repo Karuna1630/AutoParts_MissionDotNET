@@ -1,7 +1,7 @@
-import React from 'react';
+import 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-icons/fa';
+import { FaLock, FaArrowRight, FaCheck, FaArrowLeft } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { loginValidationSchema } from '../utils/LoginValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -29,16 +29,16 @@ try {
 }
 
 // Try staff table ONLY if first failed
-if (!res1?.success) {
-  try {
-    res2 = await staffLogin({
-      email: values.email.trim(),
-      password: values.password,
-    });
-  } catch (err) {
-    res2 = null;
-  }
-}
+// if (!res1?.success) {
+//   try {
+//     res2 = await staffLogin({
+//       email: values.email.trim(),
+//       password: values.password,
+//     });
+//   } catch (err) {
+//     res2 = null;
+//   }
+// }
 
 // If both failed
 if (!res1?.success && !res2?.success) {
@@ -98,9 +98,9 @@ const response = res1?.success ? res1 : res2;
         <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 shadow-lg shadow-blue-500/40">
-            <FaCarSide className="text-xl text-white" />
-          </div>
+           <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
+                <img className="rounded-2xl" src='/logo.png' />
+              </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight">AutoParts</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">

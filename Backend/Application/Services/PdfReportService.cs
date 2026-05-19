@@ -7,6 +7,9 @@ using QuestPDF.Infrastructure;
 
 namespace Application.Services;
 
+/// <summary>
+/// Generates PDF reports.
+/// </summary>
 public class PdfReportService : IPdfReportService
 {
     private static readonly CultureInfo ReportCulture = CultureInfo.InvariantCulture;
@@ -16,6 +19,9 @@ public class PdfReportService : IPdfReportService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
+    /// <summary>
+    /// Generates a financial report PDF document.
+    /// </summary>
     public byte[] GenerateFinancialReportPdf(FinancialReportDto report, string title)
     {
         var document = Document.Create(container =>

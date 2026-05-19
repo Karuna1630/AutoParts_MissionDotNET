@@ -13,6 +13,9 @@ using QuestPDF.Infrastructure;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Builds customer purchase and service history data.
+/// </summary>
 public class CustomerHistoryService : ICustomerHistoryService
 {
     private readonly AppDbContext _context;
@@ -27,6 +30,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         _context = context;
     }
 
+    /// <summary>
+    /// Returns purchase history for a customer.
+    /// </summary>
     public async Task<OperationResult<List<PurchaseHistoryDto>>> GetPurchaseHistoryAsync(int customerId, int? vehicleId, DateTime? fromDate, DateTime? toDate, string? status)
     {
         try
@@ -75,6 +81,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         }
     }
 
+    /// <summary>
+    /// Returns service history for a customer.
+    /// </summary>
     public async Task<OperationResult<List<ServiceHistoryDto>>> GetServiceHistoryAsync(int customerId, int? vehicleId, string? status)
     {
         try
@@ -110,6 +119,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         }
     }
 
+    /// <summary>
+    /// Returns combined purchase and service history.
+    /// </summary>
     public async Task<OperationResult<CombinedHistoryDto>> GetCombinedHistoryAsync(int customerId)
     {
         var purchasesResult = await GetPurchaseHistoryAsync(customerId, null, null, null, null);
@@ -129,6 +141,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         return OperationResult<CombinedHistoryDto>.Ok(result);
     }
 
+    /// <summary>
+    /// Returns a single purchase record.
+    /// </summary>
     public async Task<OperationResult<PurchaseHistoryDto>> GetSinglePurchaseAsync(int customerId, int invoiceId)
     {
         var result = await GetPurchaseHistoryAsync(customerId, null, null, null, null);
@@ -140,6 +155,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         return OperationResult<PurchaseHistoryDto>.Ok(purchase);
     }
 
+    /// <summary>
+    /// Returns a single service record.
+    /// </summary>
     public async Task<OperationResult<ServiceHistoryDto>> GetSingleServiceAsync(int customerId, int appointmentId)
     {
         var result = await GetServiceHistoryAsync(customerId, null, null);
@@ -151,6 +169,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         return OperationResult<ServiceHistoryDto>.Ok(service);
     }
 
+    /// <summary>
+    /// Returns a customer history summary.
+    /// </summary>
     public async Task<OperationResult<HistorySummaryDto>> GetHistorySummaryAsync(int customerId)
     {
         try
@@ -173,6 +194,9 @@ public class CustomerHistoryService : ICustomerHistoryService
         }
     }
 
+    /// <summary>
+    /// Exports customer history as a PDF document.
+    /// </summary>
     public async Task<OperationResult<byte[]>> ExportHistoryAsPdfAsync(int customerId)
     {
         try

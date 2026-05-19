@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const StaffOrderRequests = () => {
   const [activeTab, setActiveTab] = useState('pending');
@@ -13,6 +14,7 @@ const StaffOrderRequests = () => {
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const { confirm, showToast } = useToast();
 
   useEffect(() => {
     fetchOrders();
@@ -38,7 +40,15 @@ const StaffOrderRequests = () => {
   };
 
   const handleCreateInvoice = async (orderId) => {
-    if (!window.confirm('Create invoice and reserve stock for this order?')) return;
+    const confirmed = await confirm({
+      title: 'Create invoice?',
+      message: 'Create invoice and reserve stock for this order?',
+      confirmText: 'Create invoice',
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) return;
     try {
       setProcessingId(orderId);
       const res = await apiClient.post(`/OrderRequests/${orderId}/create-invoice`);
@@ -48,7 +58,7 @@ const StaffOrderRequests = () => {
         setTimeout(() => setSuccessMsg(null), 5000);
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create invoice.');
+      showToast(err.response?.data?.message || 'Failed to create invoice.', { type: 'error' });
     } finally {
       setProcessingId(null);
     }
@@ -56,7 +66,15 @@ const StaffOrderRequests = () => {
 
   const handleCompleteOrder = async (orderId, isPaid = false) => {
     const action = isPaid ? 'Mark as Paid' : 'Add to Credit';
-    if (!window.confirm(`${action} and complete this order?`)) return;
+    const confirmed = await confirm({
+      title: 'Complete order?',
+      message: `${action} and complete this order?`,
+      confirmText: action,
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) return;
     try {
       setProcessingId(orderId);
       const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
@@ -66,20 +84,28 @@ const StaffOrderRequests = () => {
         setTimeout(() => setSuccessMsg(null), 5000);
       }
     } catch (err) {
-      alert('Failed to complete order.');
+      showToast('Failed to complete order.', { type: 'error' });
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Cancel this order request?')) return;
+    const confirmed = await confirm({
+      title: 'Cancel order request?',
+      message: 'Cancel this order request?',
+      confirmText: 'Cancel request',
+      cancelText: 'Keep request',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) return;
     try {
       setProcessingId(orderId);
       const res = await apiClient.patch(`/OrderRequests/${orderId}/cancel`);
       if (res.data.success) fetchOrders();
     } catch (err) {
-      alert('Failed to cancel order.');
+      showToast('Failed to cancel order.', { type: 'error' });
     } finally {
       setProcessingId(null);
     }

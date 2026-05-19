@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes public parts lookup endpoints.
+/// </summary>
 [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff + "," + UserRoles.Customer)]
 [ApiController]
 [Route("api/parts")]
@@ -21,6 +24,9 @@ public class PartsController : ControllerBase
         _salesService = salesService;
     }
 
+    /// <summary>
+    /// Returns all parts.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -28,6 +34,9 @@ public class PartsController : ControllerBase
         return Ok(new { success = true, data = parts });
     }
 
+    /// <summary>
+    /// Searches available parts.
+    /// </summary>
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string query = "")
     {
@@ -38,6 +47,9 @@ public class PartsController : ControllerBase
         return Ok(new { success = true, data = availableParts });
     }
 
+    /// <summary>
+    /// Returns a part detail placeholder.
+    /// </summary>
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {

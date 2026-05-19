@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes notification endpoints.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/notifications")]
@@ -29,6 +32,9 @@ public class NotificationsController : ControllerBase
         _userRepo = userRepo;
     }
 
+    /// <summary>
+    /// Returns the current user's notifications.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetMyNotifications()
     {
@@ -54,6 +60,9 @@ public class NotificationsController : ControllerBase
         return Ok(new { success = true, data = notifications });
     }
 
+    /// <summary>
+    /// Marks a notification as read.
+    /// </summary>
     [HttpPatch("{id}/read")]
     public async Task<IActionResult> MarkAsRead(int id)
     {
@@ -71,6 +80,9 @@ public class NotificationsController : ControllerBase
         return Ok(new { success = true });
     }
 
+    /// <summary>
+    /// Sends a notification to all admins.
+    /// </summary>
     [HttpPost("notify-admins")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> NotifyAdmins([FromBody] CreateNotificationDto dto)
@@ -97,6 +109,9 @@ public class NotificationsController : ControllerBase
         return Ok(new { success = true, message = "Admins notified." });
     }
 
+    /// <summary>
+    /// Creates a notification for a specific user.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> CreateNotification([FromBody] CreateNotificationDto dto)
@@ -117,6 +132,9 @@ public class NotificationsController : ControllerBase
         return Ok(new { success = true });
     }
 
+    /// <summary>
+    /// Triggers a low stock notification check.
+    /// </summary>
     [HttpPost("check-low-stock")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> TriggerLowStockCheck([FromServices] INotificationService notificationService)
@@ -125,6 +143,9 @@ public class NotificationsController : ControllerBase
         return Ok(new { success = true, message = "Low stock check completed and notifications sent." });
     }
 
+    /// <summary>
+    /// Triggers an overdue credit reminder check.
+    /// </summary>
     [HttpPost("check-overdue-credits")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> TriggerOverdueCreditsCheck([FromServices] INotificationService notificationService)

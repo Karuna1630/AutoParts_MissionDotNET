@@ -10,6 +10,9 @@ using System.Security.Claims;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes order request workflows.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -35,6 +38,9 @@ public class OrderRequestsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    /// <summary>
+    /// Creates a customer order request.
+    /// </summary>
     [HttpPost]
     [Authorize(Roles = UserRoles.Customer)]
     public async Task<IActionResult> Create(CreateOrderRequestDto dto)
@@ -78,6 +84,9 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, data = orderRequest.Id, message = "Order request submitted successfully." });
     }
 
+    /// <summary>
+    /// Returns the current customer's orders.
+    /// </summary>
     [HttpGet("my-orders")]
     [Authorize(Roles = UserRoles.Customer)]
     public async Task<IActionResult> GetMyOrders()
@@ -113,6 +122,9 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, data = orders });
     }
 
+    /// <summary>
+    /// Returns all order requests for staff and admins.
+    /// </summary>
     [HttpGet("all")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
     public async Task<IActionResult> GetAll([FromQuery] string? status)
@@ -153,6 +165,9 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, data = orders });
     }
 
+    /// <summary>
+    /// Returns pending order requests.
+    /// </summary>
     [HttpGet("pending")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
     public async Task<IActionResult> GetPendingOrders()
@@ -186,6 +201,9 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, data = orders });
     }
 
+    /// <summary>
+    /// Cancels a pending order request.
+    /// </summary>
     [HttpPatch("{id}/cancel")]
     public async Task<IActionResult> Cancel(int id)
     {
@@ -203,6 +221,9 @@ public class OrderRequestsController : ControllerBase
         return Ok(new { success = true, message = "Order cancelled successfully." });
     }
 
+    /// <summary>
+    /// Creates an invoice from an order request.
+    /// </summary>
     [HttpPost("{id}/create-invoice")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
     public async Task<IActionResult> CreateInvoice(int id)
@@ -286,6 +307,9 @@ public class OrderRequestsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Marks an order request as completed.
+    /// </summary>
     [HttpPatch("{id}/complete")]
     [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
     public async Task<IActionResult> CompleteOrder(int id, [FromQuery] bool isPaid = false)
@@ -295,7 +319,7 @@ public class OrderRequestsController : ControllerBase
         if (order.Status == "Completed") return BadRequest(new { success = false, message = "Order already completed." });
 
         var invoice = await _invoiceRepo.Query()
-            .FirstOrDefaultAsync(i => i.CustomerId == order.CustomerId && i.Notes.Contains($"Order Request #{order.Id}"));
+            .FirstOrDefaultAsync(i => i.CustomerId == order.CustomerId && i.Notes != null && i.Notes.Contains($"Order Request #{order.Id}"));
         
         if (invoice != null)
         {

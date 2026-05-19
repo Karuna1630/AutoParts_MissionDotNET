@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260512032021_AddNotifications")]
-    partial class AddNotifications
+    [Migration("20260518142813_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,6 +35,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("CreditBalance")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("LastCreditReminderDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -178,6 +181,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime?>("LastLowStockAlertDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -223,10 +229,16 @@ namespace Infrastructure.Migrations
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<int?>("PartId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PartName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
@@ -266,33 +278,65 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<int>("CreatedByAdminId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("InvoiceDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InvoiceNo")
+                    b.Property<string>("InvoiceNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("Notes")
                         .HasColumnType("text");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("VendorName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("VendorId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByAdminId");
+
+                    b.HasIndex("VendorId");
+
                     b.ToTable("PurchaseInvoices");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PurchaseInvoiceItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PartId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseInvoiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartId");
+
+                    b.HasIndex("PurchaseInvoiceId");
+
+                    b.ToTable("PurchaseInvoiceItems");
                 });
 
             modelBuilder.Entity("Domain.Entities.SalesInvoice", b =>
@@ -960,6 +1004,44 @@ namespace Infrastructure.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("Domain.Entities.PurchaseInvoice", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByAdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PurchaseInvoiceItem", b =>
+                {
+                    b.HasOne("Domain.Entities.Part", "Part")
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.PurchaseInvoice", "PurchaseInvoice")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Part");
+
+                    b.Navigation("PurchaseInvoice");
+                });
+
             modelBuilder.Entity("Domain.Entities.SalesInvoice", b =>
                 {
                     b.HasOne("Domain.Entities.Customer", "Customer")
@@ -1123,6 +1205,11 @@ namespace Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Domain.Entities.OrderRequest", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PurchaseInvoice", b =>
                 {
                     b.Navigation("Items");
                 });

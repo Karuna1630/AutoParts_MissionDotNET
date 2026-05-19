@@ -12,6 +12,9 @@ using Application.DTOs.Common;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes POS invoice and customer search endpoints.
+/// </summary>
 [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Staff)]
 [ApiController]
 [Route("api/[controller]")]
@@ -24,6 +27,9 @@ public class PosController : ControllerBase
         _salesService = salesService;
     }
 
+    /// <summary>
+    /// Creates a sales invoice.
+    /// </summary>
     [HttpPost("invoice")]
     public async Task<IActionResult> CreateInvoice([FromBody] CreateSalesInvoiceDto dto)
     {
@@ -39,6 +45,9 @@ public class PosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Returns a sales invoice by identifier.
+    /// </summary>
     [HttpGet("invoice/{id}")]
     public async Task<IActionResult> GetInvoiceById(int id)
     {
@@ -48,6 +57,9 @@ public class PosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Returns all sales invoices.
+    /// </summary>
     [HttpGet("invoices")]
     public async Task<IActionResult> GetAllInvoices()
     {
@@ -55,6 +67,9 @@ public class PosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Updates invoice payment status.
+    /// </summary>
     [HttpPut("invoice/{id}/payment")]
     public async Task<IActionResult> UpdatePaymentStatus(int id, [FromBody] PaymentUpdateRequest request)
     {
@@ -64,6 +79,9 @@ public class PosController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Searches parts for POS use.
+    /// </summary>
     [HttpGet("parts/search")]
     public async Task<IActionResult> SearchParts([FromQuery] string query = "")
     {
@@ -81,6 +99,9 @@ public class PosController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Searches customers for POS use.
+    /// </summary>
     [HttpGet("customers/search")]
     public async Task<IActionResult> SearchCustomers([FromQuery] string query)
     {
@@ -90,6 +111,9 @@ public class PosController : ControllerBase
         return Ok(new { success = true, data = customers });
     }
 
+    /// <summary>
+    /// Sends an invoice email.
+    /// </summary>
     [HttpPost("invoice/{id}/send-email")]
     public async Task<IActionResult> SendEmail(int id)
     {
@@ -99,6 +123,9 @@ public class PosController : ControllerBase
         return Ok(result);
     }
 
+        /// <summary>
+        /// Returns regular customers.
+        /// </summary>
     [HttpGet("reports/regulars")]
 public async Task<IActionResult> GetRegularCustomers()
 {
@@ -107,6 +134,9 @@ public async Task<IActionResult> GetRegularCustomers()
     return Ok(ApiResponse<List<CustomerReportDto>>
         .SuccessResponse(result));
 }
+    /// <summary>
+    /// Returns high-spending customers.
+    /// </summary>
 [HttpGet("reports/high-spenders")]
 public async Task<IActionResult> GetHighSpenders()
 {
@@ -115,6 +145,9 @@ public async Task<IActionResult> GetHighSpenders()
     return Ok(ApiResponse<List<CustomerReportDto>>
         .SuccessResponse(result));
 }
+    /// <summary>
+    /// Returns customers with pending credits.
+    /// </summary>
 [HttpGet("reports/pending-credits")]
 public async Task<IActionResult> GetPendingCredits()
 {

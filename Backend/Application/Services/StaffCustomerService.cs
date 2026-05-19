@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles staff customer management workflows.
+/// </summary>
 public class StaffCustomerService : IStaffCustomerService
 {
     private readonly IUserRepository _userRepository;
@@ -34,6 +37,9 @@ public class StaffCustomerService : IStaffCustomerService
         _imageService = imageService;
     }
 
+    /// <summary>
+    /// Registers a customer and first vehicle.
+    /// </summary>
     public async Task<OperationResult<CustomerResponseDto>> RegisterCustomerAsync(RegisterCustomerWithVehicleDto dto)
     {
         // 1. Check if user already exists by email
@@ -99,6 +105,9 @@ public class StaffCustomerService : IStaffCustomerService
         return OperationResult<CustomerResponseDto>.Ok(MapToResponse(customer), "Customer and vehicle registered successfully.");
     }
 
+    /// <summary>
+    /// Searches customers by name, email, phone, or vehicle number.
+    /// </summary>
     public async Task<OperationResult<List<CustomerResponseDto>>> SearchCustomersAsync(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -122,6 +131,9 @@ public class StaffCustomerService : IStaffCustomerService
         return OperationResult<List<CustomerResponseDto>>.Ok(customers.Select(MapToResponse).ToList());
     }
 
+    /// <summary>
+    /// Returns a customer by identifier.
+    /// </summary>
     public async Task<OperationResult<CustomerResponseDto>> GetCustomerByIdAsync(int customerId)
     {
         var customer = await _customerRepository.GetByIdWithIncludeAsync(customerId, c => c.User, c => c.Vehicles);
@@ -133,6 +145,9 @@ public class StaffCustomerService : IStaffCustomerService
         return OperationResult<CustomerResponseDto>.Ok(MapToResponse(customer));
     }
 
+    /// <summary>
+    /// Returns a paged customer list.
+    /// </summary>
     public async Task<OperationResult<List<CustomerResponseDto>>> GetAllCustomersAsync(int pageNumber, int pageSize)
     {
         // Simple pagination for demonstration
@@ -151,6 +166,9 @@ public class StaffCustomerService : IStaffCustomerService
         return OperationResult<List<CustomerResponseDto>>.Ok(result);
     }
 
+    /// <summary>
+    /// Adds a vehicle to a customer profile.
+    /// </summary>
     public async Task<OperationResult<CustomerResponseDto>> AddVehicleAsync(int customerId, AddVehicleToCustomerDto dto)
     {
         var customer = await _customerRepository.GetByIdAsync(customerId);
@@ -193,6 +211,9 @@ public class StaffCustomerService : IStaffCustomerService
         return await GetCustomerByIdAsync(customerId);
     }
 
+    /// <summary>
+    /// Applies a credit payment to a customer balance.
+    /// </summary>
     public async Task<OperationResult<CustomerResponseDto>> SettleCreditAsync(int customerId, SettleCreditDto dto)
     {
         var customer = await _customerRepository.GetByIdWithIncludeAsync(customerId, c => c.User, c => c.Vehicles);

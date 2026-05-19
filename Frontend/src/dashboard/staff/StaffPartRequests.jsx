@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiClock, FiCheckCircle, FiTruck, FiInfo, FiPackage, FiAlertCircle, FiArrowRight, FiEdit, FiUser, FiX } from 'react-icons/fi';
 import { apiClient as api, getApiErrorMessage } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const StaffPartRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -14,6 +15,7 @@ const StaffPartRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [updating, setUpdating] = useState(false);
   const [price, setPrice] = useState('');
+  const { showToast } = useToast();
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,7 +41,7 @@ const StaffPartRequests = () => {
 
   const handleUpdateStatus = async (status) => {
     if (status === 'Arrived' && (!price || parseFloat(price) <= 0)) {
-      alert('Please enter a valid price before marking as Arrived.');
+      showToast('Please enter a valid price before marking as Arrived.', { type: 'error' });
       return;
     }
     try {

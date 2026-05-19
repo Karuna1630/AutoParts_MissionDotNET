@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes customer history endpoints.
+/// </summary>
 [Authorize(Roles = "Customer")]
 [ApiController]
 [Route("api/customers/history")]
@@ -34,6 +37,9 @@ public class CustomerHistoryController : ControllerBase
         return customer?.Id;
     }
 
+    /// <summary>
+    /// Returns purchase history for the current customer.
+    /// </summary>
     [HttpGet("purchases")]
     public async Task<IActionResult> GetPurchaseHistory([FromQuery] int? vehicleId, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate, [FromQuery] string? status)
     {
@@ -44,6 +50,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns service history for the current customer.
+    /// </summary>
     [HttpGet("services")]
     public async Task<IActionResult> GetServiceHistory([FromQuery] int? vehicleId, [FromQuery] string? status)
     {
@@ -54,6 +63,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns combined purchase and service history.
+    /// </summary>
     [HttpGet("all")]
     public async Task<IActionResult> GetCombinedHistory()
     {
@@ -64,6 +76,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns a single purchase record.
+    /// </summary>
     [HttpGet("purchases/{invoiceId}")]
     public async Task<IActionResult> GetSinglePurchase(int invoiceId)
     {
@@ -74,6 +89,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 
+    /// <summary>
+    /// Returns a single service record.
+    /// </summary>
     [HttpGet("services/{appointmentId}")]
     public async Task<IActionResult> GetSingleService(int appointmentId)
     {
@@ -84,6 +102,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 
+    /// <summary>
+    /// Returns a history summary.
+    /// </summary>
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary()
     {
@@ -94,6 +115,9 @@ public class CustomerHistoryController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Exports customer history as PDF.
+    /// </summary>
     [HttpGet("export")]
     public async Task<IActionResult> ExportHistory([FromQuery] string format = "pdf")
     {
@@ -108,6 +132,9 @@ public class CustomerHistoryController : ControllerBase
         return File(result.Data, "application/pdf", $"CustomerHistory_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
+    /// <summary>
+    /// Downloads a single invoice PDF.
+    /// </summary>
     [HttpGet("invoice/{invoiceId}/download")]
     public async Task<IActionResult> DownloadInvoice(int invoiceId)
     {

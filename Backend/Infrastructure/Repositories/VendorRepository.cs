@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
+/// <summary>
+/// Provides vendor data access.
+/// </summary>
 public class VendorRepository : IVendorRepository
 {
     private readonly AppDbContext _context;
@@ -15,11 +18,17 @@ public class VendorRepository : IVendorRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Returns a vendor by identifier.
+    /// </summary>
     public async Task<Vendor?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Vendors.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    /// <summary>
+    /// Checks whether a vendor company name exists.
+    /// </summary>
     public async Task<bool> ExistsByCompanyNameAsync(string companyName, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Vendors.AsQueryable().Where(x => x.CompanyName == companyName);
@@ -31,6 +40,9 @@ public class VendorRepository : IVendorRepository
         return await query.AnyAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Checks whether a vendor email exists.
+    /// </summary>
     public async Task<bool> ExistsByEmailAsync(string email, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Vendors.AsQueryable().Where(x => x.Email == email);
@@ -42,6 +54,9 @@ public class VendorRepository : IVendorRepository
         return await query.AnyAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Returns paged vendors with optional search.
+    /// </summary>
     public async Task<PagedResult<Vendor>> GetPagedAsync(int pageNumber, int pageSize, string? search = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Vendors.AsQueryable();
@@ -71,18 +86,27 @@ public class VendorRepository : IVendorRepository
         };
     }
 
+    /// <summary>
+    /// Adds a vendor.
+    /// </summary>
     public async Task AddAsync(Vendor vendor, CancellationToken cancellationToken = default)
     {
         await _context.Vendors.AddAsync(vendor, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Updates a vendor.
+    /// </summary>
     public async Task UpdateAsync(Vendor vendor, CancellationToken cancellationToken = default)
     {
         _context.Vendors.Update(vendor);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a vendor.
+    /// </summary>
     public async Task DeleteAsync(Vendor vendor, CancellationToken cancellationToken = default)
     {
         _context.Vendors.Remove(vendor);

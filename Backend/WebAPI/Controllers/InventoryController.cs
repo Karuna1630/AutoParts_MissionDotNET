@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes inventory management endpoints.
+/// </summary>
 [Authorize(Roles = UserRoles.Admin)]
 [ApiController]
 [Route("api/[controller]")]
@@ -25,6 +28,9 @@ public class InventoryController : ControllerBase
         _imageService = imageService;
     }
 
+    /// <summary>
+    /// Returns all inventory items.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -32,6 +38,9 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, data = items });
     }
 
+    /// <summary>
+    /// Adds a new inventory item.
+    /// </summary>
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Add([FromForm] CreateInventoryItemDto dto)
@@ -55,6 +64,9 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, data = item });
     }
 
+    /// <summary>
+    /// Deletes an inventory item.
+    /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -67,6 +79,9 @@ public class InventoryController : ControllerBase
         return Ok(new { success = true, message = "Item deleted successfully" });
     }
 
+    /// <summary>
+    /// Updates an inventory item.
+    /// </summary>
     [HttpPut("{id}")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Update(int id, [FromForm] UpdateInventoryItemDto dto)

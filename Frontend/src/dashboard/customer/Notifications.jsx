@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FiBell, FiClock, FiCheckCircle, FiInfo, FiAlertCircle, FiTrash2, FiMail, FiInbox } from 'react-icons/fi';
 import { apiClient as api } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, unread
+  const { showToast } = useToast();
 
   const fetchNotifications = async () => {
     try {
@@ -124,9 +126,9 @@ const Notifications = () => {
                         try {
                           await api.patch(`/partrequests/${n.relatedId}/status`, { status: 'Arrived' });
                           await markAsRead(n.id);
-                          alert('Part status updated to Arrived. Customer has been notified.');
+                          showToast('Part status updated to Arrived. Customer has been notified.', { type: 'success' });
                         } catch (err) {
-                          alert('Failed to update status.');
+                          showToast('Failed to update status.', { type: 'error' });
                         }
                       }}
                       className="bg-emerald-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"

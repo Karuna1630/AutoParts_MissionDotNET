@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Runs scheduled notification checks in the background.
+/// </summary>
 public class NotificationBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -20,6 +23,9 @@ public class NotificationBackgroundService : BackgroundService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes the recurring notification job loop.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Notification Background Service is starting.");

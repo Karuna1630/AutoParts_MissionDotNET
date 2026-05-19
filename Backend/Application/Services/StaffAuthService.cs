@@ -21,6 +21,9 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
+    /// <summary>
+    /// Handles staff registration, login, and profile management.
+    /// </summary>
     public class StaffAuthService(IStaffRepo repo, IIdentityService identityService, ITokenService tokenService, IImageService imageService, IUserRepository userRepository, IPasswordHasher passwordHasher) : IStaffAuthService
     {
         private readonly IStaffRepo _repo = repo;
@@ -30,6 +33,9 @@ namespace Application.Services
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
+        /// <summary>
+        /// Registers a new staff profile and identity account.
+        /// </summary>
         public async Task<ViewStaffDto> RegisterStaffAsync(CreateStaffDto dto, Guid? managedById = null)
         {
             //making identity & assigning role
@@ -83,6 +89,9 @@ namespace Application.Services
 
         }
 
+        /// <summary>
+        /// Authenticates a staff member.
+        /// </summary>
         public async Task<ApiResponse<AuthResponseDto>> StaffLoginAsync(LoginRequestDto request) 
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -110,6 +119,9 @@ namespace Application.Services
 
 
         }
+        /// <summary>
+        /// Updates staff profile details.
+        /// </summary>
         public async Task<ViewStaffDto?> UpdateStaffDetailsAsync(UpdateStaffDto dto, Guid? managedById = null)
         {
             // update identity
@@ -143,6 +155,9 @@ namespace Application.Services
             }
             else return null;
         }
+        /// <summary>
+        /// Deletes a staff profile and its identity account.
+        /// </summary>
         public async Task<bool> DeleteStaffAsync(Guid id)
         {
             var profile = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Staff id not found.");
@@ -150,6 +165,9 @@ namespace Application.Services
             if (!await _identityService.DeleteUserAsync(id)) throw new DBConcurrencyException("Faild to delete user");
             return true;
         }
+        /// <summary>
+        /// Updates the role assigned to a staff member.
+        /// </summary>
         public async Task<bool> UpdateStaffRoleAsync(Guid id, string role)
         {
             if (!Enum.TryParse<UserRole>(role, true, out var userRole) || userRole is UserRole.Customer)
@@ -160,6 +178,9 @@ namespace Application.Services
             return true;
         }
 
+        /// <summary>
+        /// Returns a single staff member profile.
+        /// </summary>
         public async Task<ViewStaffDto> GetStaffDetailsAsync(Guid id)
         {
             // 1. Fetch from Domain Repository
@@ -176,12 +197,15 @@ namespace Application.Services
 
         }
 
+        /// <summary>
+        /// Returns a paged list of staff members.
+        /// </summary>
         public async Task<PagedResult<ViewStaffDto>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
         {
             var pagedResult = await _repo.GetPagedStaffAsync(pageNumber, pageSize, search);
 
-            // get identity info & convert items  to dto
-            List<ViewStaffDto> items = [];
+            // get identity info & convert items to dto
+            var items = new List<ViewStaffDto>();
             foreach (var p in pagedResult.Items)
             {
                 var (email, phoneNumber) = await _identityService.FindByIdAsync(p.IdentityId.ToString());
@@ -216,6 +240,9 @@ namespace Application.Services
             };
         }
 
+        /// <summary>
+        /// Updates a staff member profile image.
+        /// </summary>
         public async Task<ViewStaffDto?> UpdateStaffProfileImageAsync(Guid staffId, IFormFile image, Guid? managedById = null)
         {
             if (image == null || image.Length == 0)

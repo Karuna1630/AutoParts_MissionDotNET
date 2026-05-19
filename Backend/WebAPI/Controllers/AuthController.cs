@@ -8,6 +8,9 @@ using WebAPI.Common;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes customer authentication endpoints.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -21,6 +24,9 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous]
+    /// <summary>
+    /// Registers a customer account.
+    /// </summary>
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RegisterCustomer(
         [FromBody] RegisterCustomerRequestDto request,
         CancellationToken cancellationToken)
@@ -36,6 +42,9 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    /// <summary>
+    /// Logs a user in and returns an auth token.
+    /// </summary>
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login(
         [FromBody] LoginRequestDto request,
         CancellationToken cancellationToken)

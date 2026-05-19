@@ -8,6 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace WebAPI.Services;
 
+/// <summary>
+/// Service responsible for creating signed JWT tokens for users and staff.
+/// Uses configuration keys `Jwt:Key`, `Jwt:Issuer`, `Jwt:Audience`, and `Jwt:ExpiryMinutes`.
+/// </summary>
 public class JwtTokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
@@ -17,6 +21,10 @@ public class JwtTokenService : ITokenService
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Generates a JWT for a domain `User` including standard claims.
+    /// Returns the token string and the UTC expiry time.
+    /// </summary>
     public (string Token, DateTime ExpiresAtUtc) GenerateToken(User user)
     {
         var claims = new List<Claim>
@@ -33,6 +41,9 @@ public class JwtTokenService : ITokenService
         return CreateToken(claims);
     }
 
+    /// <summary>
+    /// Generates a JWT for a staff `ViewStaffDto` including role and identity claims.
+    /// </summary>
     public (string Token, DateTime ExpiresAtUtc) GenerateStaffToken(ViewStaffDto user)
     {
         var claims = new List<Claim>
@@ -49,6 +60,9 @@ public class JwtTokenService : ITokenService
         return CreateToken(claims);
     }
 
+    /// <summary>
+    /// Creates and signs a JWT token from the provided claims using configured signing key.
+    /// </summary>
     private (string Token, DateTime ExpiresAtUtc) CreateToken(List<Claim> claims)
     {
         var key = _configuration["JWT_KEY"]
@@ -88,6 +102,9 @@ public class JwtTokenService : ITokenService
     /// <summary>
     /// Normalizes role strings to PascalCase (e.g. "STAFF" → "Staff")
     /// to match the UserRoles constants used in [Authorize] attributes.
+    /// </summary>
+    /// <summary>
+    /// Normalizes role strings to PascalCase (e.g. "STAFF" → "Staff").
     /// </summary>
     private static string NormalizeRole(string role)
     {

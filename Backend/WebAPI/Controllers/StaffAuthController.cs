@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
+    /// <summary>
+    /// Exposes staff authentication and profile endpoints.
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class StaffAuthController : ControllerBase
@@ -33,6 +36,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        /// <summary>
+        /// Returns a staff profile by identifier.
+        /// </summary>
         public async Task<ActionResult<IEnumerable<ViewStaffDto>>> GetById(Guid id)
         {
             // If the ID isn't found, the service throws NotFoundException.
@@ -44,6 +50,9 @@ namespace WebAPI.Controllers
         //[Authorize(Roles = UserRoles.Admin)]
         [Consumes("multipart/form-data")]
         [HttpPost("{id}/profile-image")]
+        /// <summary>
+        /// Uploads a new profile image for a staff member.
+        /// </summary>
         public async Task<ActionResult<ViewStaffDto>> UpdateStaffProfileImage(Guid id, [FromForm] UpdateStaffProfileImageDto dto)
         {
             if (dto.Image == null || dto.Image.Length == 0)
@@ -56,6 +65,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet]
+        /// <summary>
+        /// Returns a paged list of staff members.
+        /// </summary>
         public async Task<ActionResult<PagedResult<ViewStaffDto>>> GetStaff([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
         {
             // Validate input to prevent database strain
@@ -68,6 +80,9 @@ namespace WebAPI.Controllers
         }
         //[Authorize(Roles = UserRoles.Admin)]
         [HttpPost("register")]
+        /// <summary>
+        /// Creates a new staff member.
+        /// </summary>
         public async Task<ActionResult<ViewStaffDto>> AddStaff([FromBody] CreateStaffDto createStaffDto)
         {
             var result = await _service.RegisterStaffAsync(createStaffDto, GetCurrentUserId());
@@ -75,6 +90,9 @@ namespace WebAPI.Controllers
         }
         //[Authorize(Roles = UserRoles.Admin)]
         [HttpPatch("update-role/{id}")]
+        /// <summary>
+        /// Updates a staff member role.
+        /// </summary>
         public async Task<ActionResult<ViewStaffDto>> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
             var result = await _service.UpdateStaffRoleAsync(id, role);
@@ -83,6 +101,9 @@ namespace WebAPI.Controllers
 
         [HttpPost("staff-login")]
         [AllowAnonymous]
+        /// <summary>
+        /// Logs a staff member in.
+        /// </summary>
         public async Task<ActionResult> Login(
         [FromBody] LoginRequestDto request,
         CancellationToken cancellationToken)
@@ -97,6 +118,9 @@ namespace WebAPI.Controllers
         }
         //[Authorize(Roles = UserRoles.Admin)]
         [HttpPut("{id}")]
+        /// <summary>
+        /// Updates staff profile details.
+        /// </summary>
         public async Task<ActionResult<ViewStaffDto>> UpdateStaff(Guid id, [FromBody] UpdateStaffDto updateStaffDto)
         {
             if (!ModelState.IsValid)

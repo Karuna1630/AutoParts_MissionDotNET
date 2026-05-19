@@ -1,30 +1,10 @@
 import React from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import {
-  FaThLarge, FaUsers, FaUserTie,
-  FaSignOutAlt, FaUserCog, FaCarSide, FaShieldAlt
-} from 'react-icons/fa';
-import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { FiUser, FiLogOut } from 'react-icons/fi';
 import AdminSidebar from './AdminSidebar';
 import NotificationDropdown from '../../components/NotificationDropdown';
 
-const sidebarGroups = [
-  {
-    title: 'OVERVIEW',
-    items: [
-      { id: 'dashboard', label: 'Dashboard', icon: FaThLarge, path: '/admin' },
-    ]
-  },
-  {
-    title: 'USER MANAGEMENT',
-    items: [
-      { id: 'users', label: 'All Users', icon: FaUsers, path: '/admin/users' },
-      { id: 'staff', label: 'Staff Management', icon: FaUserTie, path: '/admin/staff' },
-      { id: 'vendors', label: 'Vendor Portal', icon: FaCarSide, path: '/admin/vendors' },
-      { id: 'notifications', label: 'Notifications', icon: FiBell, path: '/admin/notifications' },
-    ]
-  },
-];
+
 
 const AdminLayout = () => {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);

@@ -4,6 +4,7 @@ import { FaCar, FaStar, FaRegStar } from 'react-icons/fa';
 import { bookAppointment, getMyAppointments, submitReview, getSlotAvailability, cancelAppointment } from '../../services/appointmentService';
 import { getMyVehicles } from '../../services/vehicleService';
 import { getApiErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 const SERVICE_TYPES = ['Oil Change','Brake Service','Engine Diagnostics','AC Repair','Tire Replacement','General Repair','Wheel Alignment','Full Service','Transmission Service','Other'];
 const TIME_SLOTS = ['Morning (9 AM – 12 PM)','Afternoon (1 PM – 5 PM)','Evening (5 PM – 8 PM)'];
@@ -19,6 +20,7 @@ const Appointments = () => {
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [slotInfo, setSlotInfo] = useState([]);
+  const { confirm } = useToast();
 
   const [form, setForm] = useState({ vehicleId:'', serviceType:'', customService:'', preferredDate:'', preferredTime:'', priority:'Normal', notes:'' });
   const [reviewForm, setReviewForm] = useState({ rating:0, comment:'', wouldRecommend:true });
@@ -69,7 +71,15 @@ const Appointments = () => {
   };
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    const confirmed = await confirm({
+      title: 'Cancel appointment?',
+      message: 'Are you sure you want to cancel this appointment?',
+      confirmText: 'Cancel appointment',
+      cancelText: 'Keep appointment',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) return;
     try {
       const res = await cancelAppointment(id);
       if (res.success) { setSuccess('Appointment cancelled.'); fetchData(); setTimeout(()=>setSuccess(null),4000); }
@@ -120,7 +130,7 @@ const Appointments = () => {
       {/* BOOKING MODAL */}
       {modal==='book' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900">Book Appointment</h2>
               <button onClick={()=>{setModal(null);setError(null)}} className="p-2 hover:bg-slate-100 rounded-xl"><FiX size={20} className="text-slate-400"/></button>
@@ -185,7 +195,7 @@ const Appointments = () => {
       {/* BOOKING SUMMARY MODAL */}
       {modal==='summary' && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md p-8">
+          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8">
             <h2 className="text-2xl font-black text-slate-900 mb-6">Booking Summary</h2>
             <div className="space-y-4 mb-8">
               {[['Vehicle', selectedVehicle ? `${selectedVehicle.vehicleMake} ${selectedVehicle.vehicleModel} — ${selectedVehicle.vehicleNumber}` : ''],
@@ -211,7 +221,7 @@ const Appointments = () => {
       {/* DETAIL MODAL */}
       {modal==='detail' && selectedAppt && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md p-8">
+          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black text-slate-900">Appointment Details</h2>
               <button onClick={()=>setModal(null)} className="p-2 hover:bg-slate-100 rounded-xl"><FiX size={20} className="text-slate-400"/></button>
@@ -250,7 +260,7 @@ const Appointments = () => {
       {/* REVIEW MODAL */}
       {modal==='review' && selectedAppt && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-md p-8">
+          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md p-8">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900">Leave a Review</h2>
               <button onClick={()=>{setModal(null);setError(null);setReviewForm({rating:0,comment:'',wouldRecommend:true})}} className="p-2 hover:bg-slate-100 rounded-xl"><FiX size={20} className="text-slate-400"/></button>
@@ -288,7 +298,7 @@ const Appointments = () => {
           {appointments.map(a => (
             <div key={a.id} className="bg-white rounded-3xl border border-slate-100 p-6 hover:shadow-xl hover:shadow-slate-200/30 transition-all duration-300">
               <div className="flex flex-col md:flex-row md:items-center gap-5">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${a.status==='Completed'?'bg-emerald-50 text-emerald-600':a.status==='Confirmed'?'bg-blue-50 text-blue-600':a.status==='Cancelled'?'bg-red-50 text-red-500':'bg-amber-50 text-amber-600'}`}><FaCar size={22}/></div>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${a.status==='Completed'?'bg-emerald-50 text-emerald-600':a.status==='Confirmed'?'bg-blue-50 text-blue-600':a.status==='Cancelled'?'bg-red-50 text-red-500':'bg-amber-50 text-amber-600'}`}><FaCar size={22}/></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-3 mb-2">
                     <h3 className="text-lg font-bold text-slate-800">{a.serviceType}</h3>
@@ -302,7 +312,7 @@ const Appointments = () => {
                   </div>
                   {a.review && <div className="mt-3 flex items-center gap-1">{[1,2,3,4,5].map(s=><FaStar key={s} size={12} className={s<=a.review.rating?'text-amber-400':'text-slate-200'}/>)}<span className="text-[10px] font-bold text-amber-600 ml-1">Reviewed</span></div>}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <button onClick={()=>{setSelectedAppt(a);setModal('detail')}} className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 transition-all" title="View Details"><FiEye size={16}/></button>
                   {(a.status==='Pending'||a.status==='Confirmed')&&<button onClick={()=>handleCancel(a.id)} className="p-2.5 rounded-xl border border-red-200 hover:bg-red-50 text-red-500 transition-all" title="Cancel"><FiXCircle size={16}/></button>}
                   {a.status==='Completed'&&!a.review&&<button onClick={()=>{setSelectedAppt(a);setModal('review');setError(null)}} className="bg-amber-500 text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1 hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20"><FiStar/> Review</button>}

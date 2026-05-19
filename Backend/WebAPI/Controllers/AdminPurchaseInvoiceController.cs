@@ -11,6 +11,9 @@ using WebAPI.Common;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes admin purchase invoice endpoints.
+/// </summary>
 [Authorize(Roles = UserRoles.Admin)]
 [ApiController]
 [Route("api/admin/purchase-invoices")]
@@ -23,6 +26,9 @@ public class AdminPurchaseInvoiceController : ControllerBase
         _purchaseInvoiceService = purchaseInvoiceService;
     }
 
+    /// <summary>
+    /// Creates a purchase invoice.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateInvoice([FromBody] CreatePurchaseInvoiceDto dto)
     {
@@ -50,6 +56,9 @@ public class AdminPurchaseInvoiceController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns a purchase invoice by identifier.
+    /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetInvoice(int id)
     {
@@ -70,6 +79,9 @@ public class AdminPurchaseInvoiceController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns paged purchase invoices.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAllInvoices([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
