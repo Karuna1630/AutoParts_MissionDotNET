@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaArrowLeft } from 'react-icons/fa';
+import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaArrowLeft, FaCarSide } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { registerValidationSchema } from '../utils/RegisterValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -57,6 +58,25 @@ const initialValues = fieldConfigs.reduce((accumulator, field) => {
 
 const Register = () => {
   const navigate = useNavigate();
+  
+  // Checking for existing session
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userStr = localStorage.getItem('authUser');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const role = user.role?.toLowerCase();
+        if (role === 'admin') navigate('/admin', { replace: true });
+        else if (role === 'staff') navigate('/staff', { replace: true });
+        else navigate('/dashboard', { replace: true });
+      } catch (e) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (values, { setSubmitting, setStatus, resetForm }) => {
     setStatus(undefined);
@@ -107,9 +127,9 @@ const Register = () => {
         <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-500/25 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
-           <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
-                <img className="rounded-2xl" src='/logo.png' />
-              </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 shadow-xl shadow-blue-500/30">
+              <FaCarSide className="text-2xl text-white" />
+            </div>
           <div>
             <h2>AutoParts</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">Vehicle MIS</p>

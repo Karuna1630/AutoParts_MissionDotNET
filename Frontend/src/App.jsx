@@ -22,7 +22,6 @@ import ProfileSettings from './dashboard/customer/ProfileSettings';
 import AdminLayout from './dashboard/admin/AdminLayout';
 import AdminDashboard from './dashboard/admin/AdminDashboard';
 import AdminProfile from './dashboard/admin/AdminProfile';
-import UserManagement from './dashboard/admin/UserManagement';
 import StaffManagement from './dashboard/admin/StaffManagement';
 import VendorManagement from './dashboard/admin/VendorManagement';
 import Inventory from './dashboard/admin/Inventory';
@@ -40,6 +39,7 @@ import StaffAppointments from './dashboard/staff/StaffAppointments';
 import StaffPartRequests from './dashboard/staff/StaffPartRequests';
 import StaffOrderRequests from './dashboard/staff/StaffOrderRequests';
 import StaffSalesInvoices from './dashboard/staff/StaffSalesInvoices';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -57,43 +57,47 @@ function App() {
             <Route path="/login" element={<Login />} />
             
             {/* Customer Dashboard Routes */}
-            <Route path="/dashboard" element={<CustomerLayout />}>
-              <Route index element={<CustomerDashboard />} />
-              <Route path="vehicles" element={<MyVehicles />} />
-              <Route path="appointments" element={<Appointments />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="shop" element={<PartsShop />} />
-              <Route path="requests" element={<PartRequests />} />
-              <Route path="history" element={<TransactionHistory />} />
-              <Route path="profile" element={<ProfileSettings />} />
-              
+            <Route element={<ProtectedRoute allowedRoles={['Customer']} />}>
+              <Route path="/dashboard" element={<CustomerLayout />}>
+                <Route index element={<CustomerDashboard />} />
+                <Route path="vehicles" element={<MyVehicles />} />
+                <Route path="appointments" element={<Appointments />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="shop" element={<PartsShop />} />
+                <Route path="requests" element={<PartRequests />} />
+                <Route path="history" element={<TransactionHistory />} />
+                <Route path="profile" element={<ProfileSettings />} />
+              </Route>
             </Route>
 
             {/* Admin Dashboard Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UserManagement />} />
-              <Route path="staff" element={<StaffManagement />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="vendors" element={<VendorManagement />} />
-              <Route path="invoices" element={<PurchaseInvoices />} />
-              <Route path="analytics" element={<FinancialAnalytics />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path='profile' element={<AdminProfile/>} />
+            <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="staff" element={<StaffManagement />} />
+                <Route path="inventory" element={<Inventory />} />
+                <Route path="vendors" element={<VendorManagement />} />
+                <Route path="invoices" element={<PurchaseInvoices />} />
+                <Route path="analytics" element={<FinancialAnalytics />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path='profile' element={<AdminProfile/>} />
+              </Route>
             </Route>
 
             {/* Staff Dashboard Routes */}
-            <Route path="/staff" element={<StaffLayout />}>
-              <Route index element={<StaffDashboard />} />
-              <Route path="customers" element={<Customers />} />
-              <Route path="customers/:id" element={<CustomerDetails />} />
-              <Route path="pos" element={<PointOfSale />} />
-              <Route path="sales" element={<StaffSalesInvoices />} />
-              <Route path="appointments" element={<StaffAppointments />} />
-              <Route path="part-requests" element={<StaffPartRequests />} />
-              <Route path="bulk-orders" element={<StaffOrderRequests />} />
-              <Route path="profile" element={<StaffProfile />} />
-              <Route path="notifications" element={<Notifications />} />
+            <Route element={<ProtectedRoute allowedRoles={['Staff', 'Admin']} />}>
+              <Route path="/staff" element={<StaffLayout />}>
+                <Route index element={<StaffDashboard />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="customers/:id" element={<CustomerDetails />} />
+                <Route path="pos" element={<PointOfSale />} />
+                <Route path="sales" element={<StaffSalesInvoices />} />
+                <Route path="appointments" element={<StaffAppointments />} />
+                <Route path="part-requests" element={<StaffPartRequests />} />
+                <Route path="bulk-orders" element={<StaffOrderRequests />} />
+                <Route path="profile" element={<StaffProfile />} />
+                <Route path="notifications" element={<Notifications />} />
+              </Route>
             </Route>
 
             {/* Catch-all redirect */}

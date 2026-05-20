@@ -1,14 +1,6 @@
 import 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  FiLayout, 
-  FiPieChart, 
-  FiUsers, 
-  FiBox, 
-  FiTruck, 
-  FiFileText,
-  FiLogOut
-} from 'react-icons/fi';
+import { FiLayout, FiPieChart, FiUsers, FiBox, FiTruck, FiFileText, FiLogOut } from 'react-icons/fi';
 import { FaCarSide } from 'react-icons/fa';
 
 const AdminSidebar = () => {
@@ -37,7 +29,7 @@ const AdminSidebar = () => {
   const handleSignOut = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authUser');
-    navigate('/login');
+    window.location.href = '/login';
   };
 
   return (

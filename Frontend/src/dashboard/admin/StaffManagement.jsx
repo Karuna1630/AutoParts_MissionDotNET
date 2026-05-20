@@ -4,7 +4,6 @@ import { FaEdit, FaTrashAlt, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import * as Yup from 'yup';
 import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage, deleteStaff } from '../../services/staffAuthService';
 import { createStaff } from '../../services/adminService';
-import { deleteStaff } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
 import Pagination from '../../components/Pagination';
 import { useToast } from '../../context/ToastContext';
@@ -28,6 +27,7 @@ const staffEditValidationSchema = Yup.object().shape({
 });
 
 const StaffManagement = () => {
+  const { showToast, confirm } = useToast();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,8 +44,6 @@ const StaffManagement = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [staffToDelete, setStaffToDelete] = useState(null);
 
   const fetchStaff = useCallback(async (pageNumber = 1, query = debouncedSearch) => {
     try {
@@ -84,7 +82,6 @@ const StaffManagement = () => {
       setActionLoading(id);
       const roleValue = newRole === 'Admin' ? 0 : 1;
       await updateStaffRole(id, roleValue);
-      // Update local state instead of doing full refresh to be snappy
       setStaffList(prev => prev.map(s => {
         if (s.identityId === id || s.id === id) {
           return { ...s, role: newRole, userRole: roleValue };
@@ -93,30 +90,7 @@ const StaffManagement = () => {
       }));
     } catch (err) {
       console.error(err);
-      alert('Failed to update role');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleDeleteStaff = (staff) => {
-    setStaffToDelete(staff);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!staffToDelete) return;
-    
-    const id = staffToDelete.identityId || staffToDelete.id;
-    try {
-      setActionLoading(id);
-      setIsDeleteModalOpen(false);
-      await deleteStaff(id);
-      await fetchStaff(page, debouncedSearch);
-      setStaffToDelete(null);
-    } catch (err) {
-      console.error(err);
-      alert(getApiErrorMessage(err, 'Failed to delete staff member.'));
+      showToast('Failed to update role', { type: 'error' });
     } finally {
       setActionLoading(null);
     }
@@ -632,43 +606,6 @@ const StaffManagement = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 px-4 py-6">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in duration-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="h-14 w-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 text-2xl mb-4">
-                <FaTrashAlt />
-              </div>
-              <h2 className="text-xl font-bold text-slate-800 mb-2">Confirm Delete</h2>
-              <p className="text-slate-500 text-sm mb-6">
-                Are you sure you want to delete <span className="font-semibold text-slate-700">{staffToDelete?.firstName} {staffToDelete?.lastName}</span>? 
-                This action cannot be undone and will remove all their access.
-              </p>
-              
-              <div className="flex w-full gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDeleteModalOpen(false);
-                    setStaffToDelete(null);
-                  }}
-                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="flex-1 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-600 transition shadow-sm shadow-red-200"
-                >
-                  Delete Member
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

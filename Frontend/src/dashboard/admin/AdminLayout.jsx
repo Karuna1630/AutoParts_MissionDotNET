@@ -59,7 +59,7 @@ const AdminLayout = () => {
   const handleSignOut = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authUser');
-    navigate('/login');
+    window.location.href = '/login';
   };
 
   const handleViewProfile = () => {

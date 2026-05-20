@@ -1,16 +1,37 @@
 
-import { Link } from 'react-router-dom';
-import { FaBrain, FaCalendarAlt, FaTools, FaShieldAlt, FaArrowRight } from 'react-icons/fa';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaBrain, FaCalendarAlt, FaTools, FaShieldAlt, FaArrowRight, FaCarSide } from 'react-icons/fa';
 
 const Landing = () => {
+  const navigate = useNavigate();
+
+  // Checking for existing session
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userStr = localStorage.getItem('authUser');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const role = user.role?.toLowerCase();
+        if (role === 'admin') navigate('/admin', { replace: true });
+        else if (role === 'staff') navigate('/staff', { replace: true });
+        else navigate('/dashboard', { replace: true });
+      } catch (e) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+      }
+    }
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-[#E1EFFF] font-sans text-slate-900">
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between bg-white/80 px-6 py-4 backdrop-blur-md md:px-12 lg:px-24 border-b border-blue-100/50">
         <div className="flex items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
-                <img className="rounded-2xl" src='/logo.png' />
-              </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/30">
+            <FaCarSide className="text-xl text-white" />
+          </div>
           <div>
             <h2 className="text-lg font-bold leading-none tracking-tight">AutoParts</h2>
             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Vehicle MIS</p>
@@ -54,13 +75,13 @@ const Landing = () => {
           </div>
 
           {/* Hero Right */}
-          <div className="relative flex flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-800 px-6 py-12 md:px-12 md:py-20 lg:px-24 lg:py-24 text-white">
+          <div className="relative flex flex-1 flex-col justify-between overflow-hidden bg-linear-to-br from-blue-900 via-indigo-900 to-blue-800 px-6 py-12 md:px-12 md:py-20 lg:px-24 lg:py-24 text-white">
             <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-32 -left-32 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
+            <div className="pointer-events-none absolute -bottom-32 -left-32 h-125 w-125 rounded-full bg-blue-500/10 blur-[100px]" />
 
             <div className="relative z-10 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
-                <img className="rounded-2xl" src='/logo.png' />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 shadow-xl shadow-blue-500/30">
+                <FaCarSide className="text-2xl text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-bold tracking-tight">AutoParts</h2>
@@ -114,9 +135,9 @@ const Landing = () => {
       <footer className="border-t border-blue-200 bg-[#E1EFFF] px-6 py-12 md:px-12 lg:px-24">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2 opacity-80 grayscale hover:grayscale-0 transition">
-           <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
-                <img className="rounded-2xl" src='/logo.png' />
-              </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/30">
+              <FaCarSide className="text-xl text-white" />
+            </div>
             <div>
               <h2 className="text-sm font-bold leading-none tracking-tight">AutoParts</h2>
               <p className="text-[8px] uppercase tracking-[0.2em] text-slate-500">Vehicle MIS</p>

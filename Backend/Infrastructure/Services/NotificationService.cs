@@ -12,9 +12,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services;
 
-/// <summary>
-/// Creates notifications and reminder messages.
-/// </summary>
+// Managing dashboard notifications and email reminders
 public class NotificationService : INotificationService
 {
     private readonly AppDbContext _context;
@@ -34,9 +32,7 @@ public class NotificationService : INotificationService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Checks low stock parts and creates notifications.
-    /// </summary>
+    // Checking parts for low stock and notifying staff
     public async Task CheckAndNotifyLowStockAsync(int? partId = null)
     {
         _logger.LogInformation("Checking for low stock parts...");

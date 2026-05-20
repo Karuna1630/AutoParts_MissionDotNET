@@ -1,7 +1,7 @@
-import 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { FaLock, FaArrowRight, FaCheck, FaArrowLeft } from 'react-icons/fa';
+import { FaLock, FaArrowRight, FaCheck, FaArrowLeft, FaCarSide } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { loginValidationSchema } from '../utils/LoginValidation';
 import { getApiErrorMessage } from '../services/api';
@@ -10,6 +10,26 @@ import PasswordField from '../components/PasswordField';
 
 const Login = () => {
   const navigate = useNavigate();
+  
+  // Checking for existing session
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userStr = localStorage.getItem('authUser');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const role = user.role?.toLowerCase();
+        if (role === 'admin') navigate('/admin', { replace: true });
+        else if (role === 'staff') navigate('/staff', { replace: true });
+        else navigate('/dashboard', { replace: true });
+      } catch (e) {
+        // Clearing invalid data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     setStatus(undefined);
@@ -98,9 +118,9 @@ const response = res1?.success ? res1 : res2;
         <div className="pointer-events-none absolute -right-24 -top-16 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
 
         <div className="relative z-10 flex items-center gap-3">
-           <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-xl shadow-blue-500/30">
-                <img className="rounded-2xl" src='/logo.png' />
-              </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 shadow-xl shadow-blue-500/30">
+              <FaCarSide className="text-2xl text-white" />
+            </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight">AutoParts</h2>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">

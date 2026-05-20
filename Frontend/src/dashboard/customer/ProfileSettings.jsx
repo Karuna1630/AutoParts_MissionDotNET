@@ -30,10 +30,6 @@ const ProfileSettings = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   
-  // Stats states
-  const [vehicleCount, setVehicleCount] = useState(0);
-  const [visitCount, setVisitCount] = useState(0);
-  
   // File refs
   const avatarFileRef = useRef(null);
   const coverFileRef = useRef(null);
