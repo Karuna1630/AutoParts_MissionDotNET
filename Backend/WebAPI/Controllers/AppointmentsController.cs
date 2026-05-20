@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes appointment booking and management endpoints.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -34,6 +37,9 @@ public class AppointmentsController : ControllerBase
         _vehicleRepo = vehicleRepo;
     }
 
+    /// <summary>
+    /// Creates a service appointment.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentDto dto)
     {
@@ -100,6 +106,9 @@ public class AppointmentsController : ControllerBase
     }
 
     // Get slot availability for a specific date
+    /// <summary>
+    /// Returns slot availability for a date.
+    /// </summary>
     [HttpGet("slots")]
     public async Task<IActionResult> GetSlotAvailability([FromQuery] string date)
     {
@@ -123,6 +132,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, data = slotData });
     }
 
+    /// <summary>
+    /// Returns the current customer's appointments.
+    /// </summary>
     [HttpGet("my-appointments")]
     public async Task<IActionResult> GetMyAppointments()
     {
@@ -169,6 +181,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, data = appointments });
     }
 
+    /// <summary>
+    /// Adds a review for a completed appointment.
+    /// </summary>
     [HttpPost("review")]
     public async Task<IActionResult> AddReview([FromBody] CreateReviewDto dto)
     {
@@ -218,6 +233,9 @@ public class AppointmentsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Cancels a customer appointment.
+    /// </summary>
     [HttpPatch("{id}/cancel")]
     public async Task<IActionResult> Cancel(int id)
     {
@@ -242,6 +260,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, message = "Appointment cancelled successfully." });
     }
 
+    /// <summary>
+    /// Returns all appointments for staff and admins.
+    /// </summary>
     [HttpGet("all")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetAllAppointments()
@@ -284,6 +305,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, data = appointments });
     }
 
+    /// <summary>
+    /// Claims an appointment for staff handling.
+    /// </summary>
     [HttpPatch("{id}/claim")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> Claim(int id)
@@ -305,6 +329,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, message = "Appointment claimed and confirmed." });
     }
 
+    /// <summary>
+    /// Marks an appointment as completed.
+    /// </summary>
     [HttpPatch("{id}/complete")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> Complete(int id)
@@ -322,6 +349,9 @@ public class AppointmentsController : ControllerBase
         return Ok(new { success = true, message = "Appointment marked as completed." });
     }
 
+    /// <summary>
+    /// Cancels an appointment from the staff side.
+    /// </summary>
     [HttpPatch("{id}/staff-cancel")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> StaffCancel(int id, [FromBody] string reason)

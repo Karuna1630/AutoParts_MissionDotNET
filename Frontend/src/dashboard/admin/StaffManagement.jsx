@@ -4,8 +4,10 @@ import { FaEdit, FaTrashAlt, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import * as Yup from 'yup';
 import { getPagedStaff, updateStaff, updateStaffRole, uploadStaffProfileImage, deleteStaff } from '../../services/staffAuthService';
 import { createStaff } from '../../services/adminService';
+import { deleteStaff } from '../../services/staffService';
 import { getApiErrorMessage } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const staffCreateValidationSchema = Yup.object().shape({
   firstName: Yup.string().required('First name is required'),
@@ -62,7 +64,11 @@ const StaffManagement = () => {
   }, [debouncedSearch]);
 
   useEffect(() => {
-    fetchStaff(page, debouncedSearch);
+    const loadStaff = async () => {
+      await fetchStaff(page, debouncedSearch);
+    };
+
+    void loadStaff();
   }, [fetchStaff, page, debouncedSearch]);
 
   useEffect(() => {
@@ -222,6 +228,40 @@ const StaffManagement = () => {
     setProfileImagePreview(URL.createObjectURL(file));
   };
 
+  const handleDeleteStaff = async (staff) => {
+    const staffId = staff?.identityId || staff?.id;
+    if (!staffId) {
+      showToast('Unable to delete staff member. Missing staff identifier.', { type: 'error' });
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: 'Delete staff member?',
+      message: `Delete ${staff.firstName} ${staff.lastName}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoading(staffId);
+      await deleteStaff(staffId);
+      if (viewingStaff && (viewingStaff.identityId || viewingStaff.id) === staffId) {
+        setViewingStaff(null);
+      }
+      await fetchStaff(page, debouncedSearch);
+      showToast(`${staff.firstName} ${staff.lastName} deleted successfully.`, { type: 'success' });
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Failed to delete staff member.'), { type: 'error' });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div className="w-full h-full bg-[#FAFBFF] min-h-screen p-8">
       {/* Header Container */}
@@ -296,18 +336,9 @@ const StaffManagement = () => {
                         <div className="text-slate-500 text-sm">{staff.phoneNumber || staff.phone}</div>
                       </td>
                       <td className="py-5 px-6">
-                        <select
-                          value={roleLabel}
-                          onChange={(e) => handleRoleChange(staff.identityId || staff.id, e.target.value)}
-                          disabled={actionLoading === (staff.identityId || staff.id)}
-                          className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer appearance-none outline-none ${roleLabel === 'Admin'
-                              ? 'bg-[#0F172A] text-white'
-                              : 'bg-[#64748B] text-white'
-                            }`}
-                        >
-                          <option value="Admin">Admin</option>
-                          <option value="Staff">Staff</option>
-                        </select>
+                        <div className="text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                          {roleLabel}
+                        </div>
                       </td>
                       <td className="py-5 px-6">
                         <div className="flex items-center justify-end gap-4">

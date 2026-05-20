@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes staff dashboard statistics.
+/// </summary>
 [Authorize(Roles = "Staff,Admin")]
 [ApiController]
 [Route("api/staff/[controller]")]
@@ -20,6 +23,9 @@ public class DashboardController : ControllerBase
         _context = context;
     }
 
+    /// <summary>
+    /// Returns dashboard statistics.
+    /// </summary>
     [HttpGet("stats")]
     public async Task<IActionResult> GetDashboardStats()
     {

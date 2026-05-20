@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes part request workflows.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/partrequests")]
@@ -36,6 +39,9 @@ public class PartRequestsController : ControllerBase
         _imageService = imageService;
     }
 
+    /// <summary>
+    /// Creates a part request.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromForm] CreatePartRequestDto dto)
     {
@@ -79,6 +85,9 @@ public class PartRequestsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns the current customer's part requests.
+    /// </summary>
     [HttpGet("my-requests")]
     public async Task<IActionResult> GetMyRequests()
     {
@@ -110,6 +119,9 @@ public class PartRequestsController : ControllerBase
         return Ok(new { success = true, data = requests });
     }
 
+    /// <summary>
+    /// Returns all part requests for staff and admins.
+    /// </summary>
     [HttpGet("all")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetAllRequests()
@@ -148,6 +160,9 @@ public class PartRequestsController : ControllerBase
         return Ok(new { success = true, data = requests });
     }
 
+    /// <summary>
+    /// Updates a part request status.
+    /// </summary>
     [HttpPatch("{id}/status")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusDto dto)

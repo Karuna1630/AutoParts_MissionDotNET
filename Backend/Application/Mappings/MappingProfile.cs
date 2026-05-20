@@ -2,6 +2,7 @@ using AutoMapper;
 using Domain.Entities;
 using Application.DTOs.Vehicle;
 using Application.DTOs.Vendor;
+using Application.DTOs.Inventory;
 
 namespace Application.Mappings;
 
@@ -27,10 +28,10 @@ public class MappingProfile : Profile
         
         // Inventory
         // Inventory/Parts
-        CreateMap<Application.DTOs.Inventory.CreateInventoryItemDto, Part>()
+        CreateMap<CreateInventoryItemDto, Part>()
             .ForMember(dest => dest.CostPrice, opt => opt.MapFrom(src => src.Price))
             .ForMember(dest => dest.ImageUrl, opt => opt.Ignore());
-        CreateMap<Application.DTOs.Inventory.UpdateInventoryItemDto, Part>()
+        CreateMap<UpdateInventoryItemDto, Part>()
             .ForMember(dest => dest.CostPrice, opt => opt.MapFrom((src, dest) => src.Price ?? dest.CostPrice))
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }

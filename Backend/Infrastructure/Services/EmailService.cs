@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Sends outbound email messages.
+/// </summary>
 public class EmailService : IEmailService
 {
     private readonly EmailSettings _settings;
@@ -21,6 +24,9 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Sends an email with an optional attachment.
+    /// </summary>
     public async Task<bool> SendEmailAsync(string to, string subject, string body, byte[]? attachment = null, string? attachmentName = null)
     {
         try

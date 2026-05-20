@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles purchase invoices and stock updates.
+/// </summary>
 public class PurchaseInvoiceService : IPurchaseInvoiceService
 {
     private readonly IGenericRepository<PurchaseInvoice> _invoiceRepository;
@@ -30,6 +33,9 @@ public class PurchaseInvoiceService : IPurchaseInvoiceService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Creates a purchase invoice and updates stock.
+    /// </summary>
     public async Task<OperationResult<PurchaseInvoiceResponseDto>> CreatePurchaseInvoiceAsync(CreatePurchaseInvoiceDto dto, int adminId)
     {
         try
@@ -99,6 +105,9 @@ public class PurchaseInvoiceService : IPurchaseInvoiceService
         }
     }
 
+    /// <summary>
+    /// Returns a purchase invoice by identifier.
+    /// </summary>
     public async Task<OperationResult<PurchaseInvoiceResponseDto>> GetPurchaseInvoiceByIdAsync(int id)
     {
         var invoice = await _invoiceRepository.GetByIdWithIncludeAsync(id, i => i.Vendor!, i => i.Items);
@@ -117,6 +126,9 @@ public class PurchaseInvoiceService : IPurchaseInvoiceService
         return OperationResult<PurchaseInvoiceResponseDto>.Ok(MapToResponse(invoice));
     }
 
+    /// <summary>
+    /// Returns all purchase invoices.
+    /// </summary>
     public async Task<OperationResult<List<PurchaseInvoiceResponseDto>>> GetAllPurchaseInvoicesAsync(int pageNumber, int pageSize)
     {
         var invoices = await _invoiceRepository.GetAllWithIncludeAsync(null, i => i.Vendor!, i => i.Items);

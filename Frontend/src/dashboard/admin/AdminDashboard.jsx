@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FiAlertTriangle,
   FiArrowRight,
@@ -19,22 +19,32 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    let isMounted = true;
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const response = await getAdminStats();
-      if (response.success) {
-        setData(response.data);
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const response = await getAdminStats();
+        if (isMounted && response.success) {
+          setData(response.data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Error fetching dashboard stats', err);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error('Error fetching dashboard stats', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (loading || !data) {
     return (

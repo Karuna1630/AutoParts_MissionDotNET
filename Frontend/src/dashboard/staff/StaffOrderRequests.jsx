@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiPackage, FiUser, FiClock, FiCheckCircle, FiXCircle, FiTruck, FiFileText, FiInfo, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 import { apiClient } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const StaffOrderRequests = () => {
   const [activeTab, setActiveTab] = useState('pending');
@@ -22,6 +23,7 @@ const StaffOrderRequests = () => {
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const { confirm, showToast } = useToast();
 
   useEffect(() => {
     fetchOrders();
@@ -46,86 +48,75 @@ const StaffOrderRequests = () => {
     }
   };
 
-  const handleCreateInvoice = (orderId) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Create Invoice',
-      message: 'Are you sure you want to create an invoice and reserve stock for this order? This will move the order to the pickup stage.',
-      action: 'create-invoice',
-      data: orderId,
-      confirmText: 'Create Invoice',
-      type: 'blue'
+  const handleCreateInvoice = async (orderId) => {
+    const confirmed = await confirm({
+      title: 'Create invoice?',
+      message: 'Create invoice and reserve stock for this order?',
+      confirmText: 'Create invoice',
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
     });
+
+    if (!confirmed) return;
+    try {
+      setProcessingId(orderId);
+      const res = await apiClient.post(`/OrderRequests/${orderId}/create-invoice`);
+      if (res.data.success) {
+        setSuccessMsg('Invoice created! Order is now reserved for pickup.');
+        fetchOrders();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to create invoice.', { type: 'error' });
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  const handleCompleteOrder = (orderId, isPaid = false) => {
+  const handleCompleteOrder = async (orderId, isPaid = false) => {
     const action = isPaid ? 'Mark as Paid' : 'Add to Credit';
-    setConfirmModal({
-      isOpen: true,
-      title: 'Complete Order',
-      message: `Are you sure you want to ${isPaid ? 'mark this order as paid' : 'add this order to credit'} and complete it?`,
-      action: 'complete',
-      data: { orderId, isPaid },
+    const confirmed = await confirm({
+      title: 'Complete order?',
+      message: `${action} and complete this order?`,
       confirmText: action,
-      type: isPaid ? 'emerald' : 'amber'
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
     });
+
+    if (!confirmed) return;
+    try {
+      setProcessingId(orderId);
+      const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
+      if (res.data.success) {
+        setSuccessMsg(isPaid ? 'Order completed and paid!' : 'Order completed and added to credit.');
+        fetchOrders();
+        setTimeout(() => setSuccessMsg(null), 5000);
+      }
+    } catch (err) {
+      showToast('Failed to complete order.', { type: 'error' });
+    } finally {
+      setProcessingId(null);
+    }
   };
 
-  const handleCancelOrder = (orderId) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Cancel Order',
-      message: 'Are you sure you want to cancel this order request? This action cannot be undone.',
-      action: 'cancel',
-      data: orderId,
-      confirmText: 'Cancel Order',
-      type: 'red'
+  const handleCancelOrder = async (orderId) => {
+    const confirmed = await confirm({
+      title: 'Cancel order request?',
+      message: 'Cancel this order request?',
+      confirmText: 'Cancel request',
+      cancelText: 'Keep request',
+      confirmTone: 'danger',
     });
-  };
 
-  const handleConfirmAction = async () => {
-    const { action, data } = confirmModal;
-    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-    
-    if (action === 'create-invoice') {
-      try {
-        setProcessingId(data);
-        const res = await apiClient.post(`/OrderRequests/${data}/create-invoice`);
-        if (res.data.success) {
-          setSuccessMsg('Invoice created! Order is now reserved for pickup.');
-          fetchOrders();
-          setTimeout(() => setSuccessMsg(null), 5000);
-        }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Failed to create invoice.');
-      } finally {
-        setProcessingId(null);
-      }
-    } else if (action === 'complete') {
-      const { orderId, isPaid } = data;
-      try {
-        setProcessingId(orderId);
-        const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
-        if (res.data.success) {
-          setSuccessMsg(isPaid ? 'Order completed and paid!' : 'Order completed and added to credit.');
-          fetchOrders();
-          setTimeout(() => setSuccessMsg(null), 5000);
-        }
-      } catch (err) {
-        alert('Failed to complete order.');
-      } finally {
-        setProcessingId(null);
-      }
-    } else if (action === 'cancel') {
-      try {
-        setProcessingId(data);
-        const res = await apiClient.patch(`/OrderRequests/${data}/cancel`);
-        if (res.data.success) fetchOrders();
-      } catch (err) {
-        alert('Failed to cancel order.');
-      } finally {
-        setProcessingId(null);
-      }
+    if (!confirmed) return;
+    try {
+      setProcessingId(orderId);
+      const res = await apiClient.patch(`/OrderRequests/${orderId}/cancel`);
+      if (res.data.success) fetchOrders();
+    } catch (err) {
+      showToast('Failed to cancel order.', { type: 'error' });
+    } finally {
+      setProcessingId(null);
     }
   };
 

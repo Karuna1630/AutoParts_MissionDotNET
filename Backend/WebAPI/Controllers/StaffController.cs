@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
+    /// <summary>
+    /// Exposes staff administration endpoints.
+    /// </summary>
     [Authorize(Roles = UserRoles.Admin)]
     [ApiController]
     [Route("api/[controller]")]
@@ -24,6 +27,9 @@ namespace WebAPI.Controllers
             _staffService = staffService;
         }
 
+        /// <summary>
+        /// Returns paged staff members.
+        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStaff([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
@@ -34,6 +40,9 @@ namespace WebAPI.Controllers
             return Ok(new { success = true, data = result });
         }
 
+        /// <summary>
+        /// Returns a staff member by identifier.
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStaffById(Guid id)
         {
@@ -41,6 +50,9 @@ namespace WebAPI.Controllers
             return Ok(new { success = true, data = result });
         }
 
+        /// <summary>
+        /// Creates a staff member.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> AddStaff([FromBody] CreateStaffDto createStaffDto)
         {
@@ -48,6 +60,9 @@ namespace WebAPI.Controllers
             return Ok(new { success = true, message = "Staff member created successfully.", data = result });
         }
 
+        /// <summary>
+        /// Updates a staff member role.
+        /// </summary>
         [HttpPatch("{id}/role")]
         public async Task<IActionResult> UpdateStaffRole(Guid id, [FromQuery] string role)
         {
@@ -55,6 +70,9 @@ namespace WebAPI.Controllers
             return Ok(new { success = true, message = $"Staff role updated to {role}." });
         }
 
+        /// <summary>
+        /// Deletes a staff member.
+        /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStaff(Guid id)
         {

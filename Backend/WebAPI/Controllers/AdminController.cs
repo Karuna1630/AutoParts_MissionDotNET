@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes admin reporting and user management endpoints.
+/// </summary>
 [Authorize(Roles = UserRoles.Admin)]
 [ApiController]
 [Route("api/[controller]")]
@@ -31,6 +34,9 @@ public class AdminController : ControllerBase
         _pdfReportService = pdfReportService;
     }
 
+    /// <summary>
+    /// Returns the daily financial report.
+    /// </summary>
     [HttpGet("reports/daily")]
     public async Task<IActionResult> GetDailyReport([FromQuery] DateTime? date)
     {
@@ -39,6 +45,9 @@ public class AdminController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns the monthly financial report.
+    /// </summary>
     [HttpGet("reports/monthly")]
     public async Task<IActionResult> GetMonthlyReport([FromQuery] int? year, [FromQuery] int? month)
     {
@@ -48,6 +57,9 @@ public class AdminController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns the yearly financial report.
+    /// </summary>
     [HttpGet("reports/yearly")]
     public async Task<IActionResult> GetYearlyReport([FromQuery] int? year)
     {
@@ -56,6 +68,9 @@ public class AdminController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns a report for a date range.
+    /// </summary>
     [HttpGet("reports/range")]
     public async Task<IActionResult> GetRangeReport([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
     {
@@ -65,6 +80,9 @@ public class AdminController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Exports a financial report as PDF.
+    /// </summary>
     [HttpGet("reports/export-pdf")]
     public async Task<IActionResult> GetPdfReport([FromQuery] string type, [FromQuery] DateTime? date, [FromQuery] int? year, [FromQuery] int? month)
     {
@@ -102,6 +120,9 @@ public class AdminController : ControllerBase
         return File(pdfBytes, "application/pdf", fileName);
     }
 
+    /// <summary>
+    /// Returns dashboard summary metrics.
+    /// </summary>
     [HttpGet("stats")]
     public async Task<IActionResult> GetDashboardStats()
     {
@@ -184,6 +205,9 @@ public class AdminController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns all users, optionally filtered by role.
+    /// </summary>
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers([FromQuery] string? role, CancellationToken cancellationToken)
     {
@@ -208,6 +232,9 @@ public class AdminController : ControllerBase
         return Ok(new { success = true, data = result });
     }
 
+    /// <summary>
+    /// Returns a user by identifier.
+    /// </summary>
     [HttpGet("users/{id:int}")]
     public async Task<IActionResult> GetUserById(int id, CancellationToken cancellationToken)
     {
@@ -234,6 +261,9 @@ public class AdminController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Toggles a user active status.
+    /// </summary>
     [HttpPut("users/{id:int}/toggle-status")]
     public async Task<IActionResult> ToggleUserStatus(int id, CancellationToken cancellationToken)
     {
@@ -252,6 +282,9 @@ public class AdminController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Deletes a non-admin user.
+    /// </summary>
     [HttpDelete("users/{id:int}")]
     public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
     {

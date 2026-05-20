@@ -11,6 +11,7 @@ import {
 import { getVendors } from '../../services/vendorService';
 import { getApiErrorMessage } from '../../services/api';
 import Pagination from '../../components/Pagination';
+import { useToast } from '../../context/ToastContext';
 
 const inventoryValidationSchema = Yup.object().shape({
   sku: Yup.string().required('SKU is required'),
@@ -36,6 +37,7 @@ const Inventory = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const { confirm, showToast } = useToast();
 
   const fetchInventory = useCallback(async () => {
     try {
@@ -136,16 +138,26 @@ const Inventory = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      try {
-        setActionLoading(true);
-        await deleteInventoryItem(id);
-        fetchInventory();
-      } catch (err) {
-        alert('Error deleting item');
-      } finally {
-        setActionLoading(false);
-      }
+    const confirmed = await confirm({
+      title: 'Delete inventory item?',
+      message: 'Are you sure you want to delete this item?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await deleteInventoryItem(id);
+      fetchInventory();
+    } catch (err) {
+      showToast('Error deleting item', { type: 'error' });
+    } finally {
+      setActionLoading(false);
     }
   };
 

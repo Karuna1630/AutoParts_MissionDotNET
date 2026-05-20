@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Creates notifications and reminder messages.
+/// </summary>
 public class NotificationService : INotificationService
 {
     private readonly AppDbContext _context;
@@ -31,6 +34,9 @@ public class NotificationService : INotificationService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Checks low stock parts and creates notifications.
+    /// </summary>
     public async Task CheckAndNotifyLowStockAsync(int? partId = null)
     {
         _logger.LogInformation("Checking for low stock parts...");
@@ -97,6 +103,9 @@ public class NotificationService : INotificationService
         }
     }
 
+    /// <summary>
+    /// Sends overdue credit reminders to customers.
+    /// </summary>
     public async Task CheckAndSendCreditRemindersAsync()
     {
         _logger.LogInformation("Checking for overdue credits...");
@@ -150,6 +159,9 @@ public class NotificationService : INotificationService
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Creates a notification for a specific user.
+    /// </summary>
     public async Task CreateDashboardNotificationAsync(int userId, string title, string message, string type = "Info", string? relatedId = null)
     {
         var notification = new Notification

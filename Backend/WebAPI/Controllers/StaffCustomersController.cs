@@ -10,6 +10,9 @@ using WebAPI.Common;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes staff customer management endpoints.
+/// </summary>
 [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Staff}")]
 [ApiController]
 [Route("api/staff/customers")]
@@ -24,6 +27,9 @@ public class StaffCustomersController : ControllerBase
         _historyService = historyService;
     }
 
+    /// <summary>
+    /// Registers a new customer.
+    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> RegisterCustomer([FromForm] RegisterCustomerWithVehicleDto dto)
     {
@@ -46,6 +52,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Searches customers for staff workflows.
+    /// </summary>
     [HttpGet("search")]
     public async Task<IActionResult> SearchCustomers([FromQuery] string query)
     {
@@ -57,6 +66,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns a customer profile.
+    /// </summary>
     [HttpGet("{customerId}")]
     public async Task<IActionResult> GetCustomerDetails(int customerId)
     {
@@ -77,6 +89,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns paged customers.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAllCustomers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
@@ -88,6 +103,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Adds a vehicle to a customer.
+    /// </summary>
     [HttpPost("{customerId}/vehicles")]
     public async Task<IActionResult> AddVehicle(int customerId, [FromForm] AddVehicleToCustomerDto dto)
     {
@@ -109,6 +127,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Settles customer credit.
+    /// </summary>
     [HttpPost("{customerId}/settle-credit")]
     public async Task<IActionResult> SettleCredit(int customerId, [FromBody] SettleCreditDto dto)
     {
@@ -130,6 +151,9 @@ public class StaffCustomersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns combined customer history.
+    /// </summary>
     [HttpGet("{customerId}/history")]
     public async Task<IActionResult> GetCustomerHistory(int customerId)
     {

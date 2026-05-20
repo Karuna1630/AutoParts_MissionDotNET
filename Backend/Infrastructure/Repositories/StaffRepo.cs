@@ -13,13 +13,16 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
 {
+    /// <summary>
+    /// Provides staff profile data access.
+    /// </summary>
     public class StaffRepo : IStaffRepo
     {
         private readonly AppDbContext _context;
         public StaffRepo(AppDbContext context) => _context = context;
 
         /// <summary>
-        /// get user by id
+        /// Returns a staff profile by identifier.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -29,7 +32,7 @@ namespace Infrastructure.Repositories
         }
 
         /// <summary>
-        /// add user
+        /// Adds a staff profile.
         /// </summary>
         /// <param name="profile"></param>
         /// <returns></returns>
@@ -41,7 +44,7 @@ namespace Infrastructure.Repositories
         }
 
         /// <summary>
-        /// update user
+        /// Updates a staff profile.
         /// </summary>
         /// <param name="profile"></param>
         /// <returns></returns>
@@ -53,7 +56,7 @@ namespace Infrastructure.Repositories
         }
 
         /// <summary>
-        /// update staff role
+        /// Updates a staff role.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="newRole"></param>
@@ -67,7 +70,7 @@ namespace Infrastructure.Repositories
 
 
         /// <summary>
-        /// delete user
+    /// Deletes a staff profile.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -78,6 +81,9 @@ namespace Infrastructure.Repositories
             return result > 0;
         }
 
+        /// <summary>
+        /// Returns a paged staff list.
+        /// </summary>
         public async Task<PagedResult<UserProfile>> GetPagedStaffAsync(int pageNumber, int pageSize, string? search = null)
         {
             // create a query to sort and count total

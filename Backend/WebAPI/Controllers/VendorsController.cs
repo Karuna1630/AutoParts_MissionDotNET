@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace WebAPI.Controllers;
 
 //[Authorize(Roles = UserRoles.Admin)]
+/// <summary>
+/// Exposes vendor management endpoints.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class VendorsController : ControllerBase
@@ -19,6 +22,9 @@ public class VendorsController : ControllerBase
         _vendorService = vendorService;
     }
 
+    /// <summary>
+    /// Returns paged vendors.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetVendors([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
     {
@@ -26,6 +32,9 @@ public class VendorsController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Returns a vendor by identifier.
+    /// </summary>
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetVendor(int id)
     {
@@ -33,6 +42,9 @@ public class VendorsController : ControllerBase
         return result.Success ? Ok(result) : NotFound(result);
     }
 
+    /// <summary>
+    /// Creates a vendor.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateVendor([FromBody] CreateVendorDto dto)
     {
@@ -49,6 +61,9 @@ public class VendorsController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Updates a vendor.
+    /// </summary>
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateVendor(int id, [FromBody] UpdateVendorDto dto)
     {
@@ -65,6 +80,9 @@ public class VendorsController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    /// <summary>
+    /// Deletes a vendor.
+    /// </summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteVendor(int id)
     {

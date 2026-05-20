@@ -1,4 +1,3 @@
-using System.Security.Principal;
 using System.Text;
 using System.Text.Json.Serialization;
 using Application.Common.Interfaces;
@@ -13,7 +12,6 @@ using Infrastructure.Security;
 using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -21,15 +19,17 @@ using WebAPI.Middlewares;
 using WebAPI.Services;
 using dotenv.net;
 using System.Security.Claims;
+using Infrastructure.Services;
+using Application.Mappings;
+using Application.DTOs.Email;
 
 DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+// Load database Connection from .env or appsettings
+var connectionString = builder.Configuration["CONNECTION_STRING"] 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 // --- 3. Core Services ---
 builder.Services.AddControllers()
@@ -38,7 +38,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
-builder.Services.AddAutoMapper(_ => { }, typeof(Application.Mappings.MappingProfile).Assembly);
+builder.Services.AddAutoMapper(_ => { }, typeof(MappingProfile).Assembly);
 
 // Repositories
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -48,15 +48,12 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IPurchaseInvoiceRepository, PurchaseInvoiceRepository>();
 
 // Application Services
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<IStaffAuthService, StaffAuthService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
-
-// Configure Database Connection from .env or appsettings
-var connectionString = builder.Configuration["CONNECTION_STRING"] 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
-
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
@@ -64,19 +61,19 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
-builder.Services.AddScoped<IReportService, Infrastructure.Services.ReportService>();
-builder.Services.AddScoped<IPdfReportService, Application.Services.PdfReportService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>();
-builder.Services.AddScoped<ICustomerHistoryService, Infrastructure.Services.CustomerHistoryService>();
+builder.Services.AddScoped<ICustomerHistoryService, CustomerHistoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IPurchaseInvoiceService, PurchaseInvoiceService>();
-builder.Services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
-builder.Services.AddScoped<IPdfService, Infrastructure.Services.PdfService>();
-builder.Services.AddScoped<INotificationService, Infrastructure.Services.NotificationService>();
-builder.Services.AddHostedService<Infrastructure.Services.NotificationBackgroundService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 
 // Email Configuration
-builder.Services.Configure<Application.DTOs.Email.EmailSettings>(options => {
+builder.Services.Configure<EmailSettings>(options => {
     options.SmtpServer = (builder.Configuration["SMTP_SERVER"] ?? "smtp.gmail.com").Trim();
     options.Port = int.Parse((builder.Configuration["SMTP_PORT"] ?? "587").Trim());
     options.SenderEmail = (builder.Configuration["SENDER_EMAIL"] ?? "").Trim();

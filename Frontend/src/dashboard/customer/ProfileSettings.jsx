@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,8 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
   
   // Preview states
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -37,13 +39,7 @@ const ProfileSettings = () => {
   const coverFileRef = useRef(null);
   const didFetchRef = useRef(false);
 
-  useEffect(() => {
-    if (didFetchRef.current) return;
-    didFetchRef.current = true;
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     const token = localStorage.getItem('authToken');
     if (!token) {
       setLoading(false);
@@ -53,32 +49,25 @@ const ProfileSettings = () => {
 
     try {
       setLoading(true);
-      const [profileRes, vehicleRes, appointmentRes] = await Promise.all([
+      const [profileResponse, vehiclesResponse, appointmentsResponse] = await Promise.all([
         getUserProfile(),
-        getMyVehicles().catch(err => {
-          console.error('Error fetching vehicles:', err);
-          return { success: false, data: [] };
-        }),
-        getMyAppointments().catch(err => {
-          console.error('Error fetching appointments:', err);
-          return { success: false, data: [] };
-        })
+        getMyVehicles(),
+        getMyAppointments(),
       ]);
 
-      if (profileRes.success) {
-        setProfile(profileRes.data);
-        setAvatarPreview(profileRes.data.avatarUrl);
-        setCoverPreview(profileRes.data.coverUrl);
+      if (profileResponse.success) {
+        setProfile(profileResponse.data);
+        setAvatarPreview(profileResponse.data.avatarUrl);
+        setCoverPreview(profileResponse.data.coverUrl);
       }
 
-      if (vehicleRes.success && Array.isArray(vehicleRes.data)) {
-        setVehicleCount(vehicleRes.data.length);
+      if (vehiclesResponse.success) {
+        setVehicleCount(Array.isArray(vehiclesResponse.data) ? vehiclesResponse.data.length : 0);
       }
 
-      if (appointmentRes.success && Array.isArray(appointmentRes.data)) {
-        // Visits typically represent completed appointments
-        const completedVisits = appointmentRes.data.filter(a => a.status === 'Completed').length;
-        setVisitCount(completedVisits);
+      if (appointmentsResponse.success) {
+        const appointments = Array.isArray(appointmentsResponse.data) ? appointmentsResponse.data : [];
+        setVisitCount(appointments.filter((appointment) => appointment.status === 'Completed').length || appointments.length);
       }
     } catch (err) {
       if (err?.response?.status === 401) {
@@ -91,7 +80,13 @@ const ProfileSettings = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (didFetchRef.current) return;
+    didFetchRef.current = true;
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleImageChange = (e, type) => {
     const file = e.target.files[0];

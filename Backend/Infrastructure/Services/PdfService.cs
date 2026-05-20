@@ -6,6 +6,9 @@ using QuestPDF.Infrastructure;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Generates invoice PDFs.
+/// </summary>
 public class PdfService : IPdfService
 {
     public PdfService()
@@ -15,6 +18,9 @@ public class PdfService : IPdfService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
+    /// <summary>
+    /// Generates a PDF for a sales invoice.
+    /// </summary>
     public byte[] GenerateInvoicePdf(ViewSalesInvoiceDto invoice)
     {
         var document = Document.Create(container =>

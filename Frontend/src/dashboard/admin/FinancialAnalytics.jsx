@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FiAlertCircle, FiDollarSign, FiTrendingUp, FiCreditCard, FiPackage, FiUsers, FiFileText, FiRefreshCw, FiDownload } from 'react-icons/fi';
+import { FiDollarSign, FiTrendingUp, FiCreditCard, FiPackage, FiUsers, FiFileText, FiRefreshCw, FiDownload } from 'react-icons/fi';
 import { getFinancialReport, downloadFinancialReportPdf } from '../../services/adminService';
+import { useToast } from '../../context/ToastContext';
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 const toDateInputValue = (date = new Date()) => (
@@ -11,50 +12,7 @@ const toMonthInputValue = (date = new Date()) => (
 );
 const currentYear = new Date().getFullYear();
 
-const formatCurrency = (value = 0) => `Rs.${Number(value || 0).toLocaleString(undefined, {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-})}`;
 
-const emptyReport = {
-  revenue: {
-    totalSalesRevenue: 0,
-    totalCashSales: 0,
-    totalCreditSales: 0,
-    averageOrderValue: 0,
-  },
-  costs: {
-    totalCogs: 0,
-    totalPurchaseCost: 0,
-  },
-  profit: {
-    grossProfit: 0,
-    grossProfitMarginPercentage: 0,
-  },
-  topPerformers: {
-    topSellingParts: [],
-    topCustomers: [],
-  },
-  transactions: {
-    totalSalesInvoices: 0,
-    totalCustomersServed: 0,
-    totalPartsSold: 0,
-  },
-  credit: {
-    totalOutstandingCreditBalance: 0,
-    customersWithOverdueCredit: 0,
-  },
-  inventory: {
-    totalInventoryValue: 0,
-    lowStockPartsCount: 0,
-  },
-};
-
-const normalizeTopCustomer = (customer = {}) => ({
-  customerName: customer.customerName ?? customer.CustomerName ?? customer.name ?? 'Unknown Customer',
-  totalSpent: Number(customer.totalSpent ?? customer.TotalSpent ?? customer.amount ?? 0),
-  orderCount: Number(customer.orderCount ?? customer.OrderCount ?? customer.orders ?? 0),
-});
 
 const FinancialAnalytics = () => {
   const [reportType, setReportType] = useState('Monthly');
@@ -63,8 +21,8 @@ const FinancialAnalytics = () => {
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showPdfConfirm, setShowPdfConfirm] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const { confirm, showToast } = useToast();
 
   const buildReportParams = useCallback(() => {
     if (reportType === 'Daily') {
@@ -80,33 +38,33 @@ const FinancialAnalytics = () => {
   }, [reportType, selectedDate, selectedMonth, selectedYear]);
 
   const fetchReport = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const response = await getFinancialReport(reportType, buildReportParams());
+  try {
+    setLoading(true);
 
-      if (response.success) {
-        setReportData(response.data);
-      } else {
-        setReportData(null);
-        setError(response.message || 'Unable to load financial report.');
-      }
-    } catch (err) {
-      console.error('Error fetching report', err);
+    const response = await getFinancialReport(
+      reportType,
+      buildReportParams()
+    );
+
+    if (response.success) {
+      setReportData(response.data);
+    } else {
       setReportData(null);
-      setError('Unable to load live financial data. Please check the backend connection.');
-    } finally {
-      setLoading(false);
+      showToast(response.message || 'Failed to load report', { type: 'error' });
     }
-  }, [buildReportParams, reportType]);
+  } catch {
+    setReportData(null);
+    showToast('Failed to load report', { type: 'error' });
+  } finally {
+    setLoading(false);
+  }
+}, [reportType, buildReportParams, showToast]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchReport();
-  }, [fetchReport]);
-
-  const [downloading, setDownloading] = useState(false);
-
+useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchReport();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [reportType, selectedDate, selectedMonth, selectedYear]);
   const getReportPeriodLabel = () => {
     if (reportType === 'Daily') {
       return selectedDate;
@@ -120,9 +78,20 @@ const FinancialAnalytics = () => {
   };
 
   const handleDownload = async () => {
+    const confirmed = await confirm({
+      title: 'Generate financial report PDF?',
+      message: `This will create and download the ${reportType.toLowerCase()} financial report for ${getReportPeriodLabel()}.`,
+      confirmText: 'Generate PDF',
+      cancelText: 'Cancel',
+      confirmTone: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setDownloading(true);
-      setShowPdfConfirm(false);
       const blob = await downloadFinancialReportPdf(reportType, buildReportParams());
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
@@ -133,7 +102,7 @@ const FinancialAnalytics = () => {
       link.parentNode.removeChild(link);
     } catch (err) {
       console.error('Download failed', err);
-      alert('Could not download report. Please try again.');
+      showToast('Could not download report. Please try again.', { type: 'error' });
     } finally {
       setDownloading(false);
     }
@@ -182,7 +151,7 @@ const FinancialAnalytics = () => {
     );
   }
 
-  const { revenue, costs, profit, topPerformers, transactions, credit, inventory } = reportData;
+  const { revenue, profit, topPerformers, transactions, credit, inventory } = reportData;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto pb-12 px-4 md:px-0">
@@ -221,7 +190,7 @@ const FinancialAnalytics = () => {
           </div>
           
           <button 
-            onClick={() => setShowPdfConfirm(true)}
+            onClick={handleDownload}
             disabled={downloading}
             className={`flex items-center gap-2 px-5 py-2 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 transition-all shadow-sm print:hidden ${downloading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
@@ -234,44 +203,6 @@ const FinancialAnalytics = () => {
           </button>
         </div>
       </div>
-
-      {showPdfConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm print:hidden">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <FiAlertCircle size={22} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">Generate financial report PDF?</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  This will create and download the {reportType.toLowerCase()} financial report for {getReportPeriodLabel()}.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowPdfConfirm(false)}
-                disabled={downloading}
-                className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={downloading}
-                className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {downloading ? <FiRefreshCw className="animate-spin" /> : <FiDownload />}
-                {downloading ? 'Generating...' : 'Generate PDF'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -339,7 +270,7 @@ const FinancialAnalytics = () => {
           <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm">
             <h2 className="text-lg font-bold text-slate-800 mb-6">Top Selling Parts</h2>
             <div className="overflow-x-auto">
-              <table className="w-full text-left min-w-[400px]">
+              <table className="w-full text-left min-w-100">
                 <thead>
                   <tr className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-50">
                     <th className="pb-4">Part Name</th>

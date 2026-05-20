@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services;
 
+/// <summary>
+/// Generates financial reports for admin dashboards.
+/// </summary>
 public class ReportService : IReportService
 {
     private readonly AppDbContext _context;
@@ -15,6 +18,9 @@ public class ReportService : IReportService
         _context = context;
     }
 
+    /// <summary>
+    /// Generates a daily financial report.
+    /// </summary>
     public async Task<OperationResult<FinancialReportDto>> GenerateDailyReportAsync(DateTime date)
     {
         var start = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
@@ -22,6 +28,9 @@ public class ReportService : IReportService
         return OperationResult<FinancialReportDto>.Ok(await BuildSimpleReportAsync("Daily", start, end));
     }
 
+    /// <summary>
+    /// Generates a monthly financial report.
+    /// </summary>
     public async Task<OperationResult<FinancialReportDto>> GenerateMonthlyReportAsync(int year, int month)
     {
         var start = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -29,6 +38,9 @@ public class ReportService : IReportService
         return OperationResult<FinancialReportDto>.Ok(await BuildSimpleReportAsync("Monthly", start, end));
     }
 
+    /// <summary>
+    /// Generates a yearly financial report.
+    /// </summary>
     public async Task<OperationResult<FinancialReportDto>> GenerateYearlyReportAsync(int year)
     {
         var start = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -36,6 +48,9 @@ public class ReportService : IReportService
         return OperationResult<FinancialReportDto>.Ok(await BuildSimpleReportAsync("Yearly", start, end));
     }
 
+    /// <summary>
+    /// Generates a report for a custom date range.
+    /// </summary>
     public async Task<OperationResult<FinancialReportDto>> GenerateRangeReportAsync(DateTime fromDate, DateTime toDate)
     {
         var start = DateTime.SpecifyKind(fromDate.Date, DateTimeKind.Utc);

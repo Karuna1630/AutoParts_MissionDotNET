@@ -8,6 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles customer vehicle management.
+/// </summary>
 public class VehicleService : IVehicleService
 {
     private readonly IGenericRepository<Vehicle> _vehicleRepository;
@@ -33,6 +36,9 @@ public class VehicleService : IVehicleService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Adds a vehicle for the current customer.
+    /// </summary>
     public async Task<ApiResponse<VehicleResponseDto>> AddVehicleAsync(int userId, CreateVehicleDto dto)
     {
         try
@@ -97,6 +103,9 @@ public class VehicleService : IVehicleService
         }
     }
 
+    /// <summary>
+    /// Returns all vehicles for a customer.
+    /// </summary>
     public async Task<ApiResponse<IEnumerable<VehicleResponseDto>>> GetCustomerVehiclesAsync(int userId)
     {
         try
@@ -118,6 +127,9 @@ public class VehicleService : IVehicleService
         }
     }
 
+    /// <summary>
+    /// Returns a single vehicle for a customer.
+    /// </summary>
     public async Task<ApiResponse<VehicleResponseDto>> GetVehicleByIdAsync(int vehicleId, int userId)
     {
         try
@@ -151,6 +163,9 @@ public class VehicleService : IVehicleService
         }
     }
 
+    /// <summary>
+    /// Updates an existing customer vehicle.
+    /// </summary>
     public async Task<ApiResponse<VehicleResponseDto>> UpdateVehicleAsync(int vehicleId, int userId, UpdateVehicleDto dto)
     {
         try
@@ -218,6 +233,9 @@ public class VehicleService : IVehicleService
         }
     }
 
+    /// <summary>
+    /// Deletes a customer vehicle.
+    /// </summary>
     public async Task<ApiResponse<bool>> DeleteVehicleAsync(int vehicleId, int userId)
     {
         try
@@ -257,6 +275,9 @@ public class VehicleService : IVehicleService
         }
     }
 
+    /// <summary>
+    /// Marks a vehicle as the primary vehicle.
+    /// </summary>
     public async Task<ApiResponse<VehicleResponseDto>> SetPrimaryVehicleAsync(int vehicleId, int userId)
     {
         try

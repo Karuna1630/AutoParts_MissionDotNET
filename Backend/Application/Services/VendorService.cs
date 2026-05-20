@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles vendor management operations.
+/// </summary>
 public class VendorService : IVendorService
 {
     private readonly IVendorRepository _vendorRepository;
@@ -22,6 +25,9 @@ public class VendorService : IVendorService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Returns a paged list of vendors.
+    /// </summary>
     public async Task<ApiResponse<PagedResult<VendorResponseDto>>> GetVendorsAsync(int pageNumber, int pageSize, string? search = null)
     {
         try
@@ -50,6 +56,9 @@ public class VendorService : IVendorService
         }
     }
 
+    /// <summary>
+    /// Returns a single vendor.
+    /// </summary>
     public async Task<ApiResponse<VendorResponseDto>> GetVendorByIdAsync(int id)
     {
         try
@@ -69,6 +78,9 @@ public class VendorService : IVendorService
         }
     }
 
+    /// <summary>
+    /// Creates a vendor.
+    /// </summary>
     public async Task<ApiResponse<VendorResponseDto>> CreateVendorAsync(CreateVendorDto dto)
     {
         try
@@ -97,6 +109,9 @@ public class VendorService : IVendorService
         }
     }
 
+    /// <summary>
+    /// Updates a vendor.
+    /// </summary>
     public async Task<ApiResponse<VendorResponseDto>> UpdateVendorAsync(int id, UpdateVendorDto dto)
     {
         try
@@ -131,6 +146,9 @@ public class VendorService : IVendorService
         }
     }
 
+    /// <summary>
+    /// Deletes a vendor.
+    /// </summary>
     public async Task<ApiResponse<bool>> DeleteVendorAsync(int id)
     {
         try

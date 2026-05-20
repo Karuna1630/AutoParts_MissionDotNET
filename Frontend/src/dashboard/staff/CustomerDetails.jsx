@@ -455,13 +455,13 @@ const TabButton = ({ active, onClick, icon: Icon, label, count }) => (
 );
 
 const DetailItem = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-4 group">
+  <div className="flex items-start gap-4 group min-w-0">
     <div className="p-3 bg-slate-50 text-slate-400 rounded-2xl transition-colors group-hover:bg-blue-50 group-hover:text-blue-600">
       <Icon size={18} />
     </div>
-    <div>
+    <div className="min-w-0 flex-1">
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{label}</p>
-      <p className="text-sm font-bold text-slate-800 mt-1">{value}</p>
+      <p className="mt-1 break-all text-sm font-bold text-slate-800">{value}</p>
     </div>
   </div>
 );

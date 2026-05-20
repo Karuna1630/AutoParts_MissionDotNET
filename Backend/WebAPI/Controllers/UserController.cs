@@ -10,6 +10,9 @@ using Domain.Entities;
 
 namespace WebAPI.Controllers;
 
+/// <summary>
+/// Exposes current user profile endpoints.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/user")]
@@ -24,6 +27,9 @@ public class UserController : ControllerBase
         _imageService = imageService;
     }
 
+    /// <summary>
+    /// Returns the current user's profile.
+    /// </summary>
     [HttpGet("profile")]
     public async Task<IActionResult> GetProfile()
     {
@@ -71,6 +77,9 @@ public class UserController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Updates the current user's profile.
+    /// </summary>
     [HttpPost("profile/update")]
     public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequestDto request)
     {

@@ -8,6 +8,9 @@ using Domain.Entities;
 
 namespace Application.Services;
 
+/// <summary>
+/// Handles customer and staff authentication workflows.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
@@ -27,6 +30,9 @@ public class AuthService : IAuthService
         _customerRepository = customerRepository;
     }
 
+    /// <summary>
+    /// Registers a new customer account.
+    /// </summary>
     public Task<OperationResult<AuthResponseDto>> RegisterCustomerAsync(
         RegisterCustomerRequestDto request,
         CancellationToken cancellationToken = default)
@@ -41,6 +47,9 @@ public class AuthService : IAuthService
             cancellationToken);
     }
 
+    /// <summary>
+    /// Creates a staff account.
+    /// </summary>
     public Task<OperationResult<AuthResponseDto>> CreateStaffAsync(
         CreateStaffRequestDto request,
         CancellationToken cancellationToken = default)
@@ -55,6 +64,9 @@ public class AuthService : IAuthService
             cancellationToken);
     }
 
+    /// <summary>
+    /// Authenticates a user and returns a JWT response.
+    /// </summary>
     public async Task<OperationResult<AuthResponseDto>> LoginAsync(
         LoginRequestDto request,
         CancellationToken cancellationToken = default)
