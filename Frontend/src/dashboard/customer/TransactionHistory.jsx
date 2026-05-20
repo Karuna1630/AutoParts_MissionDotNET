@@ -308,8 +308,8 @@ const ServiceCard = ({ service }) => {
         </div>
         
         <div className="text-right">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Appointment ID</p>
-          <p className="font-bold text-slate-800">#{service.appointmentId}</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Vehicle</p>
+          <p className="font-bold text-slate-800">{service.vehicleName || 'Vehicle info unavailable'}</p>
         </div>
       </div>
 

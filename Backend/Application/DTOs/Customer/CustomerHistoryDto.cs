@@ -30,6 +30,7 @@ public class ServiceHistoryDto
     public string Status { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
     public int? Rating { get; set; }
+    public string VehicleName { get; set; } = string.Empty;
     public int? VehicleId { get; set; }
 }
 

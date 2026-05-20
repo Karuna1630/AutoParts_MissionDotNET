@@ -8,6 +8,8 @@ import {
 } from 'react-icons/fa';
 import { getUserProfile, updateProfile } from '../../services/userService';
 import { getApiErrorMessage } from '../../services/api';
+import { getMyVehicles } from '../../services/vehicleService';
+import { getMyAppointments } from '../../services/appointmentService';
 
 const profileValidationSchema = Yup.object({
   fullName: Yup.string().trim().min(3).required('Full name is required'),
@@ -25,6 +27,10 @@ const ProfileSettings = () => {
   // Preview states
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  
+  // Stats states
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [visitCount, setVisitCount] = useState(0);
   
   // File refs
   const avatarFileRef = useRef(null);
@@ -47,11 +53,32 @@ const ProfileSettings = () => {
 
     try {
       setLoading(true);
-      const response = await getUserProfile();
-      if (response.success) {
-        setProfile(response.data);
-        setAvatarPreview(response.data.avatarUrl);
-        setCoverPreview(response.data.coverUrl);
+      const [profileRes, vehicleRes, appointmentRes] = await Promise.all([
+        getUserProfile(),
+        getMyVehicles().catch(err => {
+          console.error('Error fetching vehicles:', err);
+          return { success: false, data: [] };
+        }),
+        getMyAppointments().catch(err => {
+          console.error('Error fetching appointments:', err);
+          return { success: false, data: [] };
+        })
+      ]);
+
+      if (profileRes.success) {
+        setProfile(profileRes.data);
+        setAvatarPreview(profileRes.data.avatarUrl);
+        setCoverPreview(profileRes.data.coverUrl);
+      }
+
+      if (vehicleRes.success && Array.isArray(vehicleRes.data)) {
+        setVehicleCount(vehicleRes.data.length);
+      }
+
+      if (appointmentRes.success && Array.isArray(appointmentRes.data)) {
+        // Visits typically represent completed appointments
+        const completedVisits = appointmentRes.data.filter(a => a.status === 'Completed').length;
+        setVisitCount(completedVisits);
       }
     } catch (err) {
       if (err?.response?.status === 401) {
@@ -181,20 +208,13 @@ const ProfileSettings = () => {
                 <h2 className="text-3xl font-black text-slate-800">{profile.fullName}</h2>
                 <p className="text-slate-500 font-medium mt-1">{profile.email}</p>
                 
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100">
-                    <FaCheckCircle className="text-[10px]" /> Verified
-                  </span>
-                  <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100">
-                    Silver member
-                  </span>
-                </div>
+
               </div>
 
               {/* Stats Row */}
               <div className="flex gap-4">
-                <StatBox icon={FaCar} label="VEHICLES" value="2" />
-                <StatBox icon={FaCalendarCheck} label="VISITS" value="1" />
+                <StatBox icon={FaCar} label="VEHICLES" value={String(vehicleCount)} />
+                <StatBox icon={FaCalendarCheck} label="VISITS" value={String(visitCount)} />
               </div>
             </div>
           </div>

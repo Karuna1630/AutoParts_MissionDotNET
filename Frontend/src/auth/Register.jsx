@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { FaUser, FaPhone, FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { registerValidationSchema } from '../utils/RegisterValidation';
 import { getApiErrorMessage } from '../services/api';
 import { registerCustomer } from '../services/authService';
+import PasswordField from '../components/PasswordField';
 
 const fieldConfigs = [
   {
@@ -55,6 +56,8 @@ const initialValues = fieldConfigs.reduce((accumulator, field) => {
 }, {});
 
 const Register = () => {
+  const navigate = useNavigate();
+
   const handleSubmit = async (values, { setSubmitting, setStatus, resetForm }) => {
     setStatus(undefined);
 
@@ -79,27 +82,15 @@ const Register = () => {
         return;
       }
 
-      if (response?.data?.token) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem(
-          'authUser',
-          JSON.stringify({
-            userId: response.data.userId,
-            email: response.data.email,
-            fullName: response.data.fullName,
-            role: response.data.role,
-            avatarUrl: response.data.avatarUrl,
-            coverUrl: response.data.coverUrl,
-            expiresAtUtc: response.data.expiresAtUtc,
-          }),
-        );
-      }
-
       resetForm();
       setStatus({
         type: 'success',
-        message: response?.message || 'Registration successful.',
+        message: (response?.message || 'Registration successful.') + ' Redirecting to login page...',
       });
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (error) {
       setStatus({
         type: 'error',
@@ -190,24 +181,39 @@ const Register = () => {
                         <Icon /> {label}
                       </label>
                       <div className="relative flex items-center">
-                        <Icon className="pointer-events-none absolute left-4 text-slate-400" />
-                        <Field
-                          type={type}
-                          id={id}
-                          name={name}
-                          className={`w-full rounded-xl border bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 transition focus:outline-none focus:ring-4 ${
-                            hasError
-                              ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-100'
-                              : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
-                          }`}
-                          placeholder={placeholder}
-                        />
+                        <Icon className="pointer-events-none absolute left-4 text-slate-400 z-10" />
+                        {type === 'password' ? (
+                          <PasswordField
+                            id={id}
+                            name={name}
+                            placeholder={placeholder}
+                            className={`pl-11 pr-12 ${
+                              hasError
+                                ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-100'
+                                : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+                            }`}
+                          />
+                        ) : (
+                          <Field
+                            type={type}
+                            id={id}
+                            name={name}
+                            className={`w-full rounded-xl border bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 transition focus:outline-none focus:ring-4 ${
+                              hasError
+                                ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-100'
+                                : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100'
+                            }`}
+                            placeholder={placeholder}
+                          />
+                        )}
                       </div>
-                      <ErrorMessage
-                        name={name}
-                        component="p"
-                        className="mt-1.5 ml-1 text-xs font-medium text-red-600"
-                      />
+                      {type !== 'password' && (
+                        <ErrorMessage
+                          name={name}
+                          component="p"
+                          className="mt-1.5 ml-1 text-xs font-medium text-red-600"
+                        />
+                      )}
                     </div>
                   );
                 })}

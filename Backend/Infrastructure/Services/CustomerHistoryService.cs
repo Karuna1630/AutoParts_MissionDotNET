@@ -81,6 +81,7 @@ public class CustomerHistoryService : ICustomerHistoryService
         {
             var query = _context.ServiceAppointments
                 .Include(a => a.Review)
+                .Include(a => a.Vehicle)
                 .Where(a => a.CustomerId == customerId);
 
             if (vehicleId.HasValue)
@@ -99,6 +100,9 @@ public class CustomerHistoryService : ICustomerHistoryService
                 Status = a.Status,
                 Notes = a.Notes ?? string.Empty,
                 Rating = a.Review?.Rating,
+                VehicleName = a.Vehicle != null
+                    ? $"{a.Vehicle.VehicleMake} {a.Vehicle.VehicleModel} ({a.Vehicle.VehicleNumber})"
+                    : "Unknown Vehicle",
                 VehicleId = a.VehicleId
             }).ToList();
 

@@ -117,6 +117,17 @@ namespace WebAPI.Controllers
 
             return Ok(result);
         }
-    }
 
+        //[Authorize(Roles = UserRoles.Admin)]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteStaff(Guid id)
+        {
+            var result = await _service.DeleteStaffAsync(id);
+            if (!result)
+            {
+                return BadRequest(new { message = "Failed to delete staff member." });
+            }
+            return Ok(new { message = "Staff member deleted successfully." });
+        }
+    }
 }

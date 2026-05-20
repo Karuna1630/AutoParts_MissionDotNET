@@ -5,7 +5,7 @@ import { FaLock, FaArrowRight, FaCheck, FaCarSide, FaArrowLeft } from 'react-ico
 import { MdEmail } from 'react-icons/md';
 import { loginValidationSchema } from '../utils/LoginValidation';
 import { getApiErrorMessage } from '../services/api';
-import { login } from '../services/authService';
+import { login, staffLogin } from '../services/authService';
 import PasswordField from '../components/PasswordField';
 
 const Login = () => {

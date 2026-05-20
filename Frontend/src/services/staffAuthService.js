@@ -36,4 +36,9 @@ export const uploadStaffProfileImage = async (id, file) => {
   });
   return response.data;
 };
+
+export const deleteStaff = async (id) => {
+  const response = await apiClient.delete(`/StaffAuth/${id}`);
+  return response.data;
+};
   

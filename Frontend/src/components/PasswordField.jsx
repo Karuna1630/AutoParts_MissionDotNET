@@ -18,7 +18,7 @@ const PasswordField = ({ name, placeholder = '••••••••', classNa
     : { name, id: id || name };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <input
         {...inputProps}
         type={show ? 'text' : 'password'}

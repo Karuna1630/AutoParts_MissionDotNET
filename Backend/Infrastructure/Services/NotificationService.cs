@@ -35,7 +35,10 @@ public class NotificationService : INotificationService
     {
         _logger.LogInformation("Checking for low stock parts...");
 
-        var query = _context.Parts.Where(p => p.StockQuantity < 10);
+        // Only look for parts that are low on stock AND haven't been alerted for in the last 24 hours
+        var thresholdDate = DateTime.UtcNow.AddHours(-24);
+        var query = _context.Parts.Where(p => p.StockQuantity < 10 && 
+            (p.LastLowStockAlertDate == null || p.LastLowStockAlertDate < thresholdDate));
 
         if (partId.HasValue)
         {
@@ -46,11 +49,13 @@ public class NotificationService : INotificationService
 
         if (!lowStockParts.Any())
         {
+            _logger.LogInformation("No new low stock parts to notify at this time.");
             return;
         }
 
         foreach (var part in lowStockParts)
         {
+            // Update the last alert date so we don't spam again for 24 hours
             part.LastLowStockAlertDate = DateTime.UtcNow;
             
             // Create dashboard notifications for all Admins and Staff
@@ -60,6 +65,15 @@ public class NotificationService : INotificationService
 
             foreach (var user in usersToNotify)
             {
+                // Extra check: Don't add if there's already an unread "LowStock" alert for this part for this user
+                var exists = await _context.Notifications.AnyAsync(n => 
+                    n.UserId == user.Id && 
+                    n.Type == "LowStock" && 
+                    n.RelatedId == part.Id.ToString() && 
+                    !n.IsRead);
+
+                if (exists) continue;
+
                 _context.Notifications.Add(new Notification
                 {
                     UserId = user.Id,

@@ -9,6 +9,15 @@ const StaffOrderRequests = () => {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: null,
+    data: null,
+    confirmText: 'Confirm',
+    type: 'blue'
+  });
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,51 +46,86 @@ const StaffOrderRequests = () => {
     }
   };
 
-  const handleCreateInvoice = async (orderId) => {
-    if (!window.confirm('Create invoice and reserve stock for this order?')) return;
-    try {
-      setProcessingId(orderId);
-      const res = await apiClient.post(`/OrderRequests/${orderId}/create-invoice`);
-      if (res.data.success) {
-        setSuccessMsg('Invoice created! Order is now reserved for pickup.');
-        fetchOrders();
-        setTimeout(() => setSuccessMsg(null), 5000);
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create invoice.');
-    } finally {
-      setProcessingId(null);
-    }
+  const handleCreateInvoice = (orderId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Create Invoice',
+      message: 'Are you sure you want to create an invoice and reserve stock for this order? This will move the order to the pickup stage.',
+      action: 'create-invoice',
+      data: orderId,
+      confirmText: 'Create Invoice',
+      type: 'blue'
+    });
   };
 
-  const handleCompleteOrder = async (orderId, isPaid = false) => {
+  const handleCompleteOrder = (orderId, isPaid = false) => {
     const action = isPaid ? 'Mark as Paid' : 'Add to Credit';
-    if (!window.confirm(`${action} and complete this order?`)) return;
-    try {
-      setProcessingId(orderId);
-      const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
-      if (res.data.success) {
-        setSuccessMsg(isPaid ? 'Order completed and paid!' : 'Order completed and added to credit.');
-        fetchOrders();
-        setTimeout(() => setSuccessMsg(null), 5000);
-      }
-    } catch (err) {
-      alert('Failed to complete order.');
-    } finally {
-      setProcessingId(null);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Complete Order',
+      message: `Are you sure you want to ${isPaid ? 'mark this order as paid' : 'add this order to credit'} and complete it?`,
+      action: 'complete',
+      data: { orderId, isPaid },
+      confirmText: action,
+      type: isPaid ? 'emerald' : 'amber'
+    });
   };
 
-  const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Cancel this order request?')) return;
-    try {
-      setProcessingId(orderId);
-      const res = await apiClient.patch(`/OrderRequests/${orderId}/cancel`);
-      if (res.data.success) fetchOrders();
-    } catch (err) {
-      alert('Failed to cancel order.');
-    } finally {
-      setProcessingId(null);
+  const handleCancelOrder = (orderId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Cancel Order',
+      message: 'Are you sure you want to cancel this order request? This action cannot be undone.',
+      action: 'cancel',
+      data: orderId,
+      confirmText: 'Cancel Order',
+      type: 'red'
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { action, data } = confirmModal;
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    
+    if (action === 'create-invoice') {
+      try {
+        setProcessingId(data);
+        const res = await apiClient.post(`/OrderRequests/${data}/create-invoice`);
+        if (res.data.success) {
+          setSuccessMsg('Invoice created! Order is now reserved for pickup.');
+          fetchOrders();
+          setTimeout(() => setSuccessMsg(null), 5000);
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to create invoice.');
+      } finally {
+        setProcessingId(null);
+      }
+    } else if (action === 'complete') {
+      const { orderId, isPaid } = data;
+      try {
+        setProcessingId(orderId);
+        const res = await apiClient.patch(`/OrderRequests/${orderId}/complete?isPaid=${isPaid}`);
+        if (res.data.success) {
+          setSuccessMsg(isPaid ? 'Order completed and paid!' : 'Order completed and added to credit.');
+          fetchOrders();
+          setTimeout(() => setSuccessMsg(null), 5000);
+        }
+      } catch (err) {
+        alert('Failed to complete order.');
+      } finally {
+        setProcessingId(null);
+      }
+    } else if (action === 'cancel') {
+      try {
+        setProcessingId(data);
+        const res = await apiClient.patch(`/OrderRequests/${data}/cancel`);
+        if (res.data.success) fetchOrders();
+      } catch (err) {
+        alert('Failed to cancel order.');
+      } finally {
+        setProcessingId(null);
+      }
     }
   };
 
@@ -236,6 +280,53 @@ const StaffOrderRequests = () => {
           <FiShoppingBag className="text-slate-200 mb-3" size={36} />
           <h3 className="text-lg font-bold text-slate-800">No {activeTab} orders</h3>
           <p className="text-slate-500 text-sm mt-1">Check another tab or wait for new requests.</p>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className={`h-14 w-14 rounded-full flex items-center justify-center text-2xl mb-4 ${
+                confirmModal.type === 'blue' ? 'bg-blue-50 text-blue-500' :
+                confirmModal.type === 'emerald' ? 'bg-emerald-50 text-emerald-500' :
+                confirmModal.type === 'amber' ? 'bg-amber-50 text-amber-500' :
+                'bg-red-50 text-red-500'
+              }`}>
+                {confirmModal.type === 'blue' && <FiFileText />}
+                {confirmModal.type === 'emerald' && <FiCheckCircle />}
+                {confirmModal.type === 'amber' && <FiCreditCard />}
+                {confirmModal.type === 'red' && <FiXCircle />}
+              </div>
+              <h2 className="text-xl font-bold text-slate-800 mb-2">{confirmModal.title}</h2>
+              <p className="text-slate-500 text-sm mb-6">
+                {confirmModal.message}
+              </p>
+              
+              <div className="flex w-full gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmAction}
+                  className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition shadow-sm ${
+                    confirmModal.type === 'blue' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' :
+                    confirmModal.type === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
+                    confirmModal.type === 'amber' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' :
+                    'bg-red-500 hover:bg-red-600 shadow-red-200'
+                  }`}
+                >
+                  {confirmModal.confirmText}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
